@@ -1,0 +1,92 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Sistema Blackphone — despliegue del demo en el VPS.
+#
+# Este stack NO levanta su propio reverse proxy: se cuelga del Caddy que ya está
+# publicando el sitio real en los puertos 80 y 443. Por eso acá no hay `ports:`
+# de ningún tipo — ni la base de datos ni la aplicación se asoman al servidor.
+#
+#   docker compose -f docker-compose.production.yml up -d --build
+# ─────────────────────────────────────────────────────────────────────────────
+name: blackphone-demo
+
+x-app: &app
+  image: blackphone-demo-app:production
+  build:
+    context: .
+    dockerfile: Dockerfile.production
+  env_file:
+    - .env.production
+  restart: unless-stopped
+  depends_on:
+    db:
+      condition: service_healthy
+  volumes:
+    - blackphone_demo_storage:/var/www/html/storage
+  networks:
+    - backend
+
+services:
+  # ⚠️ El nombre del servicio NO puede ser "app".
+  #
+  # En una red compartida, Compose registra el nombre del servicio como alias DNS.
+  # Si este servicio se llamara "app", compartiría alias con el "app" del proyecto
+  # real y Caddy repartiría el tráfico del sitio de producción entre los dos.
+  blackphone:
+    <<: *app
+    container_name: blackphone-demo-app
+    expose:
+      - "80"
+    networks:
+      backend:
+      edge:
+        aliases:
+          - blackphone-demo-app
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost/up"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  queue:
+    <<: *app
+    container_name: blackphone-demo-queue
+    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--timeout=120", "--max-time=3600"]
+    stop_grace_period: 2m
+
+  scheduler:
+    <<: *app
+    container_name: blackphone-demo-scheduler
+    command: ["php", "artisan", "schedule:work"]
+
+  db:
+    image: postgres:18
+    container_name: blackphone-demo-db
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    volumes:
+      - blackphone_demo_postgres:/var/lib/postgresql
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+networks:
+  # Privada de este stack: acá viven la base de datos, la cola y el planificador.
+  backend:
+
+  # La del proyecto que ya corre en el servidor. Es por donde Caddy llega al demo,
+  # y lo único que este stack comparte con él. Se declara como externa a propósito:
+  # si no existe, el despliegue falla en vez de crear una red nueva y quedar aislado.
+  edge:
+    external: true
+    name: appleboss-production_edge
+
+volumes:
+  blackphone_demo_postgres:
+  blackphone_demo_storage:

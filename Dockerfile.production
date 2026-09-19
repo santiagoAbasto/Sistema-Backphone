@@ -1,0 +1,95 @@
+# syntax=docker/dockerfile:1.7
+# ─────────────────────────────────────────────────────────────────────────────
+# Sistema Blackphone — imagen de producción.
+#
+# Nada de volúmenes de código: el código entra en la imagen y sale compilado. El
+# `docker-compose.yml` de la raíz es para desarrollar en la máquina; este no.
+# ─────────────────────────────────────────────────────────────────────────────
+
+FROM node:24-bookworm-slim AS frontend
+
+WORKDIR /app
+
+# La marca entra en el build: Vite la congela dentro del bundle y de ahí sale el <title>.
+ARG VITE_APP_NAME="Blackphone"
+ENV VITE_APP_NAME=${VITE_APP_NAME}
+
+COPY src/package.json src/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+
+COPY src/ ./
+RUN npm run build
+
+
+FROM php:8.5-apache AS runtime
+
+ENV APP_ENV=production \
+    APP_DEBUG=false \
+    COMPOSER_ALLOW_SUPERUSER=1
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        curl \
+        gosu \
+        libexif-dev \
+        libfreetype6-dev \
+        libjpeg62-turbo-dev \
+        libonig-dev \
+        libpng-dev \
+        libpq-dev \
+        libwebp-dev \
+        libzip-dev \
+        unzip \
+    && docker-php-ext-configure gd --with-jpeg --with-webp --with-freetype \
+    && docker-php-ext-install -j"$(nproc)" exif gd pcntl pdo_pgsql zip \
+    && a2enmod headers rewrite \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+COPY src/composer.json src/composer.lock ./
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --no-progress \
+    --no-scripts \
+    --optimize-autoloader \
+    --prefer-dist
+
+COPY src/ ./
+COPY --from=frontend /app/public/build ./public/build
+COPY docker/production/php.ini /usr/local/etc/php/conf.d/blackphone-production.ini
+COPY docker/production/entrypoint.sh /usr/local/bin/blackphone-entrypoint
+
+RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf \
+    && printf '%s\n' \
+        '<Directory /var/www/html/public>' \
+        '    AllowOverride All' \
+        '    Options -Indexes +FollowSymLinks' \
+        '    Require all granted' \
+        '</Directory>' \
+        > /etc/apache2/conf-available/blackphone.conf \
+    && printf '%s\n' 'ServerName localhost' > /etc/apache2/conf-available/servername.conf \
+    && printf '%s\n' 'ServerTokens Prod' 'ServerSignature Off' 'TraceEnable Off' > /etc/apache2/conf-available/endurecer.conf \
+    && a2enconf blackphone servername endurecer \
+    && composer dump-autoload --no-dev --classmap-authoritative --no-scripts \
+    && php artisan package:discover --ansi \
+    && mkdir -p \
+        bootstrap/cache \
+        storage/app/public \
+        storage/framework/cache/data \
+        storage/framework/sessions \
+        storage/framework/views \
+        storage/logs \
+    && chmod -R a+rX /var/www/html \
+    && rm -f public/storage \
+    && ln -s ../storage/app/public public/storage \
+    && chown -R www-data:www-data bootstrap/cache storage \
+    && chmod +x /usr/local/bin/blackphone-entrypoint
+
+EXPOSE 80
+
+ENTRYPOINT ["blackphone-entrypoint"]
+CMD ["apache2-foreground"]
