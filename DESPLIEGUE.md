@@ -65,20 +65,24 @@ cp .env.production.example .env.production
 chmod 600 .env.production
 ```
 
-Generar las claves y escribirlas dentro de `.env.production`:
+Generar las claves y escribirlas dentro de `.env.production` de una vez. La
+contraseña de la base va en dos variables —`DB_PASSWORD` para Laravel y
+`POSTGRES_PASSWORD` para PostgreSQL— y tiene que ser la misma en las dos:
 
 ```bash
-# Clave de la aplicación
-docker run --rm -v "$PWD/src:/app" -w /app php:8.5-cli php -r \
-  'echo "base64:".base64_encode(random_bytes(32)), PHP_EOL;'
+APP_KEY="base64:$(openssl rand -base64 32)"
+DB_PASS="$(openssl rand -base64 30 | tr -dc 'A-Za-z0-9' | cut -c1-28)"
+ADMIN_PASS="$(openssl rand -base64 30 | tr -dc 'A-Za-z0-9' | cut -c1-20)"
 
-# Contraseña de la base de datos y del primer administrador
-openssl rand -base64 24 | tr -d '/+=' | cut -c1-24
-openssl rand -base64 24 | tr -d '/+=' | cut -c1-24
+sed -i "s|^APP_KEY=.*|APP_KEY=${APP_KEY}|" .env.production
+sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=${DB_PASS}|" .env.production
+sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=${DB_PASS}|" .env.production
+sed -i "s|^SEED_ADMIN_PASSWORD=.*|SEED_ADMIN_PASSWORD=${ADMIN_PASS}|" .env.production
+
+echo "Clave del administrador: ${ADMIN_PASS}"
 ```
 
-Completar en `.env.production`: `APP_KEY`, `DB_PASSWORD` y `POSTGRES_PASSWORD`
-(el mismo valor en las dos), `SEED_ADMIN_EMAIL` y `SEED_ADMIN_PASSWORD`.
+Falta completar a mano `SEED_ADMIN_EMAIL` con el correo de la primera cuenta.
 
 Levantar:
 
