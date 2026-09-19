@@ -1,0 +1,9 @@
+.git
+.claude
+
+src/*
+!src/composer.json
+!src/composer.lock
+
+npm-debug.log
+yarn-error.log

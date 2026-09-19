@@ -1,0 +1,110 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Sistema Blackphone — entorno completo en Docker.
+#
+# Aislado de cualquier otro stack de la máquina: nombres, red, volúmenes y
+# puertos son propios. Levantar con:  docker compose up -d --build
+# ─────────────────────────────────────────────────────────────────────────────
+name: blackphone
+
+x-app-base: &app-base
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: blackphone-app:local
+  env_file:
+    - .env
+  volumes:
+    - ./src:/var/www/html:cached
+    - ./src/docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
+    - vendor:/var/www/html/vendor
+    - bootstrap_cache:/var/www/html/bootstrap/cache
+    - public_build:/var/www/html/public/build
+  depends_on:
+    db:
+      condition: service_healthy
+  restart: unless-stopped
+
+services:
+  app:
+    <<: *app-base
+    container_name: blackphone-app
+    ports:
+      - "${APP_BIND_IP:-127.0.0.1}:${APP_HTTP_PORT:-8030}:80"
+
+  queue:
+    <<: *app-base
+    container_name: blackphone-queue
+    command: php artisan queue:work --tries=3 --timeout=90 --sleep=3
+    healthcheck:
+      disable: true
+
+  scheduler:
+    <<: *app-base
+    container_name: blackphone-scheduler
+    command: php artisan schedule:work
+    healthcheck:
+      disable: true
+
+  db:
+    image: postgres:18
+    container_name: blackphone-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-blackphone}
+      POSTGRES_USER: ${POSTGRES_USER:-blackphone}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD en .env}
+    volumes:
+      - db_data:/var/lib/postgresql
+    ports:
+      - "${APP_BIND_IP:-127.0.0.1}:${POSTGRES_FORWARD_PORT:-5440}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-blackphone} -d ${POSTGRES_DB:-blackphone}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+
+  node:
+    image: node:24
+    container_name: blackphone-node
+    working_dir: /var/www/html
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+      FRONTEND_MODE: ${FRONTEND_MODE:-build}
+      VITE_CONTAINER_PORT: ${VITE_CONTAINER_PORT:-5173}
+      VITE_HMR_HOST: ${VITE_HMR_HOST:-localhost}
+    volumes:
+      - ./src:/var/www/html
+      - node_modules:/var/www/html/node_modules
+      - vite_cache:/tmp/vite-cache
+      - public_build:/var/www/html/public/build
+    ports:
+      - "${APP_BIND_IP:-127.0.0.1}:${VITE_HOST_PORT:-5180}:${VITE_CONTAINER_PORT:-5173}"
+    command: >
+      sh -c "npm install &&
+      if [ \"$${FRONTEND_MODE:-build}\" = \"dev\" ]; then
+        npm run dev -- --host 0.0.0.0 --port $${VITE_CONTAINER_PORT:-5173};
+      else
+        rm -f public/hot && npm run build && tail -f /dev/null;
+      fi"
+    restart: unless-stopped
+
+  # Cliente web de la base de datos. Solo con: docker compose --profile herramientas up -d
+  adminer:
+    image: adminer
+    container_name: blackphone-adminer
+    profiles: [herramientas]
+    depends_on:
+      - db
+    ports:
+      - "${APP_BIND_IP:-127.0.0.1}:${ADMINER_HOST_PORT:-8031}:8080"
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  node_modules:
+  vendor:
+  bootstrap_cache:
+  vite_cache:
+  public_build:

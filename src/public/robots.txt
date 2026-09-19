@@ -1,0 +1,3 @@
+# El sistema es privado: no se indexa ninguna pantalla.
+User-agent: *
+Disallow: /

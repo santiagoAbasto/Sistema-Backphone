@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Blackphone">
+  <rect width="64" height="64" rx="14" fill="#0A0A0B"/>
+  <g transform="translate(18 10) scale(0.62)">
+    <defs>
+      <clipPath id="b">
+        <path d="M6 0h32l14 14v10l-7 7 9 9v12L40 72H6V0Zm15 14v16h14l6-6v-4l-6-6H21Zm0 28v16h16l6-6v-4l-6-6H21Z" clip-rule="evenodd"/>
+      </clipPath>
+    </defs>
+    <path d="M6 0h32l14 14v10l-7 7 9 9v12L40 72H6V0Zm15 14v16h14l6-6v-4l-6-6H21Zm0 28v16h16l6-6v-4l-6-6H21Z" fill-rule="evenodd" clip-rule="evenodd" fill="#FFFFFF"/>
+    <g clip-path="url(#b)">
+      <path d="M44 -8h12L26 80H14L44 -8Z" fill="#C49A7C"/>
+    </g>
+  </g>
+</svg>

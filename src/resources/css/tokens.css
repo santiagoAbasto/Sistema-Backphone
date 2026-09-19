@@ -1,0 +1,157 @@
+/* ============================================================================
+   BLACKPHONE — SISTEMA DE DISEÑO
+   Fuente única de verdad. Se importa desde app.css y app-vite.css.
+   Ningún otro archivo define tokens: si hace falta un valor nuevo, se agrega acá.
+
+   La identidad es negro y bronce. El armazón del panel (barra lateral y encabezado)
+   va en negro; el contenido va sobre superficies claras, que es lo que deja leer
+   tablas y formularios durante ocho horas seguidas.
+   ========================================================================== */
+
+:root {
+  /* ── Bronce: el color de la marca ─────────────────────────────────────── */
+  --bronce-50:   #FAF6F2;
+  --bronce-100:  #F3E8DD;
+  --bronce-200:  #E6D0BC;
+  --bronce-300:  #D5B396;
+  --bronce-400:  #C49A7C;   /* el del isotipo */
+  --bronce-500:  #B0846A;
+  --bronce-600:  #96684F;   /* acento sobre fondo claro (4.9:1 sobre blanco) */
+  --bronce-700:  #79523E;
+  --bronce-800:  #5A3D2E;
+  --bronce-900:  #3B2820;
+
+  /* ── Carbón: el negro del armazón ─────────────────────────────────────── */
+  --carbon-950:  #0A0A0B;
+  --carbon-900:  #121214;
+  --carbon-850:  #171719;
+  --carbon-800:  #1D1D21;
+  --carbon-700:  #26262B;
+  --carbon-600:  #36363D;
+  --carbon-500:  #4A4A53;
+
+  /* ── Neutros cálidos: el resto de la interfaz ─────────────────────────── */
+  --gris-25:   #FCFCFB;
+  --gris-50:   #F7F7F5;
+  --gris-100:  #F0F0ED;
+  --gris-200:  #E3E3DE;
+  --gris-300:  #CDCDC6;
+  --gris-400:  #A3A39B;
+  --gris-500:  #7B7B73;
+  --gris-600:  #5C5C56;
+  --gris-700:  #44443F;
+  --gris-800:  #2E2E2A;
+  --gris-900:  #1B1B19;
+
+  /* ── Estados ──────────────────────────────────────────────────────────── */
+  --ok-fondo:       #ECF7F0;
+  --ok-borde:       #BFE3CD;
+  --ok-texto:       #1B7A45;
+  --ok-fuerte:      #17A05A;
+
+  --aviso-fondo:    #FDF5E4;
+  --aviso-borde:    #F0DCAE;
+  --aviso-texto:    #8A6116;
+  --aviso-fuerte:   #C8941F;
+
+  --peligro-fondo:  #FCEEEE;
+  --peligro-borde:  #F2C9C9;
+  --peligro-texto:  #A32A2A;
+  --peligro-fuerte: #D13B3B;
+
+  --info-fondo:     #EEF3FA;
+  --info-borde:     #C9D9EE;
+  --info-texto:     #2B5488;
+  --info-fuerte:    #3A72B8;
+
+  /* ── Superficies ──────────────────────────────────────────────────────── */
+  --superficie-pagina:  var(--gris-50);
+  --superficie:         #FFFFFF;
+  --superficie-tenue:   var(--gris-100);
+  --superficie-hundida: var(--gris-200);
+  --superficie-oscura:  var(--carbon-900);
+
+  /* ── Texto ────────────────────────────────────────────────────────────── */
+  --texto-fuerte:      var(--gris-900);
+  --texto:             var(--gris-800);
+  --texto-suave:       var(--gris-600);
+  --texto-tenue:       var(--gris-400);
+  --texto-sobre-oscuro: #FFFFFF;
+  --texto-sobre-acento: #FFFFFF;
+
+  /* ── Bordes ───────────────────────────────────────────────────────────── */
+  --borde-sutil:  var(--gris-200);
+  --borde-medio:  var(--gris-300);
+  --borde-fuerte: var(--gris-400);
+
+  /* ── Acento del panel ─────────────────────────────────────────────────────
+     Cada panel lo redefine (`PanelShell`), así una misma pieza compartida toma
+     el color del panel donde está montada. `--acento-rgb` son los mismos canales
+     sueltos: es lo que Tailwind necesita para las transparencias. */
+  --acento:       var(--bronce-600);
+  --acento-rgb:   150 104 79;
+  --acento-suave: var(--bronce-100);
+  --acento-borde: var(--bronce-200);
+
+  /* ── Armazón oscuro (barra lateral y encabezado) ──────────────────────── */
+  --armazon:            var(--carbon-900);
+  --armazon-degradado:  linear-gradient(180deg, #121214 0%, #1D1D21 100%);
+  --armazon-linea:      rgba(255, 255, 255, 0.08);
+  --armazon-texto:      rgba(255, 255, 255, 0.72);
+  --armazon-texto-vivo: #FFFFFF;
+  --armazon-activo:     rgba(196, 154, 124, 0.16);
+  --armazon-velo:       rgba(10, 10, 11, 0.62);
+
+  /* ── Tipografía ───────────────────────────────────────────────────────── */
+  --fuente-marca:  'Chakra Petch', 'Inter', system-ui, sans-serif;  /* logotipo y títulos */
+  --fuente-texto:  'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --fuente-cifra:  'IBM Plex Mono', ui-monospace, 'SF Mono', monospace; /* códigos, IMEI, series */
+
+  /* ── Radios ───────────────────────────────────────────────────────────── */
+  --radio-xs:   4px;
+  --radio-sm:   6px;
+  --radio-md:  10px;
+  --radio-lg:  14px;
+  --radio-xl:  20px;
+  --radio-full: 9999px;
+
+  /* ── Sombras: discretas, para separar planos sin ensuciar ─────────────── */
+  --sombra-sutil:   0 1px 2px rgba(27, 27, 25, 0.05);
+  --sombra-tarjeta: 0 1px 2px rgba(27, 27, 25, 0.05), 0 4px 14px rgba(27, 27, 25, 0.05);
+  --sombra-alzada:  0 4px 12px rgba(27, 27, 25, 0.09), 0 12px 32px rgba(27, 27, 25, 0.08);
+  --sombra-flotante: 0 12px 28px rgba(10, 10, 11, 0.18), 0 2px 8px rgba(10, 10, 11, 0.12);
+  --anillo-foco:    0 0 0 4px rgb(var(--acento-rgb) / 0.18);
+
+  /* ── Espaciado y medidas ──────────────────────────────────────────────── */
+  --canaleta:    clamp(1rem, 3vw, 2rem);
+  --contenedor:  1440px;
+  --barra-ancho: 268px;
+  --barra-alto:  60px;
+
+  /* ── Movimiento ───────────────────────────────────────────────────────── */
+  --dur-pulsacion: 110ms;
+  --dur-rapida:    170ms;
+  --dur-ui:        230ms;
+  --dur-panel:     300ms;
+  --curva-salida:  cubic-bezier(0.22, 1, 0.36, 1);
+  --curva-suave:   cubic-bezier(0.65, 0, 0.35, 1);
+  --curva-cajon:   cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* ── Planos ───────────────────────────────────────────────────────────── */
+  --z-contenido:  1;
+  --z-pegajoso:  20;
+  --z-barra:     40;
+  --z-velo:      60;
+  --z-modal:     70;
+  --z-aviso:     90;
+}
+
+/* Quien pide menos movimiento, no lo recibe. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-pulsacion: 1ms;
+    --dur-rapida:    1ms;
+    --dur-ui:        1ms;
+    --dur-panel:     1ms;
+  }
+}
