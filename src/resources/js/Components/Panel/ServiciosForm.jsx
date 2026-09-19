@@ -3,14 +3,83 @@ import { useRef, useState } from 'react';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { route } from 'ziggy-js';
-import { ArrowLeft, Hammer, Plus, Trash2, Wrench } from 'lucide-react';
+import { ArrowLeft, Hammer, Plus, Search, Trash2, Wrench, X } from 'lucide-react';
 import PremiumNotice from '@/Components/PremiumNotice';
 import { notifyRecordsUpdated } from '@/Hooks/useAutoRefresh';
-import { Badge, Field, Input, StepCard, Textarea, bsFmt, buttonCls } from '@/Components/Admin/ui';
+import { Badge, Field, Input, StepCard, Textarea, bsFmt, buttonCls, inputCls } from '@/Components/Admin/ui';
+import { IconoPieza } from '@/Components/Admin/piezas';
+import RecepcionEquipo, { payloadRecepcion, recepcionInicial, textoDesbloqueo, validarRecepcion } from '@/Components/Panel/RecepcionEquipo';
 
 let ultimoId = 0;
-const nuevoTrabajo = () => ({ id: ++ultimoId, descripcion: '', costo: '', precio: '' });
+const nuevoTrabajo = () => ({ id: ++ultimoId, origen: 'manual', descripcion: '', costo: '', precio: '', pieza: null, cantidad: 1 });
+const trabajoDePieza = (pieza) => ({
+  id: ++ultimoId,
+  origen: 'pieza',
+  pieza,
+  cantidad: 1,
+  descripcion: [pieza.nombre, pieza.compatibilidad].filter(Boolean).join(' · '),
+  // El costo lo pone el servidor desde el inventario; acá solo se muestra cuando el panel lo recibe.
+  costo: pieza.precio_costo != null ? String(Number(pieza.precio_costo)) : '',
+  precio: String(Number(pieza.precio_venta) || 0),
+});
 const monto = (v) => Math.round((Number(v) || 0) * 100) / 100;
+const normalizar = (v) => String(v ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+/**
+ * Buscador de piezas del inventario.
+ *
+ * Es un buscador y no un desplegable porque un taller que despieza equipos junta cientos de
+ * repuestos: en una lista larga no se encuentra nada, y con el nombre a medio escribir sí.
+ */
+function BuscadorPiezas({ piezas, onElegir, onCerrar }) {
+  const [texto, setTexto] = useState('');
+  const q = normalizar(texto.trim());
+  const resultados = (q
+    ? piezas.filter((p) => normalizar([p.nombre, p.categoria, p.compatibilidad, p.codigo].join(' ')).includes(q))
+    : piezas
+  ).slice(0, 40);
+
+  return (
+    <div className="rounded-xl border border-[rgb(var(--acento-rgb)_/_0.3)] bg-[rgb(var(--acento-rgb)_/_0.04)] p-3">
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gris-400" />
+          <input autoFocus value={texto} onChange={(e) => setTexto(e.target.value)} aria-label="Buscar una pieza del inventario"
+            placeholder="Pantalla, batería, pin de carga, iPhone 11…" className={`${inputCls} h-10 pl-9`} />
+        </div>
+        <button type="button" onClick={onCerrar} aria-label="Cerrar el buscador de piezas"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-gris-400 transition-colors hover:bg-white hover:text-gris-700">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      {resultados.length === 0 ? (
+        <p className="px-1 py-3 text-[13px] text-gris-500">
+          {piezas.length === 0
+            ? 'Todavía no hay piezas cargadas en el inventario. Podés escribir el trabajo a mano igual.'
+            : 'Ninguna pieza coincide. Probá con parte del nombre o con el equipo compatible.'}
+        </p>
+      ) : (
+        <ul className="mt-2 max-h-64 overflow-y-auto rounded-lg border border-gris-200 bg-white">
+          {resultados.map((p) => (
+            <li key={p.id}>
+              <button type="button" onClick={() => onElegir(p)}
+                className="flex w-full items-center justify-between gap-3 border-b border-gris-100 px-3 py-2.5 text-left last:border-b-0 hover:bg-gris-50">
+                <span className="min-w-0">
+                  <span className="block truncate text-[13px] font-semibold text-gris-900">{p.nombre}</span>
+                  <span className="block truncate text-xs text-gris-500">
+                    {[p.compatibilidad || p.categoria, `quedan ${p.cantidad}`].filter(Boolean).join(' · ')}
+                  </span>
+                </span>
+                <span className="shrink-0 text-[13px] font-bold tabular-nums text-gris-900">{bsFmt(p.precio_venta)}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 function Linea({ label, valor }) {
   return (
@@ -21,7 +90,7 @@ function Linea({ label, valor }) {
   );
 }
 
-export default function ServiciosForm({ tecnicos = [], Layout, prefijo = 'admin' }) {
+export default function ServiciosForm({ tecnicos = [], piezas = [], revision = [], Layout, prefijo = 'admin' }) {
   // El vendedor registra solo lo que paga el cliente: con eso sale la nota. El costo de cada trabajo lo carga
   // el administrador desde la lista (le llega el aviso), y recién ahí se calcula la utilidad.
   const conMargen = prefijo === 'admin';
@@ -34,9 +103,11 @@ export default function ServiciosForm({ tecnicos = [], Layout, prefijo = 'admin'
     notas_adicionales: '',
   });
   const [trabajos, setTrabajos] = useState(() => [nuevoTrabajo()]);
+  const [recepcion, setRecepcion] = useState(() => recepcionInicial(revision));
   const [sugerencias, setSugerencias] = useState([]);
   const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
   const [errores, setErrores] = useState({});
+  const [buscandoPieza, setBuscandoPieza] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [notice, setNotice] = useState(null);
   const ultimaBusqueda = useRef('');
@@ -78,19 +149,51 @@ export default function ServiciosForm({ tecnicos = [], Layout, prefijo = 'admin'
 
   /* Trabajos */
   const cambiarTrabajo = (id, campo, valor) => {
-    setTrabajos((ts) => ts.map((t) => (t.id === id ? { ...t, [campo]: valor } : t)));
+    setTrabajos((ts) => ts.map((t) => {
+      if (t.id !== id) return t;
+      const siguiente = { ...t, [campo]: valor };
+      // Al cambiar las unidades de una pieza, el cobro y el costo se recalculan desde su precio
+      // unitario: si no, cambiar 1 por 3 dejaría el precio de una sola.
+      if (campo === 'cantidad' && t.origen === 'pieza' && t.pieza) {
+        const n = Math.max(1, Number(valor) || 1);
+        siguiente.cantidad = n;
+        siguiente.precio = String(monto((Number(t.pieza.precio_venta) || 0) * n));
+        siguiente.costo = t.pieza.precio_costo != null ? String(monto((Number(t.pieza.precio_costo) || 0) * n)) : '';
+      }
+      return siguiente;
+    }));
     quitarError(`trabajo.${id}`);
     quitarError('trabajos');
   };
   const quitarTrabajo = (id) => setTrabajos((ts) => (ts.length === 1 ? [nuevoTrabajo()] : ts.filter((t) => t.id !== id)));
   const agregarTrabajo = () => setTrabajos((ts) => [...ts, nuevoTrabajo()]);
 
+  // La primera fila está vacía hasta que se escribe algo: la pieza ocupa ese lugar en vez de
+  // dejar un renglón en blanco arriba de todo.
+  const agregarPieza = (pieza) => {
+    setTrabajos((ts) => {
+      const fila = trabajoDePieza(pieza);
+      const soloUnaVacia = ts.length === 1 && ts[0].origen === 'manual' && !ts[0].descripcion.trim() && ts[0].precio === '';
+      return soloUnaVacia ? [fila] : [...ts, fila];
+    });
+    setBuscandoPieza(false);
+    quitarError('trabajos');
+  };
+
+  const puntosMarcados = recepcion.revision.filter((p) => p.estado).length;
   const descritos = trabajos.filter((t) => t.descripcion.trim());
   const totalCosto = monto(trabajos.reduce((a, t) => a + monto(t.costo), 0));
   const totalCobro = monto(trabajos.reduce((a, t) => a + monto(t.precio), 0));
   const ganancia = monto(totalCobro - totalCosto);
 
-  const sinCosto = conMargen ? descritos.filter((t) => t.costo === '').length : 0;
+  // Lo que sale del inventario ya trae su costo: solo queda pendiente lo escrito a mano sin costo.
+  const sinCosto = conMargen ? descritos.filter((t) => t.origen !== 'pieza' && t.costo === '').length : 0;
+
+  // Cuántas unidades de cada pieza está pidiendo el servicio (dos renglones de lo mismo suman).
+  const pedidoPorPieza = trabajos.reduce((acc, t) => {
+    if (t.origen === 'pieza' && t.pieza) acc[t.pieza.id] = (acc[t.pieza.id] ?? 0) + Math.max(1, Number(t.cantidad) || 1);
+    return acc;
+  }, {});
 
   const validar = () => {
     const e = {};
@@ -102,9 +205,12 @@ export default function ServiciosForm({ tecnicos = [], Layout, prefijo = 'admin'
       if (!t.descripcion.trim() && (t.costo !== '' || t.precio !== '')) e[`trabajo.${t.id}`] = 'Describe este trabajo.';
       else if (t.descripcion.trim() && t.precio === '') e[`trabajo.${t.id}`] = 'Escribe cuánto paga el cliente por este trabajo.';
       else if (Number(t.costo) < 0 || Number(t.precio) < 0) e[`trabajo.${t.id}`] = 'Los montos no pueden ser negativos.';
+      else if (t.origen === 'pieza' && t.pieza && pedidoPorPieza[t.pieza.id] > Number(t.pieza.cantidad || 0)) {
+        e[`trabajo.${t.id}`] = `De «${t.pieza.nombre}» quedan ${t.pieza.cantidad} y el servicio está usando ${pedidoPorPieza[t.pieza.id]}.`;
+      }
     });
     if (descritos.length === 0) e.trabajos = 'Agrega al menos un trabajo.';
-    return e;
+    return { ...e, ...validarRecepcion(recepcion) };
   };
 
   const registrar = () => {
@@ -116,12 +222,21 @@ export default function ServiciosForm({ tecnicos = [], Layout, prefijo = 'admin'
       return;
     }
 
-    // Un costo vacío no es cero: el servicio queda con el costo pendiente (del vendedor nunca viaja el costo)
-    const detalle = descritos.map((t) => ({
-      descripcion: t.descripcion.trim(),
-      ...(conMargen && t.costo !== '' ? { costo: monto(t.costo) } : {}),
-      precio: monto(t.precio),
-    }));
+    // Un costo vacío no es cero: el servicio queda con el costo pendiente (del vendedor nunca viaja
+    // el costo). Lo que sale del inventario viaja con su pieza y sus unidades, y el costo real lo
+    // resuelve el servidor: así nadie puede inflarlo desde el navegador.
+    const detalle = descritos.map((t) => (t.origen === 'pieza' && t.pieza
+      ? {
+        descripcion: t.descripcion.trim(),
+        precio: monto(t.precio),
+        pieza_id: t.pieza.id,
+        cantidad: Math.max(1, Number(t.cantidad) || 1),
+      }
+      : {
+        descripcion: t.descripcion.trim(),
+        ...(conMargen && t.costo !== '' ? { costo: monto(t.costo) } : {}),
+        precio: monto(t.precio),
+      }));
 
     router.post(route(`${prefijo}.servicios.store`), {
       cliente: data.cliente.trim(),
@@ -130,8 +245,9 @@ export default function ServiciosForm({ tecnicos = [], Layout, prefijo = 'admin'
       tecnico: data.tecnico.trim(),
       fecha: data.fecha,
       notas_adicionales: data.notas_adicionales.trim(),
+      recepcion: payloadRecepcion(recepcion),
       detalle_servicio: JSON.stringify(detalle),
-      ...(conMargen && sinCosto === 0 ? { precio_costo: monto(detalle.reduce((a, t) => a + (t.costo ?? 0), 0)) } : {}),
+      ...(conMargen && sinCosto === 0 ? { precio_costo: totalCosto } : {}),
       precio_venta: monto(detalle.reduce((a, t) => a + t.precio, 0)),
     }, {
       preserveState: true,
@@ -237,24 +353,41 @@ export default function ServiciosForm({ tecnicos = [], Layout, prefijo = 'admin'
             </StepCard>
 
             {/* Paso 3 */}
-            <StepCard step={3} title="Trabajos a realizar"
+            <StepCard step={3} title="Trabajos y repuestos"
               subtitle={conMargen
-                ? 'Cada trabajo con su costo y lo que paga el cliente. Si todavía no sabes el costo, déjalo vacío y lo cargas después desde la lista.'
-                : 'Cada trabajo con lo que paga el cliente. El costo lo carga el administrador.'}
-              actions={<Badge tone="navy">{descritos.length} {descritos.length === 1 ? 'trabajo' : 'trabajos'}</Badge>}>
+                ? 'Cada trabajo con su costo y lo que paga el cliente. Las piezas del inventario traen su costo sola y salen del stock al guardar; lo que no esté cargado se escribe a mano.'
+                : 'Cada trabajo con lo que paga el cliente. Si usas una pieza del inventario, elígela: sale del stock al guardar.'}
+              actions={<Badge tone="navy">{descritos.length} {descritos.length === 1 ? 'renglón' : 'renglones'}</Badge>}>
+
               <div className={`mb-2 hidden gap-2.5 px-[13px] text-[11px] font-bold uppercase tracking-[0.08em] text-gris-400 md:grid ${conMargen ? 'grid-cols-[32px_minmax(0,1fr)_132px_152px_40px]' : 'grid-cols-[32px_minmax(0,1fr)_152px_40px]'}`}>
-                <span>#</span><span>Trabajo</span>{conMargen && <span>Costo (Bs)</span>}<span>Cobro al cliente</span><span />
+                <span>#</span><span>Trabajo o repuesto</span>{conMargen && <span>Costo (Bs)</span>}<span>Cobro al cliente</span><span />
               </div>
 
               <ul className="space-y-2">
                 {trabajos.map((t, i) => {
+                  const dePieza = t.origen === 'pieza' && t.pieza;
                   const costo = monto(t.costo);
                   const precio = monto(t.precio);
                   const error = errores[`trabajo.${t.id}`];
                   const bajoCosto = conMargen && t.costo !== '' && t.precio !== '' && precio < costo;
                   const aviso = error || (bajoCosto ? `Se cobra ${bsFmt(costo - precio)} menos de lo que cuesta.` : null);
                   return (
-                    <li key={t.id} className={`rounded-xl border p-3 transition-colors ${error ? 'border-rose-300 bg-rose-50/40' : 'border-gris-200 bg-white'}`}>
+                    <li key={t.id} className={`rounded-xl border p-3 transition-colors ${error ? 'border-rose-300 bg-rose-50/40' : dePieza ? 'border-[rgb(var(--acento-rgb)_/_0.3)] bg-[rgb(var(--acento-rgb)_/_0.03)]' : 'border-gris-200 bg-white'}`}>
+                      {dePieza && (
+                        <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2 border-b border-gris-200/70 pb-2.5">
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[color:var(--acento)]">
+                            <IconoPieza className="h-3.5 w-3.5" /> Del inventario
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <label htmlFor={`unidades-${t.id}`} className="text-[11px] font-semibold text-gris-500">Unidades</label>
+                            <input id={`unidades-${t.id}`} type="number" min={1} step={1} inputMode="numeric" value={t.cantidad}
+                              onChange={(e) => cambiarTrabajo(t.id, 'cantidad', e.target.value)}
+                              className={`${inputCls} h-9 w-20 text-center font-semibold tabular-nums`} />
+                            <span className="text-[11px] text-gris-400">de {t.pieza.cantidad} en stock</span>
+                          </div>
+                        </div>
+                      )}
+
                       <div className={`grid items-center gap-2.5 ${conMargen
                         ? 'grid-cols-[minmax(0,1fr)_minmax(0,1fr)_40px] md:grid-cols-[32px_minmax(0,1fr)_132px_152px_40px]'
                         : 'grid-cols-[minmax(0,1fr)_40px] md:grid-cols-[32px_minmax(0,1fr)_152px_40px]'}`}>
@@ -262,13 +395,19 @@ export default function ServiciosForm({ tecnicos = [], Layout, prefijo = 'admin'
                         <Input className={conMargen ? 'col-span-3 md:col-span-1' : 'col-span-2 md:col-span-1'} value={t.descripcion} aria-label={`Trabajo ${i + 1}`}
                           placeholder={i === 0 ? 'Ej.: Cambio de batería' : 'Describe el trabajo'}
                           onChange={(e) => cambiarTrabajo(t.id, 'descripcion', e.target.value)} />
-                        {conMargen && (
+                        {conMargen && (dePieza ? (
+                          // El costo de una pieza sale del inventario: se muestra, no se escribe.
+                          <p className="flex h-11 items-center rounded-[10px] border border-dashed border-gris-300 px-3 text-sm font-semibold tabular-nums text-gris-500"
+                            title="Sale del inventario de piezas">
+                            {t.costo === '' ? 'Del stock' : bsFmt(costo)}
+                          </p>
+                        ) : (
                           <Input type="number" min="0" step="0.01" inputMode="decimal" placeholder="Costo" aria-label={`Costo del trabajo ${i + 1}`}
                             className="tabular-nums" value={t.costo} onChange={(e) => cambiarTrabajo(t.id, 'costo', e.target.value)} />
-                        )}
+                        ))}
                         <Input type="number" min="0" step="0.01" inputMode="decimal" placeholder="Cobro al cliente" aria-label={`Cobro al cliente del trabajo ${i + 1}`}
                           className="font-semibold tabular-nums" value={t.precio} onChange={(e) => cambiarTrabajo(t.id, 'precio', e.target.value)} />
-                        <button type="button" onClick={() => quitarTrabajo(t.id)} aria-label={`Quitar trabajo ${i + 1}`} title="Quitar"
+                        <button type="button" onClick={() => quitarTrabajo(t.id)} aria-label={`Quitar ${dePieza ? t.pieza.nombre : `trabajo ${i + 1}`}`} title="Quitar"
                           className="grid h-10 w-10 place-items-center rounded-lg text-gris-400 transition-colors hover:bg-rose-50 hover:text-rose-600">
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -281,18 +420,38 @@ export default function ServiciosForm({ tecnicos = [], Layout, prefijo = 'admin'
                 })}
               </ul>
 
-              <button type="button" onClick={agregarTrabajo}
-                className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-gris-300 text-sm font-semibold text-gris-600 transition-colors hover:border-[color:var(--acento)] hover:bg-[rgb(var(--acento-rgb)_/_0.04)] hover:text-carbon-900">
-                <Plus className="h-4 w-4" /> Agregar otro trabajo
-              </button>
+              {buscandoPieza ? (
+                <div className="mt-3">
+                  <BuscadorPiezas piezas={piezas} onElegir={agregarPieza} onCerrar={() => setBuscandoPieza(false)} />
+                </div>
+              ) : (
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <button type="button" onClick={agregarTrabajo}
+                    className="flex h-11 items-center justify-center gap-2 rounded-xl border border-dashed border-gris-300 text-sm font-semibold text-gris-600 transition-colors hover:border-[color:var(--acento)] hover:bg-[rgb(var(--acento-rgb)_/_0.04)] hover:text-carbon-900">
+                    <Plus className="h-4 w-4" /> Escribir un trabajo
+                  </button>
+                  <button type="button" onClick={() => setBuscandoPieza(true)}
+                    className="flex h-11 items-center justify-center gap-2 rounded-xl border border-[rgb(var(--acento-rgb)_/_0.4)] bg-[rgb(var(--acento-rgb)_/_0.06)] text-sm font-semibold text-[color:var(--acento)] transition-colors hover:bg-[rgb(var(--acento-rgb)_/_0.12)]">
+                    <IconoPieza className="h-4 w-4" /> Usar una pieza del inventario
+                  </button>
+                </div>
+              )}
               {errores.trabajos && <p className="mt-2 text-xs font-semibold text-rose-600">{errores.trabajos}</p>}
             </StepCard>
 
             {/* Paso 4 */}
-            <StepCard step={4} title="Notas" subtitle="Opcional. Estado del equipo, accesorios que deja o recomendaciones.">
-              <Textarea rows={3} value={data.notas_adicionales} placeholder="Ej.: Llega con la pantalla rayada; deja el cargador."
-                onChange={(e) => cambiar('notas_adicionales', e.target.value)} />
-              <p className="mt-1.5 text-[11px] text-gris-500">Aparecen en el recibo térmico.</p>
+            <StepCard step={4} title="Cómo llega el equipo"
+              subtitle="Se imprime en la nota que firman el cliente y la tienda. Es lo que responde cuando alguien vuelve diciendo que su equipo no estaba así."
+              actions={<Badge tone="navy">{puntosMarcados} {puntosMarcados === 1 ? 'punto' : 'puntos'}</Badge>}>
+              <RecepcionEquipo recepcion={recepcion} onCambiar={(r) => { setRecepcion(r); quitarError('desbloqueo'); }}
+                error={errores.desbloqueo} />
+
+              <div className="mt-5 border-t border-gris-100 pt-5">
+                <Field label="Notas" hint="Lo que no entra en la revisión: acuerdos con el cliente, recomendaciones.">
+                  <Textarea rows={3} value={data.notas_adicionales} placeholder="Ej.: el cliente autoriza abrir el equipo; pasa a buscarlo el viernes."
+                    onChange={(e) => cambiar('notas_adicionales', e.target.value)} />
+                </Field>
+              </div>
             </StepCard>
           </div>
 
@@ -311,6 +470,8 @@ export default function ServiciosForm({ tecnicos = [], Layout, prefijo = 'admin'
                   <Linea label="Cliente" valor={data.cliente.trim()} />
                   <Linea label="Equipo" valor={data.equipo.trim()} />
                   <Linea label="Técnico" valor={data.tecnico.trim()} />
+                  <Linea label="Desbloqueo" valor={textoDesbloqueo(recepcion.desbloqueo)} />
+                  <Linea label="Revisión" valor={puntosMarcados > 0 ? `${puntosMarcados} puntos anotados` : ''} />
                 </dl>
 
                 {descritos.length > 0 && (

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Vendedor;
 use App\Http\Controllers\Controller;
 use App\Models\Celular;
 use App\Models\Computadora;
+use App\Models\Pieza;
 use App\Models\ProductoApple;
 use App\Models\ProductoGeneral;
 use Illuminate\Contracts\Database\Eloquent\Builder;
@@ -29,6 +30,7 @@ class ProductoVendedorController extends Controller
         'celulares' => [
             'modelo'  => Celular::class,
             'label'   => 'Celulares',
+            'vacio'   => 'No queda ningún celular disponible',
             'campos'  => ['id', 'modelo', 'condicion', 'capacidad', 'color', 'bateria', 'imei_1', 'numero_serie', 'precio_venta'],
             'buscar'  => ['modelo', 'capacidad', 'color', 'imei_1', 'imei_2', 'numero_serie'],
             'orden'   => 'modelo',
@@ -36,6 +38,7 @@ class ProductoVendedorController extends Controller
         'computadoras' => [
             'modelo'  => Computadora::class,
             'label'   => 'Computadoras',
+            'vacio'   => 'No queda ninguna computadora disponible',
             'campos'  => ['id', 'nombre', 'condicion', 'procesador', 'ram', 'almacenamiento', 'bateria', 'color', 'numero_serie', 'precio_venta'],
             'buscar'  => ['nombre', 'procesador', 'ram', 'almacenamiento', 'numero_serie'],
             'orden'   => 'nombre',
@@ -43,6 +46,7 @@ class ProductoVendedorController extends Controller
         'apple' => [
             'modelo'  => ProductoApple::class,
             'label'   => 'Equipos de marca',
+            'vacio'   => 'No queda ningún equipo de marca disponible',
             'campos'  => ['id', 'modelo', 'condicion', 'capacidad', 'color', 'bateria', 'imei_1', 'numero_serie', 'precio_venta'],
             'buscar'  => ['modelo', 'capacidad', 'color', 'imei_1', 'imei_2', 'numero_serie'],
             'orden'   => 'modelo',
@@ -50,9 +54,20 @@ class ProductoVendedorController extends Controller
         'generales' => [
             'modelo'  => ProductoGeneral::class,
             'label'   => 'Accesorios y otros',
+            'vacio'   => 'No queda ningún accesorio disponible',
             'campos'  => ['id', 'codigo', 'tipo', 'nombre', 'condicion', 'precio_venta'],
             'buscar'  => ['codigo', 'tipo', 'nombre'],
             'orden'   => 'nombre',
+        ],
+        'piezas' => [
+            'modelo'  => Pieza::class,
+            'label'   => 'Piezas y repuestos',
+            'vacio'   => 'No queda ninguna pieza en el inventario',
+            'campos'  => ['id', 'codigo', 'nombre', 'categoria', 'compatibilidad', 'cantidad', 'precio_venta'],
+            'buscar'  => ['codigo', 'nombre', 'categoria', 'compatibilidad'],
+            'orden'   => 'nombre',
+            // Las piezas llevan saldo, no estado: «disponible» es que quede al menos una.
+            'saldo'   => true,
         ],
     ];
 
@@ -79,12 +94,19 @@ class ProductoVendedorController extends Controller
                 ->map(fn (array $c, string $clave) => [
                     'clave'  => $clave,
                     'label'  => $c['label'],
+                    'vacio'  => $c['vacio'],
                     // El número es el stock real de esa pestaña, sin el filtro de búsqueda
                     'total'  => $this->consulta($c, '')->count(),
                 ])->values(),
             'resumen'   => [
                 'encontrados' => $productos->total(),
-                'valor'       => round((float) $this->consulta($config, $q)->sum('precio_venta'), 2),
+                // En las piezas, el valor del stock es el saldo por el precio: seis pantallas valen seis.
+                'valor'       => round((float) (($config['saldo'] ?? false)
+                    ? $this->consulta($config, $q)->selectRaw('COALESCE(SUM(cantidad * precio_venta), 0) AS t')->value('t')
+                    : $this->consulta($config, $q)->sum('precio_venta')), 2),
+                'unidades'    => ($config['saldo'] ?? false)
+                    ? (int) $this->consulta($config, $q)->sum('cantidad')
+                    : $productos->total(),
             ],
         ]);
     }
@@ -93,14 +115,16 @@ class ProductoVendedorController extends Controller
     private function consulta(array $config, string $q): Builder
     {
         /** @var Builder $consulta */
-        $consulta = $config['modelo']::query()->where('estado', 'disponible');
+        $consulta = ($config['saldo'] ?? false)
+            ? $config['modelo']::query()->disponibles()
+            : $config['modelo']::query()->where('estado', 'disponible');
 
         if ($q !== '') {
             // LOWER + LIKE funciona igual en PostgreSQL y en SQLite (los tests corren en SQLite)
             $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], mb_strtolower($q)) . '%';
             $consulta->where(function ($w) use ($config, $like) {
                 foreach ($config['buscar'] as $columna) {
-                    $w->orWhereRaw("LOWER({$columna}) LIKE ?", [$like]);
+                    $w->orWhereRaw("LOWER(COALESCE({$columna}, '')) LIKE ?", [$like]);
                 }
             });
         }

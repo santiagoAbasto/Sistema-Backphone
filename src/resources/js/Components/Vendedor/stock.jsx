@@ -49,11 +49,24 @@ export const COLUMNAS = {
         { key: 'condicion', label: 'Condición', condicion: true },
         { key: 'precio_venta', label: 'Precio', precio: true },
     ],
+    // Las piezas llevan saldo en vez de condición: lo que importa es cuántas quedan.
+    piezas: [
+        { key: 'nombre', label: 'Pieza', principal: true },
+        { key: 'categoria', label: 'Categoría' },
+        { key: 'compatibilidad', label: 'Compatible con' },
+        { key: 'codigo', label: 'Código', mono: true },
+        { key: 'cantidad', label: 'Quedan', centro: true, saldo: true },
+        { key: 'precio_venta', label: 'Precio', precio: true },
+    ],
 };
 
 function Celda({ item, col }) {
     const valor = col.bonito ? bonito(item[col.key]) : txt(item[col.key]);
     if (col.condicion) return <CondicionBadge condicion={valor} vacio={guion} />;
+    if (col.saldo) {
+        const n = Number(item[col.key]) || 0;
+        return <span className={`font-bold tabular-nums ${n <= 2 ? 'text-amber-700' : 'text-gris-900'}`}>{n}</span>;
+    }
     if (col.precio) return <span className="font-bold tabular-nums text-gris-900">{bsFmt(item[col.key])}</span>;
     if (!valor) return guion;
     return valor;

@@ -24,7 +24,8 @@ class ServicioTecnico extends Model
         'telefono',
         'equipo',
         'detalle_servicio',
-        'notas_adicionales', // 👈 NUEVO
+        'notas_adicionales',
+        'recepcion',
         'precio_costo',
         'precio_venta',
         'tecnico',
@@ -41,6 +42,7 @@ class ServicioTecnico extends Model
      * Casts automáticos
      */
     protected $casts = [
+        'recepcion'        => 'array',
         'fecha'            => 'date',
         'costo_pendiente'  => 'boolean',
         'costo_cargado_en' => 'datetime',

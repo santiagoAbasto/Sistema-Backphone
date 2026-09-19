@@ -3,6 +3,7 @@ import {
   Settings, ShoppingCart, SlidersHorizontal, Smartphone, Tablet, Users, Wallet,
 } from 'lucide-react';
 import IconoUsuarios from '@/Components/Admin/IconoUsuarios';
+import { IconoPieza } from '@/Components/Admin/piezas';
 import { IconoRed } from '@/Components/Marca/IconosSucursal';
 import PanelShell, { MARCA, FUENTE_MARCA } from '@/Layouts/PanelShell';
 
@@ -33,6 +34,7 @@ const NAV = [
     { r: 'admin.computadoras.index', icon: Laptop, label: 'Computadoras', modulo: 'inventario' },
     { r: 'admin.productos-apple.index', icon: Tablet, label: 'Equipos de marca', modulo: 'inventario' },
     { r: 'admin.productos-generales.index', icon: Package, label: 'Accesorios y generales', modulo: 'inventario' },
+    { r: 'admin.piezas.index', icon: IconoPieza, label: 'Piezas y repuestos', modulo: 'piezas' },
     { r: 'admin.inventory-audits.index', icon: ClipboardCheck, label: 'Auditoría', modulo: 'auditoria' },
   ] },
   { key: 'datos', label: 'Exportar datos', items: [

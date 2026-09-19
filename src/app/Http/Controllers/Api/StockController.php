@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Celular;
 use App\Models\Computadora;
+use App\Models\Pieza;
 use App\Models\ProductoApple;
 use App\Models\ProductoGeneral;
 use App\Models\ReservaItem;
@@ -59,6 +60,21 @@ class StockController extends Controller
     {
         return $this->lista(ProductoApple::where('estado', 'disponible')
             ->whereNotIn('id', $this->idsReservados('producto_apple')));
+    }
+
+    /**
+     * Piezas y repuestos con saldo.
+     *
+     * No pasan por `idsReservados`: una pieza no se reserva, se descuenta al usarla. Al vendedor
+     * le viaja el saldo y el precio de venta; el costo se lo queda el administrador.
+     */
+    public function piezas()
+    {
+        return $this->lista(
+            Pieza::disponibles()
+                ->orderBy('nombre')
+                ->select(['id', 'nombre', 'codigo', 'categoria', 'compatibilidad', 'cantidad', 'precio_costo', 'precio_venta'])
+        );
     }
 
     /**
@@ -167,6 +183,27 @@ class StockController extends Controller
                     'stock' => $pg->stock,
                     'estado' => $pg->estado,
                     'condicion' => $pg->condicion,
+                ],
+            ]);
+        }
+
+        // Piezas y repuestos (código exacto o nombre exacto)
+        $pieza = Pieza::disponibles()
+            ->where(fn ($q) => $q->where('codigo', mb_strtoupper($codigo))->orWhere('nombre', $codigo))
+            ->first();
+
+        if ($pieza) {
+            return response()->json([
+                'tipo' => 'pieza',
+                'producto' => [
+                    'id' => $pieza->id,
+                    'nombre' => $pieza->nombre,
+                    'codigo' => $pieza->codigo,
+                    'compatibilidad' => $pieza->compatibilidad,
+                    'precio_venta' => $pieza->precio_venta,
+                    'precio_costo' => SinCostos::aplica(request()->user()) ? null : $pieza->precio_costo,
+                    'cantidad' => $pieza->cantidad,
+                    'stock' => $pieza->cantidad,
                 ],
             ]);
         }

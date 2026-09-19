@@ -227,7 +227,14 @@
         <!-- ITEMS -->
         @foreach($venta->items as $item)
         <div class="item">
-            <div class="name">{{ strtoupper($item->tipo) }}</div>
+            {{-- «PIEZA» a secas no dice nada en un papel de 80 mm: se pone el nombre y, si van varias, las unidades --}}
+            <div class="name">
+                @if($item->tipo === 'pieza')
+                {{ $item->cantidad > 1 ? $item->cantidad . ' × ' : '' }}{{ strtoupper($item->nombre_producto ?? optional($item->pieza)->nombre ?? 'PIEZA') }}
+                @else
+                {{ strtoupper(str_replace('_', ' ', $item->tipo)) }}
+                @endif
+            </div>
 
             <div class="meta">
                 @if($item->tipo === 'celular' && $item->celular)
@@ -241,6 +248,8 @@
                 @elseif($item->tipo === 'producto_apple' && $item->productoApple)
                 {{ $item->productoApple->modelo }} · {{ $item->productoApple->capacidad }}<br>
                 {{ $item->productoApple->color }} · Batería: {{ $item->productoApple->bateria }}
+                @elseif($item->tipo === 'pieza')
+                {{ $item->modelo ?? optional($item->pieza)->compatibilidad ?? 'Repuesto' }}
                 @elseif($item->productoGeneral)
                 {{ $item->productoGeneral->nombre }} · {{ $item->productoGeneral->codigo }}
                 @endif

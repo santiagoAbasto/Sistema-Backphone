@@ -203,6 +203,24 @@ td:last-child {
         <p><strong>Registrado por:</strong> {{ $servicio->vendedor->name ?? '—' }}</p>
     </div>
 
+    {{-- CÓMO LLEGÓ EL EQUIPO: es lo que responde si después se discute en qué estado se dejó --}}
+    @php $recepcion = $servicio->recepcion ?? []; @endphp
+    @php $desbloqueo = \App\Support\RecepcionDeEquipo::textoDesbloqueo($recepcion['desbloqueo'] ?? null); @endphp
+
+    @if ($desbloqueo || ! empty($recepcion['revision']))
+    <div class="divider"></div>
+
+    <div class="section-title">Estado al recibirlo</div>
+    <div class="info">
+        @if ($desbloqueo)
+        <p><strong>Desbloqueo:</strong> {{ $desbloqueo }}</p>
+        @endif
+        @foreach ($recepcion['revision'] ?? [] as $punto)
+        <p>{{ $punto['etiqueta'] }}: <strong>{{ \App\Support\RecepcionDeEquipo::ETIQUETAS_ESTADO[$punto['estado']] ?? '' }}</strong></p>
+        @endforeach
+    </div>
+    @endif
+
     <div class="divider"></div>
 
     <!-- DETAILS -->

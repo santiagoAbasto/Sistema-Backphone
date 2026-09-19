@@ -50,6 +50,7 @@ class ReporteController extends Controller
             'items.computadora',
             'items.productoGeneral',
             'items.productoApple',
+            'items.pieza',
             'servicioTecnico',
         ])
             ->when(
@@ -133,6 +134,7 @@ class ReporteController extends Controller
                     'computadora'      => 'Computadora',
                     'producto_general' => 'Producto General',
                     'producto_apple'   => 'Producto Apple',
+                    'pieza'            => 'Pieza o repuesto',
                     default            => '—',
                 };
 
@@ -141,6 +143,7 @@ class ReporteController extends Controller
                     'computadora'      => $item->computadora?->nombre ?? '—',
                     'producto_general' => $item->productoGeneral?->nombre ?? '—',
                     'producto_apple'   => $item->productoApple?->modelo ?? '—',
+                    'pieza'            => $item->nombre_producto ?? $item->pieza?->nombre ?? '—',
                     default            => '—',
                 };
 
@@ -357,6 +360,7 @@ class ReporteController extends Controller
             'items.computadora',
             'items.productoGeneral',
             'items.productoApple',
+            'items.pieza',
             'entregadoCelular',
             'entregadoComputadora',
             'entregadoProductoGeneral',
@@ -423,6 +427,7 @@ class ReporteController extends Controller
                     'computadora'      => 'Computadora',
                     'producto_general' => 'Producto General',
                     'producto_apple'   => 'Producto Apple',
+                    'pieza'            => 'Pieza o repuesto',
                     default            => '—',
                 };
 
@@ -431,6 +436,7 @@ class ReporteController extends Controller
                     'computadora'      => $item->computadora?->nombre ?? '—',
                     'producto_general' => $item->productoGeneral?->nombre ?? '—',
                     'producto_apple'   => $item->productoApple?->modelo ?? '—',
+                    'pieza'            => $item->nombre_producto ?? $item->pieza?->nombre ?? '—',
                     default            => '—',
                 };
 
@@ -540,6 +546,7 @@ class ReporteController extends Controller
             'items.computadora',
             'items.productoGeneral',
             'items.productoApple',
+            'items.pieza',
             'entregadoCelular',
             'entregadoComputadora',
             'entregadoProductoGeneral',
@@ -583,6 +590,7 @@ class ReporteController extends Controller
                     'computadora'      => 'Computadora',
                     'producto_general' => 'Producto General',
                     'producto_apple'   => 'Producto Apple',
+                    'pieza'            => 'Pieza o repuesto',
                     default            => '—',
                 };
 
@@ -591,6 +599,7 @@ class ReporteController extends Controller
                     'computadora'      => $item->computadora?->nombre ?? '—',
                     'producto_general' => $item->productoGeneral?->nombre ?? '—',
                     'producto_apple'   => $item->productoApple?->modelo ?? '—',
+                    'pieza'            => $item->nombre_producto ?? $item->pieza?->nombre ?? '—',
                     default            => '—',
                 };
 
@@ -712,6 +721,7 @@ class ReporteController extends Controller
             'items.computadora',
             'items.productoGeneral',
             'items.productoApple',
+            'items.pieza',
             'entregadoCelular',
             'entregadoComputadora',
             'entregadoProductoGeneral',
@@ -755,6 +765,7 @@ class ReporteController extends Controller
                     'computadora'      => 'Computadora',
                     'producto_general' => 'Producto General',
                     'producto_apple'   => 'Producto Apple',
+                    'pieza'            => 'Pieza o repuesto',
                     default            => '—',
                 };
 
@@ -763,6 +774,7 @@ class ReporteController extends Controller
                     'computadora'      => $item->computadora?->nombre ?? '—',
                     'producto_general' => $item->productoGeneral?->nombre ?? '—',
                     'producto_apple'   => $item->productoApple?->modelo ?? '—',
+                    'pieza'            => $item->nombre_producto ?? $item->pieza?->nombre ?? '—',
                     default            => '—',
                 };
 
@@ -883,6 +895,7 @@ class ReporteController extends Controller
             'items.computadora',
             'items.productoGeneral',
             'items.productoApple',
+            'items.pieza',
             'entregadoCelular',
             'entregadoComputadora',
             'entregadoProductoGeneral',
@@ -926,6 +939,7 @@ class ReporteController extends Controller
                     'computadora'      => 'Computadora',
                     'producto_general' => 'Producto General',
                     'producto_apple'   => 'Producto Apple',
+                    'pieza'            => 'Pieza o repuesto',
                     default            => '—',
                 };
 
@@ -934,6 +948,7 @@ class ReporteController extends Controller
                     'computadora'      => $item->computadora?->nombre ?? '—',
                     'producto_general' => $item->productoGeneral?->nombre ?? '—',
                     'producto_apple'   => $item->productoApple?->modelo ?? '—',
+                    'pieza'            => $item->nombre_producto ?? $item->pieza?->nombre ?? '—',
                     default            => '—',
                 };
 
@@ -1055,6 +1070,7 @@ class ReporteController extends Controller
             'items.computadora',
             'items.productoGeneral',
             'items.productoApple',
+            'items.pieza',
             'entregadoCelular',
             'entregadoComputadora',
             'entregadoProductoGeneral',
@@ -1098,6 +1114,7 @@ class ReporteController extends Controller
                     'computadora'      => 'Computadora',
                     'producto_general' => 'Producto General',
                     'producto_apple'   => 'Producto Apple',
+                    'pieza'            => 'Pieza o repuesto',
                     default            => '—',
                 };
 
@@ -1106,6 +1123,7 @@ class ReporteController extends Controller
                     'computadora'      => $item->computadora?->nombre ?? '—',
                     'producto_general' => $item->productoGeneral?->nombre ?? '—',
                     'producto_apple'   => $item->productoApple?->modelo ?? '—',
+                    'pieza'            => $item->nombre_producto ?? $item->pieza?->nombre ?? '—',
                     default            => '—',
                 };
 

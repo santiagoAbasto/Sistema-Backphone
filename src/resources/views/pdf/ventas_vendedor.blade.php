@@ -174,20 +174,23 @@
               $item->computadora?->nombre ??
               $item->productoGeneral?->nombre ??
               $item->productoApple?->modelo ??
+              $item->pieza?->nombre ??
+              $item->nombre_producto ??
               ($item->tipo === 'servicio' ? 'Servicio Técnico' : '—');
 
-            // Lo que quedó después del descuento que hizo el vendedor
-            $cobrado = $item->precio_venta - $item->descuento;
+            // Una línea puede llevar varias unidades (piezas, accesorios): los montos se multiplican
+            $unidades = max(1, (int) $item->cantidad);
+            $cobrado = $item->precio_venta * $unidades - $item->descuento * $unidades;
 
-            $totalVenta += $item->precio_venta;
-            $totalDescuento += $item->descuento;
+            $totalVenta += $item->precio_venta * $unidades;
+            $totalDescuento += $item->descuento * $unidades;
             $totalCobrado += $cobrado;
           @endphp
 
           <tr>
             <td>{{ $venta->nombre_cliente }}</td>
-            <td>{{ $producto }}</td>
-            <td>{{ ucfirst($item->tipo) }}</td>
+            <td>{{ $unidades > 1 ? $unidades . ' × ' : '' }}{{ $producto }}</td>
+            <td>{{ ucfirst(str_replace('_', ' ', $item->tipo)) }}</td>
             <td>Bs {{ number_format($item->precio_venta, 2) }}</td>
             <td>Bs {{ number_format($item->descuento, 2) }}</td>
             <td><strong>Bs {{ number_format($cobrado, 2) }}</strong></td>

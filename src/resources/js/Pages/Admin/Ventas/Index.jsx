@@ -15,6 +15,7 @@ const TIPOS = {
   computadora: { label: 'Computadora', tone: 'violet' },
   producto_apple: { label: 'Equipo de marca', tone: 'amber' },
   producto_general: { label: 'Producto general', tone: 'slate' },
+  pieza: { label: 'Pieza o repuesto', tone: 'bronce' },
   servicio_tecnico: { label: 'Servicio técnico', tone: 'emerald' },
 };
 
@@ -87,8 +88,11 @@ export default function Index({ ventas }) {
     }
 
     return venta.items.map((item, itemIndex) => {
-      const precioVenta = parseFloat(item.precio_venta || 0);
-      const descuento = parseFloat(item.descuento || 0);
+      // El precio y el descuento son por unidad; el capital ya viene por la línea entera.
+      // Una pieza puede ir de a varias, así que todo lo demás se multiplica.
+      const unidades = Math.max(1, Number(item.cantidad) || 1);
+      const precioVenta = parseFloat(item.precio_venta || 0) * unidades;
+      const descuento = parseFloat(item.descuento || 0) * unidades;
       const capital = parseFloat(item.precio_invertido || 0);
       const permuta = itemIndex === 0 ? parseFloat(venta.valor_permuta || 0) : 0;
       const reserva = itemIndex === 0 ? parseFloat(venta.monto_reserva_aplicado || 0) : 0;
@@ -101,11 +105,13 @@ export default function Index({ ventas }) {
           ? item.computadora?.nombre
           : item.tipo === 'producto_apple'
           ? item.producto_apple?.modelo
+          : item.tipo === 'pieza'
+          ? (item.nombre_producto ?? item.pieza?.nombre)
           : item.producto_general?.nombre;
 
       return {
         cliente: venta.nombre_cliente,
-        producto: nombre,
+        producto: unidades > 1 ? `${unidades} × ${nombre ?? 'Producto'}` : nombre,
         codigoNota: venta.codigo_nota,
         id_venta: venta.id,
         tipo: item.tipo,

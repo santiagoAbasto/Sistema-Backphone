@@ -103,6 +103,28 @@
       background-color: #f8fafc;
     }
 
+    /* ================= RECEPCIÓN ================= */
+    .desbloqueo {
+      border: 1px solid #121214;
+      padding: 7px 9px;
+      font-size: 10.5px;
+      margin-top: 8px;
+    }
+
+    .revision td {
+      width: 50%;
+      font-size: 10px;
+      padding: 5px 7px;
+    }
+
+    .marca {
+      font-weight: bold;
+      float: right;
+      margin-left: 8px;
+    }
+
+    .marca-no { color: #B4472F; }
+
     .precio-servicio {
       font-size: 9.5px;
       color: #475569;
@@ -195,6 +217,43 @@
     <p><strong>Cliente:</strong> {{ $servicio->cliente }}</p>
     <p><strong>Teléfono:</strong> {{ $servicio->telefono ?? '—' }}</p>
   </div>
+
+  {{-- CÓMO LLEGÓ EL EQUIPO: es lo que responde si después se discute en qué estado se dejó --}}
+  @php $recepcion = $servicio->recepcion ?? []; @endphp
+  @php $desbloqueo = \App\Support\RecepcionDeEquipo::textoDesbloqueo($recepcion['desbloqueo'] ?? null); @endphp
+
+  @if ($desbloqueo || ! empty($recepcion['revision']))
+  <div class="section-title">Estado del Equipo al Recibirlo</div>
+
+  @if ($desbloqueo)
+  <div class="desbloqueo"><strong>Código de desbloqueo:</strong> {{ $desbloqueo }}</div>
+  @endif
+
+  @if (! empty($recepcion['revision']))
+  <table class="revision">
+    <tbody>
+      @foreach (array_chunk($recepcion['revision'], 2) as $fila)
+      <tr>
+        @foreach ($fila as $punto)
+        <td>
+          {{ $punto['etiqueta'] }}
+          <span class="marca {{ $punto['estado'] === 'no' ? 'marca-no' : '' }}">
+            {{ \App\Support\RecepcionDeEquipo::ETIQUETAS_ESTADO[$punto['estado']] ?? '' }}
+          </span>
+        </td>
+        @endforeach
+        @if (count($fila) === 1)<td></td>@endif
+      </tr>
+      @endforeach
+    </tbody>
+  </table>
+  @endif
+  @endif
+
+  @if (! empty($servicio->notas_adicionales))
+  <div class="section-title">Notas</div>
+  <div class="info"><p>{{ $servicio->notas_adicionales }}</p></div>
+  @endif
 
   <!-- DETALLE DEL SERVICIO -->
   <div class="section-title">Detalle del Servicio</div>

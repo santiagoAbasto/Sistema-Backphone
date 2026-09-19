@@ -10,6 +10,7 @@ import ModalPermutaComponent from '@/Components/ModalPermutaComponent';
 import CardPaymentFields from '@/Components/CardPaymentFields';
 import PremiumNotice from '@/Components/PremiumNotice';
 import { notifyRecordsUpdated, useAutoRefreshCallback } from '@/Hooks/useAutoRefresh';
+import { IconoPieza } from '@/Components/Admin/piezas';
 import { Badge, Button, Field, Input, Segmented, Select, StepCard, Switch, Textarea, bsFmt, buttonCls } from '@/Components/Admin/ui';
 
 const TIPOS_PRODUCTO = [
@@ -17,7 +18,12 @@ const TIPOS_PRODUCTO = [
   { value: 'computadora', label: 'Computadora', icon: Laptop },
   { value: 'producto_apple', label: 'Equipo de marca', icon: Tablet },
   { value: 'producto_general', label: 'Producto general', icon: Package },
+  { value: 'pieza', label: 'Pieza', icon: IconoPieza },
 ];
+
+// Las piezas se venden por cantidad: de una misma pantalla pueden salir tres en la misma nota.
+// Todo lo demás es un equipo concreto, con su IMEI o su serie, y va de a uno.
+const esPorCantidad = (tipo) => tipo === 'pieza';
 
 // El servidor acepta permutas de estos tipos (VentaController@store)
 const TIPOS_PERMUTA = [
@@ -57,7 +63,7 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
     tipo: '', codigo: '', cantidad: 1, descuento: 0, imei: '', producto: null,
   });
 
-  const [stocks, setStocks] = useState({ celulares: [], computadoras: [], productosGenerales: [], productosApple: [] });
+  const [stocks, setStocks] = useState({ celulares: [], computadoras: [], productosGenerales: [], productosApple: [], piezas: [] });
   const [errores, setErrores] = useState({});
   const [items, setItems] = useState([]);
   const [reservaSeleccionada, setReservaSeleccionada] = useState(null);
@@ -75,6 +81,8 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
     producto.numero_serie,
     producto.nombre,
     producto.modelo,
+    producto.categoria,
+    producto.compatibilidad,
   ];
 
   const claveProducto = (producto) =>
@@ -87,17 +95,19 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
   });
 
   const fetchStock = async () => {
-    const [c, comp, pg, apple] = await Promise.all([
+    const [c, comp, pg, apple, piezas] = await Promise.all([
       axios.get(route('api.stock.celulares')),
       axios.get(route('api.stock.computadoras')),
       axios.get(route('api.stock.productos_generales')),
       axios.get(route('api.stock.productos_apple')),
+      axios.get(route('api.stock.piezas')),
     ]);
     setStocks({
       celulares: c.data,
       computadoras: comp.data,
       productosGenerales: pg.data,
       productosApple: apple.data,
+      piezas: piezas.data,
     });
   };
 
@@ -123,10 +133,11 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
     const { tipo, producto, cantidad, descuento, imei, codigo } = productoSeleccionado;
     if (!producto || !tipo || cantidad <= 0 || !codigo) return showNotice('Falta seleccionar un producto', 'Busca y elige un resultado antes de agregarlo.');
 
-    if (cantidad > 1) return showNotice('Cantidad no disponible', 'Este inventario se vende una unidad por registro.');
+    const porCantidad = esPorCantidad(tipo);
+    if (cantidad > 1 && !porCantidad) return showNotice('Cantidad no disponible', 'Este inventario se vende una unidad por registro.');
 
-    const yaExiste = items.some((i) => i.tipo === tipo && i.producto_id === producto.id);
-    if (yaExiste) return showNotice('Producto ya agregado', 'Ya está en el resumen de la venta.', 'info');
+    const existente = items.find((i) => i.tipo === tipo && i.producto_id === producto.id);
+    if (existente && !porCantidad) return showNotice('Producto ya agregado', 'Ya está en el resumen de la venta.', 'info');
 
     const precioVenta = Number(producto.precio_venta ?? 0);
     const precioCosto = Number(producto.precio_costo ?? 0);
@@ -139,24 +150,41 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
       return showNotice('Descuento demasiado alto', 'El descuento no puede superar el precio de venta.');
     }
 
-    const subtotal = (precioVenta - Number(descuento || 0)) * cantidad;
-    const precio_invertido = precioCosto * cantidad;
+    // El saldo también se revisa en el servidor al guardar; acá es para avisar antes de escribir toda la nota.
+    if (porCantidad) {
+      const enLaNota = existente ? Number(existente.cantidad) : 0;
+      const saldo = Number(producto.cantidad ?? 0);
+      if (enLaNota + cantidad > saldo) {
+        return showNotice(
+          'No alcanza el stock',
+          `De «${producto.nombre}» ${saldo === 1 ? 'queda 1' : `quedan ${saldo}`}${enLaNota ? ` y ya llevas ${enLaNota} en esta nota` : ''}.`,
+        );
+      }
+    }
 
-    setItems([...items, {
+    const nuevo = {
       tipo,
       producto_id: producto.id,
       cantidad,
       precio_venta: precioVenta,
-      precio_invertido,
+      precio_invertido: precioCosto * cantidad,
       descuento: Number(descuento || 0),
-      subtotal,
+      subtotal: (precioVenta - Number(descuento || 0)) * cantidad,
       nombre: producto.nombre || producto.modelo || '---',
       imei: tipo === 'celular' ? imei : null,
       detalles: producto,
-    }]);
+    };
+
+    // La misma pieza dos veces es una sola línea con más unidades: así la nota queda legible y el
+    // descuento no se duplica sin querer.
+    setItems(existente
+      ? items.map((i) => (i === existente
+        ? { ...i, cantidad: i.cantidad + cantidad, subtotal: (i.precio_venta - i.descuento) * (i.cantidad + cantidad), precio_invertido: precioCosto * (i.cantidad + cantidad) }
+        : i))
+      : [...items, nuevo]);
 
     setProductoSeleccionado({ tipo, codigo: '', cantidad: 1, descuento: 0, imei: '', producto: null });
-    showNotice('Producto agregado', 'Ya forma parte de esta venta.', 'success');
+    showNotice(existente ? 'Se sumó a la línea' : 'Producto agregado', 'Ya forma parte de esta venta.', 'success');
     fetchStock();
   };
 
@@ -228,6 +256,7 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
     if (productoSeleccionado.tipo === 'computadora') fuente = stocks.computadoras;
     if (productoSeleccionado.tipo === 'producto_general') fuente = stocks.productosGenerales;
     if (productoSeleccionado.tipo === 'producto_apple') fuente = stocks.productosApple;
+    if (productoSeleccionado.tipo === 'pieza') fuente = stocks.piezas;
 
     const identificador = normalizarIdentificador(texto);
     const resultados = fuente.filter((p) =>
@@ -423,10 +452,12 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
             </StepCard>
 
             {/* Paso 2 */}
-            <StepCard step={2} title="Productos" subtitle="Elige el tipo y busca por código, IMEI, serie o nombre.">
+            <StepCard step={2} title="Productos" subtitle="Elige el tipo y busca por código, IMEI, serie o nombre. Las piezas y repuestos se venden por cantidad.">
               <Segmented
                 options={TIPOS_PRODUCTO}
                 value={productoSeleccionado.tipo}
+                // Cinco opciones no entran en una fila salvo en pantallas anchas: antes de eso van de a tres
+                cols="grid-cols-2 sm:grid-cols-3 xl:grid-cols-5"
                 ariaLabel="Tipo de producto"
                 onChange={(v) => {
                   setProductoSeleccionado({ ...productoSeleccionado, tipo: v, codigo: '', producto: null });
@@ -439,7 +470,11 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
                 <Input
                   className="pl-10"
                   disabled={!productoSeleccionado.tipo}
-                  placeholder={productoSeleccionado.tipo ? `Buscar ${etiquetaTipo(productoSeleccionado.tipo).toLowerCase()} por código, IMEI, serie o nombre` : 'Primero elige el tipo de producto'}
+                  placeholder={productoSeleccionado.tipo
+                    ? (esPorCantidad(productoSeleccionado.tipo)
+                      ? 'Buscar la pieza por nombre, categoría, equipo compatible o código'
+                      : `Buscar ${etiquetaTipo(productoSeleccionado.tipo).toLowerCase()} por código, IMEI, serie o nombre`)
+                    : 'Primero elige el tipo de producto'}
                   value={productoSeleccionado.codigo}
                   onChange={(e) => {
                     const v = e.target.value;
@@ -457,7 +492,11 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
                           className="flex w-full items-center justify-between gap-3 border-b border-gris-100 px-4 py-2.5 text-left last:border-b-0 hover:bg-gris-50">
                           <span className="min-w-0">
                             <span className="block truncate font-semibold text-gris-900">{p.nombre || p.modelo}</span>
-                            <span className="block truncate text-xs text-gris-500">{etiquetaTipo(p.tipo)} · {p.codigo || p.imei_1 || p.numero_serie}</span>
+                            <span className="block truncate text-xs text-gris-500">
+                              {esPorCantidad(p.tipo)
+                                ? [p.compatibilidad || p.categoria, `quedan ${p.cantidad ?? 0}`].filter(Boolean).join(' · ')
+                                : `${etiquetaTipo(p.tipo)} · ${p.codigo || p.imei_1 || p.numero_serie}`}
+                            </span>
                           </span>
                           <span className="shrink-0 text-sm font-bold tabular-nums text-gris-900">{bsFmt(p.precio_venta)}</span>
                         </button>
@@ -475,7 +514,8 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
                       <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--acento)]">Producto elegido</p>
                       <p className="mt-1 truncate text-base font-bold text-gris-900">{productoActual.modelo || productoActual.nombre}</p>
                       <p className="text-xs text-gris-500">
-                        {etiquetaTipo(productoSeleccionado.tipo)} · {productoActual.codigo || productoActual.imei_1 || productoActual.numero_serie || 'sin código'} · stock {productoActual.stock ?? 1}
+                        {etiquetaTipo(productoSeleccionado.tipo)} · {productoActual.codigo || productoActual.imei_1 || productoActual.numero_serie || 'sin código'}
+                        {' · '}quedan {esPorCantidad(productoSeleccionado.tipo) ? (productoActual.cantidad ?? 0) : (productoActual.stock ?? 1)}
                       </p>
                     </div>
                     <p className="text-xl font-bold text-gris-900">{bsFmt(productoActual.precio_venta)}</p>
@@ -486,7 +526,13 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
                       <Input type="number" min={0} value={productoSeleccionado.descuento}
                         onChange={(e) => setProductoSeleccionado({ ...productoSeleccionado, descuento: Number(e.target.value) })} />
                     </Field>
-                    {productoSeleccionado.tipo === 'celular' ? (
+                    {esPorCantidad(productoSeleccionado.tipo) ? (
+                      <Field label="Cantidad">
+                        <Input type="number" min={1} step={1} inputMode="numeric" className="font-semibold tabular-nums"
+                          value={productoSeleccionado.cantidad}
+                          onChange={(e) => setProductoSeleccionado({ ...productoSeleccionado, cantidad: Math.max(1, Number(e.target.value) || 1) })} />
+                      </Field>
+                    ) : productoSeleccionado.tipo === 'celular' ? (
                       <Field label="IMEI">
                         <Input placeholder="IMEI" value={productoSeleccionado.imei}
                           onChange={(e) => setProductoSeleccionado({ ...productoSeleccionado, imei: e.target.value })} />
@@ -514,7 +560,8 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold text-gris-900">{item.nombre}</p>
                           <p className="text-xs text-gris-500">
-                            {etiquetaTipo(item.tipo)}{item.imei ? ` · IMEI ${item.imei}` : ''} · {bsFmt(item.precio_venta)}
+                            {etiquetaTipo(item.tipo)}{item.imei ? ` · IMEI ${item.imei}` : ''}
+                            {item.cantidad > 1 ? ` · ${item.cantidad} × ` : ' · '}{bsFmt(item.precio_venta)}
                             {item.descuento > 0 && <span className="text-rose-600"> − {bsFmt(item.descuento)}</span>}
                           </p>
                         </div>
@@ -583,7 +630,7 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
                   <ul className="max-h-48 space-y-2 overflow-y-auto">
                     {items.map((item) => (
                       <li key={`r-${item.tipo}-${item.producto_id}`} className="flex items-baseline justify-between gap-3 text-sm">
-                        <span className="min-w-0 truncate text-gris-600">{item.nombre}</span>
+                        <span className="min-w-0 truncate text-gris-600">{item.cantidad > 1 ? `${item.cantidad} × ` : ''}{item.nombre}</span>
                         <span className="shrink-0 font-semibold tabular-nums text-gris-900">{bsFmt(item.subtotal)}</span>
                       </li>
                     ))}

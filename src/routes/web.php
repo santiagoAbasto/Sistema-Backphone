@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Storage;
 // 📦 Controladores usados
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CelularController;
+use App\Http\Controllers\PiezaController;
 use App\Http\Controllers\ProductoGeneralController;
 use App\Http\Controllers\ComputadoraController;
 use App\Http\Controllers\VentaController;
@@ -147,6 +148,21 @@ Route::middleware(['auth', 'verified', 'permiso'])
         Route::resource('productos-generales', ProductoGeneralController::class)
             ->names('productos-generales')
             ->parameters(['productos-generales' => 'producto']);
+
+        // ========================
+        // 🔩 Piezas y repuestos
+        // ========================
+        // El saldo no se edita en el formulario: entra por «Ingresar» o se corrige por «Ajustar»,
+        // y cada movimiento queda anotado en el historial de la pieza.
+        Route::post('piezas/{pieza}/stock', [PiezaController::class, 'stock'])
+            ->name('piezas.stock');
+
+        Route::patch('piezas/{pieza}/archivar', [PiezaController::class, 'archivar'])
+            ->name('piezas.archivar');
+
+        Route::resource('piezas', PiezaController::class)
+            ->except(['show'])
+            ->names('piezas');
 
         // ========================
         // 🛒 Ventas
@@ -561,6 +577,9 @@ Route::middleware(['auth', 'verified', 'rol:admin|vendedor', 'throttle:120,1'])
 
         Route::get('productos-apple', [StockController::class, 'productosApple'])
             ->name('productos_apple');
+
+        Route::get('piezas', [StockController::class, 'piezas'])
+            ->name('piezas');
 
         Route::post('buscar', [StockController::class, 'buscarPorCodigo'])
             ->name('buscar_codigo');

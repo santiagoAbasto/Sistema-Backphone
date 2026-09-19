@@ -56,6 +56,7 @@ class DashboardController extends Controller
             'items.computadora',
             'items.productoGeneral',
             'items.productoApple',
+            'items.pieza',
             'entregadoCelular',
             'entregadoComputadora',
             'entregadoProductoGeneral',
@@ -82,6 +83,7 @@ class DashboardController extends Controller
             'generales' => 0,
             'servicio_tecnico' => 0,
             'producto_apple' => 0,
+            'piezas' => 0,
         ];
 
         /* =========================
@@ -109,6 +111,7 @@ class DashboardController extends Controller
                     'computadora'      => $ganancias['computadoras']    += $ganancia,
                     'producto_general' => $ganancias['generales']       += $ganancia,
                     'producto_apple'   => $ganancias['producto_apple']  += $ganancia,
+                    'pieza'            => $ganancias['piezas']            += $ganancia,
                     default            => null,
                 };
 
@@ -117,6 +120,7 @@ class DashboardController extends Controller
                     'computadora'      => $item->computadora?->nombre ?? 'Computadora',
                     'producto_general' => $item->productoGeneral?->nombre ?? 'Producto General',
                     'producto_apple'   => $item->productoApple?->modelo ?? 'Equipo de marca',
+                    'pieza'            => $item->nombre_producto ?? $item->pieza?->nombre ?? 'Pieza',
                     default            => '—',
                 };
 
@@ -222,7 +226,7 @@ class DashboardController extends Controller
  * - Servicio técnico NO entra en inversión
  * ===================================================== */
 
-        $tiposConInversion = ['celular', 'computadora', 'producto_apple', 'producto_general'];
+        $tiposConInversion = ['celular', 'computadora', 'producto_apple', 'producto_general', 'pieza'];
 
         /* ======================
  * 📅 DÍA (por movimiento)
@@ -331,7 +335,7 @@ class DashboardController extends Controller
                 'fecha'                        => $fecha,
                 'total'                        => $itemsDelDia->sum(fn($i) => $i['ganancia'] + $i['capital'] + $i['descuento'] + $i['permuta']),
                 'ganancia_productos'           => $itemsDelDia->whereIn('tipo', ['celular', 'computadora', 'producto_apple'])->sum('ganancia'),
-                'ganancia_productos_generales' => $itemsDelDia->where('tipo', 'producto_general')->sum('ganancia'),
+                'ganancia_productos_generales' => $itemsDelDia->whereIn('tipo', ['producto_general', 'pieza'])->sum('ganancia'),
                 'ganancia_servicios'           => $itemsDelDia->where('tipo', 'servicio_tecnico')->sum('ganancia'),
                 'descuento'                    => $itemsDelDia->sum('descuento'),
                 // 🔻 nuevos
@@ -359,6 +363,10 @@ class DashboardController extends Controller
             [
                 'label' => 'Equipos de marca',
                 'valor' => round($ganancias['producto_apple'], 2),
+            ],
+            [
+                'label' => 'Piezas y repuestos',
+                'valor' => round($ganancias['piezas'], 2),
             ],
             [
                 'label' => 'Servicios Técnicos',
@@ -397,6 +405,7 @@ class DashboardController extends Controller
             'computadora'      => 'Computadoras',
             'producto_general' => 'Productos Generales',
             'producto_apple'   => 'Equipos de marca',
+            'pieza'            => 'Piezas y repuestos',
             'servicio_tecnico' => 'Servicios Técnicos',
         ];
         $movimientos = $items->values()
@@ -511,7 +520,7 @@ class DashboardController extends Controller
                 'egresos_total' => $totalEgresos,
                 'utilidad_disponible' => $utilidadDisponible,
                 'ganancia_productos' => $ganancias['celulares'] + $ganancias['computadoras'] + $ganancias['producto_apple'],
-                'ganancia_productos_generales' => $ganancias['generales'],
+                'ganancia_productos_generales' => $ganancias['generales'] + $ganancias['piezas'],
                 'ganancia_servicios' => $ganancias['servicio_tecnico'],
             ],
 

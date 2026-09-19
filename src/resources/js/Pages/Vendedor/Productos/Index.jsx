@@ -125,7 +125,7 @@ export default function Index({ tipo, pestanas = [], productos, filtros = {}, re
           {items.length === 0 ? (
             <EmptyState
               icon={Boxes}
-              title={filtros.q ? 'Nada coincide con esa búsqueda' : `No queda ningún ${pestanaActiva?.label?.toLowerCase() ?? 'producto'} disponible`}
+              title={filtros.q ? 'Nada coincide con esa búsqueda' : (pestanaActiva?.vacio ?? 'No queda nada disponible')}
               text={filtros.q
                 ? 'Probá con parte del modelo, con el IMEI completo o con el código del producto.'
                 : 'Cuando el administrador cargue equipos nuevos, van a aparecer acá solos.'}

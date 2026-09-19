@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Venta;
 use App\Models\Celular;
 use App\Models\Computadora;
+use App\Models\MovimientoPieza;
+use App\Models\Pieza;
 use App\Models\ProductoGeneral;
+use App\Services\StockDePiezas;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\VentaItem;
@@ -49,8 +52,20 @@ class VentaController extends Controller
             'computadora' => Computadora::class,
             'producto_general' => ProductoGeneral::class,
             'producto_apple' => ProductoApple::class,
+            'pieza' => Pieza::class,
             default => null,
         };
+    }
+
+    /**
+     * Los tipos que se venden de a una unidad por registro.
+     *
+     * Las piezas quedan fuera a propósito: son un saldo («quedan 6 pantallas»), así que una misma
+     * línea puede llevar tres. Todo lo demás es un equipo concreto, con su IMEI o su serie.
+     */
+    private function esPorCantidad(string $tipo): bool
+    {
+        return $tipo === 'pieza';
     }
 
     private function productLabelForSale($producto): string
@@ -131,6 +146,10 @@ class VentaController extends Controller
             ]);
         }
 
+        if ($this->esPorCantidad($tipo)) {
+            return $this->getAvailablePieceForSale($productoId, $index);
+        }
+
         $producto = $modelo::whereKey($productoId)
             ->where('estado', 'disponible')
             ->lockForUpdate()
@@ -157,8 +176,39 @@ class VentaController extends Controller
         return $producto;
     }
 
+    /** La pieza queda bloqueada hasta el final de la transacción: dos ventas a la vez no pueden llevarse la misma última unidad. */
+    private function getAvailablePieceForSale(int $piezaId, int $index): Pieza
+    {
+        $pieza = StockDePiezas::bloquear($piezaId);
+
+        if (! $pieza || ! $pieza->activa) {
+            throw ValidationException::withMessages([
+                "items.$index.producto_id" => 'La pieza seleccionada ya no está en el inventario.',
+            ]);
+        }
+
+        if ((float) $pieza->precio_venta <= 0) {
+            throw ValidationException::withMessages([
+                "items.$index.precio_venta" => 'La pieza «' . $pieza->nombre . '» no tiene precio de venta.',
+            ]);
+        }
+
+        return $pieza;
+    }
+
     private function productsForSaleEdit(Venta $venta, string $tipo)
     {
+        // Las piezas no tienen estado ni reserva: se ofrecen las activas con saldo, más las que ya
+        // están en esta venta (si no, al editar desaparecería la línea de una pieza agotada).
+        if ($this->esPorCantidad($tipo)) {
+            $enLaVenta = $venta->items->where('tipo', $tipo)->pluck('producto_id')->filter()->unique();
+
+            return Pieza::query()
+                ->where(fn ($q) => $q->disponibles()->orWhereIn('id', $enLaVenta))
+                ->orderBy('nombre')
+                ->get();
+        }
+
         $modelo = $this->productModelForSaleType($tipo);
         if (! $modelo) {
             return collect();
@@ -225,7 +275,7 @@ class VentaController extends Controller
             ]);
         }
 
-        if (! $sameProduct) {
+        if (! $sameProduct && ! $this->esPorCantidad($tipo)) {
             if ($producto->estado !== 'disponible' || $this->activeReservationExistsForProduct($tipo, $productoId)) {
                 throw ValidationException::withMessages([
                     "items.$index.producto_id" => 'El producto seleccionado ya no está disponible.',
@@ -236,9 +286,24 @@ class VentaController extends Controller
         return [$producto, $sameProduct];
     }
 
-    private function releasePreviousSaleItemProduct(VentaItem $item): void
+    private function releasePreviousSaleItemProduct(VentaItem $item, ?Venta $venta = null): void
     {
         if (! $item->tipo || ! $item->producto_id) {
+            return;
+        }
+
+        // Una pieza no se «libera»: las unidades que había sacado vuelven al saldo.
+        if ($this->esPorCantidad($item->tipo)) {
+            if ($pieza = StockDePiezas::bloquear((int) $item->producto_id)) {
+                StockDePiezas::devolver(
+                    $pieza,
+                    (int) $item->cantidad,
+                    MovimientoPieza::DEVOLUCION,
+                    $venta,
+                    'Se quitó de la venta ' . ($venta?->codigo_nota ?? '') ,
+                );
+            }
+
             return;
         }
 
@@ -263,6 +328,32 @@ class VentaController extends Controller
         }
     }
 
+    /**
+     * El saldo de una pieza cuando se edita la línea de una venta.
+     *
+     * Si cambió la pieza, vuelve entero lo que había salido y sale lo nuevo. Si es la misma, se
+     * mueve solo la diferencia: pasar de 2 a 3 saca una unidad, no tres.
+     */
+    private function ajustarStockDePieza(VentaItem $item, Pieza $pieza, int $cantidad, Venta $venta, bool $mismaPieza): void
+    {
+        $motivo = 'Venta ' . ($venta->codigo_nota ?? '#' . $venta->id) . ' (editada)';
+
+        if (! $mismaPieza) {
+            $this->releasePreviousSaleItemProduct($item, $venta);
+            StockDePiezas::descontar($pieza, $cantidad, MovimientoPieza::VENTA, $venta, $motivo);
+
+            return;
+        }
+
+        $diferencia = $cantidad - (int) $item->cantidad;
+
+        if ($diferencia > 0) {
+            StockDePiezas::descontar($pieza, $diferencia, MovimientoPieza::VENTA, $venta, $motivo);
+        } elseif ($diferencia < 0) {
+            StockDePiezas::devolver($pieza, -$diferencia, MovimientoPieza::DEVOLUCION, $venta, $motivo);
+        }
+    }
+
     private function buildValidatedSaleItems(array $items, ?Reserva $reserva = null): array
     {
         $validated = [];
@@ -273,9 +364,16 @@ class VentaController extends Controller
             $descuento = max(0, (float) ($item['descuento'] ?? 0));
             $producto = $this->getAvailableProductForSale($tipo, (int) ($item['producto_id'] ?? 0), $index, $reserva);
 
-            if ($cantidad > 1) {
+            if ($cantidad > 1 && ! $this->esPorCantidad($tipo)) {
                 throw ValidationException::withMessages([
                     "items.$index.cantidad" => 'Solo se puede vender una unidad por producto seleccionado.',
+                ]);
+            }
+
+            if ($this->esPorCantidad($tipo) && $producto->cantidad < $cantidad) {
+                throw ValidationException::withMessages([
+                    "items.$index.cantidad" => 'De «' . $producto->nombre . '» quedan ' . $producto->cantidad
+                        . ' y se están pidiendo ' . $cantidad . '.',
                 ]);
             }
 
@@ -339,6 +437,14 @@ class VentaController extends Controller
             case 'producto_general':
                 $snapshot['categoria'] = $producto->tipo;
                 $snapshot['nombre_producto'] = $producto->nombre;
+                break;
+
+            case 'pieza':
+                // El nombre y la compatibilidad se copian a la venta: si mañana se corrige la ficha
+                // de la pieza, la nota ya emitida sigue diciendo lo que se vendió ese día.
+                $snapshot['categoria'] = 'piezas';
+                $snapshot['nombre_producto'] = $producto->nombre;
+                $snapshot['modelo'] = $producto->compatibilidad;
                 break;
 
             case 'producto_apple':
@@ -530,6 +636,7 @@ class VentaController extends Controller
             'items.computadora',
             'items.productoGeneral',
             'items.productoApple',
+            'items.pieza',
             'servicioTecnico', // ✅ Añade esta relación
             'reserva',
         ])
@@ -545,9 +652,11 @@ class VentaController extends Controller
             ]);
         }
 
-        // El vendedor ve el precio, su descuento y lo que cobró; el costo y la ganancia no salen del servidor
+        // El vendedor ve el precio, su descuento y lo que cobró; el costo y la ganancia no salen del
+        // servidor. Se purga en profundidad: cada ítem trae su producto (venta.items.celular,
+        // venta.items.pieza…) y ahí también viaja el costo si no se lo saca.
         return Inertia::render('Vendedor/Ventas/Index', [
-            'ventas' => SinCostos::deColeccion($ventas),
+            'ventas' => SinCostos::purgar($ventas),
         ]);
     }
 
@@ -563,6 +672,7 @@ class VentaController extends Controller
             'computadoras' => $computadoras,
             'productosGenerales' => $productosGenerales,
             'productosApple' => $productosApple,
+            'piezas' => Pieza::disponibles()->orderBy('nombre')->get(),
             'reservasActivas' => Reserva::with([
                 'items',
                 'items.celular',
@@ -622,7 +732,7 @@ class VentaController extends Controller
             'fin_tarjeta' => 'required_if:metodo_pago,tarjeta|nullable|digits:4',
             'reserva_id' => 'nullable|integer|exists:reservas,id',
             'items' => 'required|array|min:1',
-            'items.*.tipo' => 'required|in:celular,computadora,producto_general,producto_apple',
+            'items.*.tipo' => 'required|in:celular,computadora,producto_general,producto_apple,pieza',
             'items.*.producto_id' => 'required|integer',
             'items.*.cantidad' => 'required|integer|min:1',
             'items.*.descuento' => 'nullable|numeric|min:0',
@@ -808,6 +918,19 @@ class VentaController extends Controller
          * 6) CAMBIAR ESTADO A VENDIDO (INCLUYE APPLE)
          * ====================================================== */
             foreach ($itemsValidados as $item) {
+                // La pieza no se marca «vendida»: baja su saldo y queda el renglón en su historial.
+                if ($this->esPorCantidad($item['tipo'])) {
+                    StockDePiezas::descontar(
+                        $item['producto'],
+                        $item['cantidad'],
+                        MovimientoPieza::VENTA,
+                        $venta,
+                        'Venta ' . $venta->codigo_nota,
+                    );
+
+                    continue;
+                }
+
                 $item['producto']->estado = 'vendido';
                 $item['producto']->save();
             }
@@ -900,6 +1023,7 @@ class VentaController extends Controller
             'items.computadora',
             'items.productoGeneral',
             'items.productoApple',
+            'items.pieza',
             'servicioTecnico',
             'entregadoCelular',
             'entregadoComputadora',
@@ -913,6 +1037,7 @@ class VentaController extends Controller
             'computadoras' => $this->productsForSaleEdit($venta, 'computadora'),
             'productosGenerales' => $this->productsForSaleEdit($venta, 'producto_general'),
             'productosApple' => $this->productsForSaleEdit($venta, 'producto_apple'),
+            'piezas' => $this->productsForSaleEdit($venta, 'pieza'),
         ];
 
         if (auth()->user()->rol === 'admin') {
@@ -946,7 +1071,7 @@ class VentaController extends Controller
             'valor_permuta' => 'nullable|numeric|min:0',
             'items' => 'nullable|array',
             'items.*.id' => 'nullable|integer|exists:ventas_items,id',
-            'items.*.tipo' => 'nullable|in:celular,computadora,producto_general,producto_apple',
+            'items.*.tipo' => 'nullable|in:celular,computadora,producto_general,producto_apple,pieza',
             'items.*.producto_id' => 'nullable|integer',
             'items.*.cantidad' => 'required|integer|min:1',
             'items.*.precio_venta' => 'nullable|numeric|min:0',
@@ -1047,8 +1172,19 @@ class VentaController extends Controller
                 if (! $item) {
                     $validatedItem = $this->buildValidatedSaleItems([$itemData])[0];
                     $this->createVentaItemFromValidated($venta, $validatedItem);
-                    $validatedItem['producto']->estado = 'vendido';
-                    $validatedItem['producto']->save();
+
+                    if ($this->esPorCantidad($validatedItem['tipo'])) {
+                        StockDePiezas::descontar(
+                            $validatedItem['producto'],
+                            $validatedItem['cantidad'],
+                            MovimientoPieza::VENTA,
+                            $venta,
+                            'Se agregó a la venta ' . $venta->codigo_nota,
+                        );
+                    } else {
+                        $validatedItem['producto']->estado = 'vendido';
+                        $validatedItem['producto']->save();
+                    }
 
                     $subtotal += $validatedItem['subtotal'];
                     $capitalTotal += $validatedItem['precio_invertido'];
@@ -1086,8 +1222,13 @@ class VentaController extends Controller
                     $item
                 );
 
-                if (! $sameProduct) {
-                    $this->releasePreviousSaleItemProduct($item);
+                if ($this->esPorCantidad($requestedTipo)) {
+                    // El costo de una pieza lo pone el inventario, no el navegador: así la utilidad
+                    // de la venta editada sigue saliendo de lo que de verdad costó el repuesto.
+                    $precioInvertido = round((float) $producto->precio_costo * $cantidad, 2);
+                    $this->ajustarStockDePieza($item, $producto, $cantidad, $venta, $sameProduct);
+                } elseif (! $sameProduct) {
+                    $this->releasePreviousSaleItemProduct($item, $venta);
                     $producto->estado = 'vendido';
                     $producto->save();
                 }
@@ -1159,6 +1300,7 @@ class VentaController extends Controller
             'items.computadora',
             'items.productoGeneral',
             'items.productoApple',
+            'items.pieza',
             'vendedor',
             'entregadoCelular',
             'entregadoComputadora',
@@ -1187,6 +1329,7 @@ class VentaController extends Controller
             'items.computadora',
             'items.productoGeneral',
             'items.productoApple',
+            'items.pieza',
             'vendedor'
         ])
             ->where('user_id', auth()->id())
@@ -1322,6 +1465,7 @@ class VentaController extends Controller
             'items.computadora',
             'items.productoGeneral',
             'items.productoApple',
+            'items.pieza',
             'vendedor',
             'entregadoCelular',
             'entregadoComputadora',

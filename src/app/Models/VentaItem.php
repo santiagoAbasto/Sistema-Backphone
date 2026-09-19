@@ -59,4 +59,9 @@ class VentaItem extends Model
     {
         return $this->belongsTo(ServicioTecnico::class, 'producto_id');
     }
+
+    public function pieza()
+    {
+        return $this->belongsTo(Pieza::class, 'producto_id');
+    }
 }

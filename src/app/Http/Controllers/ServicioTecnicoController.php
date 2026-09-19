@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MovimientoPieza;
+use App\Models\Pieza;
 use App\Models\ServicioTecnico;
+use App\Services\StockDePiezas;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +14,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use App\Services\GeneradorCodigos;
 use App\Models\Cliente;
+use App\Support\RecepcionDeEquipo;
 use App\Support\SinCostos;
 
 
@@ -110,9 +114,22 @@ class ServicioTecnicoController extends Controller
      * ====================================================== */
     public function create()
     {
+        $esAdmin = ! SinCostos::aplica(Auth::user());
+
         return Inertia::render(
             Auth::user()->rol === 'admin' ? 'Admin/Servicios/Create' : 'Vendedor/Servicios/Create',
-            ['tecnicos' => $this->tecnicosConocidos()]
+            [
+                'tecnicos' => $this->tecnicosConocidos(),
+                // Los puntos que se revisan al recibir un equipo; en el mostrador se pueden agregar más
+                'revision' => RecepcionDeEquipo::PUNTOS,
+                // Las piezas que el taller tiene a mano. Al vendedor le viaja el precio de venta
+                // y el saldo, nunca el costo: eso lo resuelve el servidor al guardar.
+                'piezas'   => SinCostos::paraUsuario(
+                    Pieza::disponibles()->orderBy('nombre')
+                        ->get(['id', 'nombre', 'codigo', 'categoria', 'compatibilidad', 'cantidad', 'precio_costo', 'precio_venta']),
+                    Auth::user()
+                ),
+            ]
         );
     }
 
@@ -121,7 +138,7 @@ class ServicioTecnicoController extends Controller
      * ====================================================== */
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $data = $request->validate(RecepcionDeEquipo::reglas() + [
             'cliente'           => 'required|string|max:255',
             'telefono'          => 'nullable|string|max:50',
             'equipo'            => 'required|string|max:255',
@@ -135,9 +152,11 @@ class ServicioTecnicoController extends Controller
         ]);
 
         $esAdmin = ! SinCostos::aplica(Auth::user());
-        $montos = $this->montosDelServicio($data, $esAdmin);
 
-        return DB::transaction(function () use ($data, $montos, $esAdmin) {
+        return DB::transaction(function () use ($data, $esAdmin) {
+
+            // Acá adentro, para que el bloqueo de cada pieza valga hasta que el servicio esté guardado.
+            $montos = $this->montosDelServicio($data, $esAdmin);
 
             $cliente = Cliente::firstOrCreate(
                 [
@@ -160,6 +179,8 @@ class ServicioTecnicoController extends Controller
                     'equipo'            => $data['equipo'],
                     'detalle_servicio'  => $montos['detalle'],
                     'notas_adicionales' => $data['notas_adicionales'] ?? null,
+                    // Cómo llegó el equipo: es lo que después responde por la tienda y por el cliente
+                    'recepcion'         => RecepcionDeEquipo::normalizar($data['recepcion'] ?? null),
                     'precio_costo'      => $montos['costo'],
                     'precio_venta'      => $montos['venta'],
                     'costo_pendiente'   => $montos['pendiente'],
@@ -170,6 +191,19 @@ class ServicioTecnicoController extends Controller
                     'user_id'           => auth()->id(),
                 ]);
             });
+
+            // Las piezas que se usaron salen del inventario recién ahora, con el servicio ya numerado:
+            // así el movimiento queda apuntando a la nota en la que se gastaron.
+            foreach ($montos['piezas'] as $uso) {
+                StockDePiezas::descontar(
+                    $uso['pieza'],
+                    $uso['cantidad'],
+                    MovimientoPieza::SERVICIO,
+                    $servicio,
+                    'Servicio ' . $servicio->codigo_nota . ' · ' . $servicio->equipo,
+                    'detalle_servicio',
+                );
+            }
 
             // Lo que registra el vendedor llega al administrador en el momento: tiene que cargar el costo
             if ($servicio && $montos['pendiente'] && ! $esAdmin) {
@@ -196,18 +230,32 @@ class ServicioTecnicoController extends Controller
         if ($trabajos !== null && count($trabajos) > 0) {
             $validated = $request->validate([
                 'costos'   => ['required', 'array', 'size:' . count($trabajos)],
-                'costos.*' => ['required', 'numeric', 'min:0', 'max:99999999.99'],
+                'costos.*' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             ], [
-                'costos.size'       => 'Carga el costo de cada trabajo del servicio.',
-                'costos.*.required' => 'Carga el costo de cada trabajo del servicio.',
-                'costos.*.numeric'  => 'El costo tiene que ser un monto.',
-                'costos.*.min'      => 'El costo no puede ser negativo.',
+                'costos.size'      => 'Carga el costo de cada trabajo del servicio.',
+                'costos.*.numeric' => 'El costo tiene que ser un monto.',
+                'costos.*.min'     => 'El costo no puede ser negativo.',
             ]);
 
             // Solo se completa el costo: la descripción y lo que paga el cliente (lo que dice la nota) no cambian
             foreach ($trabajos as $i => $trabajo) {
                 $trabajos[$i] = is_array($trabajo) ? $trabajo : ['descripcion' => (string) $trabajo];
-                $trabajos[$i]['costo'] = round((float) $validated['costos'][$i], 2);
+
+                // Lo que salió del inventario ya vino con su costo real: no se vuelve a preguntar ni
+                // se deja pisar, porque ese número es el que cuadra con el movimiento de la pieza.
+                if (! empty($trabajos[$i]['pieza_id'])) {
+                    continue;
+                }
+
+                $costo = $validated['costos'][$i] ?? null;
+
+                if ($costo === null || $costo === '') {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'costos' => 'Carga el costo de «' . ($trabajos[$i]['descripcion'] ?? 'este trabajo') . '».',
+                    ]);
+                }
+
+                $trabajos[$i]['costo'] = round((float) $costo, 2);
             }
 
             $costo = round(array_sum(array_column($trabajos, 'costo')), 2);
@@ -242,8 +290,18 @@ class ServicioTecnicoController extends Controller
 
     /**
      * Los montos del servicio salen de sus trabajos, no del total que manda el navegador: así la nota, el total y la
-     * utilidad siempre cuadran. El vendedor registra solo lo que paga el cliente; si el administrador deja algún costo
-     * vacío, el servicio queda con el costo pendiente igual que uno del vendedor.
+     * utilidad siempre cuadran.
+     *
+     * Un trabajo puede venir de dos lados:
+     *
+     * - **Del inventario de piezas** (`pieza_id`): el costo lo pone el servidor, multiplicando lo que
+     *   costó el repuesto por las unidades que se usaron. Nadie lo escribe ni lo puede inflar, y esas
+     *   unidades salen del stock al guardar.
+     * - **A mano**: el taller usa muchísimos repuestos y no todos están cargados. Entonces se escribe
+     *   la descripción y lo que paga el cliente; el costo lo pone el administrador, en el momento o
+     *   después desde el listado.
+     *
+     * Devuelve además qué piezas hay que descontar, ya bloqueadas y con el saldo comprobado.
      */
     private function montosDelServicio(array $data, bool $esAdmin): array
     {
@@ -257,14 +315,22 @@ class ServicioTecnicoController extends Controller
                 'venta'     => round((float) $data['precio_venta'], 2),
                 'costo'     => $pendiente ? 0 : round((float) $data['precio_costo'], 2),
                 'pendiente' => $pendiente,
+                'piezas'    => [],
             ];
         }
 
         $trabajos = [];
         $errores = [];
+        $usos = [];
 
-        foreach (array_values($items) as $i => $item) {
+        foreach (array_values($items) as $item) {
+            $pieza = $this->piezaDelTrabajo($item, $errores);
+            $cantidad = $pieza ? max(1, (int) ($item['cantidad'] ?? 1)) : 1;
+
             $descripcion = trim(strip_tags((string) ($item['descripcion'] ?? '')));
+            if ($descripcion === '' && $pieza) {
+                $descripcion = $pieza->etiqueta();
+            }
 
             if ($descripcion === '') {
                 continue;
@@ -278,16 +344,36 @@ class ServicioTecnicoController extends Controller
 
             $trabajo = ['descripcion' => $descripcion, 'precio' => round((float) $precio, 2)];
 
-            $costo = $item['costo'] ?? null;
-            if ($esAdmin && $costo !== null && $costo !== '') {
-                if (! is_numeric($costo) || (float) $costo < 0) {
-                    $errores['detalle_servicio'] = "Revisa el costo de «{$descripcion}».";
-                    continue;
+            if ($pieza) {
+                // Queda anotado en la nota de qué pieza salió y cuántas se usaron: es lo que después
+                // explica por qué bajó el stock, y lo que impide que el costo se cargue dos veces.
+                $trabajo['pieza_id'] = $pieza->id;
+                $trabajo['cantidad'] = $cantidad;
+                $trabajo['costo'] = round((float) $pieza->precio_costo * $cantidad, 2);
+
+                $usos[$pieza->id] ??= ['pieza' => $pieza, 'cantidad' => 0];
+                $usos[$pieza->id]['cantidad'] += $cantidad;
+            } else {
+                $costo = $item['costo'] ?? null;
+                if ($esAdmin && $costo !== null && $costo !== '') {
+                    if (! is_numeric($costo) || (float) $costo < 0) {
+                        $errores['detalle_servicio'] = "Revisa el costo de «{$descripcion}».";
+                        continue;
+                    }
+                    $trabajo['costo'] = round((float) $costo, 2);
                 }
-                $trabajo['costo'] = round((float) $costo, 2);
             }
 
             $trabajos[] = $trabajo;
+        }
+
+        // El saldo se comprueba sobre el total pedido, no línea por línea: dos renglones de la misma
+        // pantalla suman, y si entre los dos se pasan del stock hay que decirlo antes de guardar nada.
+        foreach ($usos as $uso) {
+            if ($uso['pieza']->cantidad < $uso['cantidad']) {
+                $errores['detalle_servicio'] = 'De «' . $uso['pieza']->nombre . '» quedan '
+                    . $uso['pieza']->cantidad . ' y el servicio está usando ' . $uso['cantidad'] . '.';
+            }
         }
 
         if ($trabajos === [] && $errores === []) {
@@ -298,20 +384,44 @@ class ServicioTecnicoController extends Controller
             throw \Illuminate\Validation\ValidationException::withMessages($errores);
         }
 
-        $pendiente = ! $esAdmin || collect($trabajos)->contains(fn (array $t) => ! array_key_exists('costo', $t));
-
         return [
             'detalle'   => json_encode($trabajos, JSON_UNESCAPED_UNICODE),
             'venta'     => round(array_sum(array_column($trabajos, 'precio')), 2),
             'costo'     => round(array_sum(array_column($trabajos, 'costo')), 2),
-            'pendiente' => $pendiente,
+            // Lo que salió del inventario ya trae su costo: solo queda pendiente si algún trabajo
+            // escrito a mano se guardó sin él.
+            'pendiente' => collect($trabajos)->contains(fn (array $t) => ! array_key_exists('costo', $t)),
+            'piezas'    => array_values($usos),
         ];
+    }
+
+    /**
+     * La pieza de un trabajo, bloqueada para que nadie más se lleve esas unidades mientras tanto.
+     * Devuelve null si el trabajo no sale del inventario.
+     */
+    private function piezaDelTrabajo(mixed $item, array &$errores): ?Pieza
+    {
+        $id = is_array($item) ? (int) ($item['pieza_id'] ?? 0) : 0;
+
+        if ($id <= 0) {
+            return null;
+        }
+
+        $pieza = StockDePiezas::bloquear($id);
+
+        if (! $pieza || ! $pieza->activa) {
+            $errores['detalle_servicio'] = 'Una de las piezas del servicio ya no está en el inventario.';
+
+            return null;
+        }
+
+        return $pieza;
     }
 
     /** Servicios listos para el panel del vendedor: sin el costo del servicio ni el de cada trabajo. */
     private function sinCostos($servicios)
     {
-        return SinCostos::deColeccion($servicios)->map(function (array $s) {
+        return collect(SinCostos::purgar($servicios))->map(function (array $s) {
             $s['detalle_servicio'] = SinCostos::detalleDeServicio($s['detalle_servicio'] ?? null);
 
             return $s;

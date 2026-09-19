@@ -15,7 +15,11 @@ const productTypes = [
   { value: 'computadora', label: 'Computadora' },
   { value: 'producto_general', label: 'Producto general' },
   { value: 'producto_apple', label: 'Equipo de marca' },
+  { value: 'pieza', label: 'Pieza o repuesto' },
 ];
+
+// Los tipos que se venden por cantidad: acá se puede editar cuántas unidades lleva la línea.
+const POR_CANTIDAD = ['producto_general', 'pieza'];
 
 const METODOS_PAGO = [
   { value: 'efectivo', label: 'Efectivo', icon: Banknote },
@@ -29,11 +33,12 @@ const productoNombre = (item) => {
   if (item.computadora?.nombre) return item.computadora.nombre;
   if (item.producto_apple?.modelo) return item.producto_apple.modelo;
   if (item.producto_general?.nombre) return item.producto_general.nombre;
+  if (item.pieza?.nombre) return item.pieza.nombre;
   return 'Producto';
 };
 
 const productoRelacion = (item) => (
-  item.celular || item.computadora || item.producto_apple || item.producto_general || null
+  item.celular || item.computadora || item.producto_apple || item.producto_general || item.pieza || null
 );
 
 const productTitle = (product) => (
@@ -53,6 +58,8 @@ const productSubtitle = (product, tipo) => {
     product?.procesador,
     product?.ram,
     product?.almacenamiento,
+    product?.compatibilidad,
+    product?.cantidad !== undefined ? `quedan ${product.cantidad}` : null,
     product?.estado && product.estado !== 'disponible' ? product.estado : null,
   ].filter(Boolean);
 
@@ -78,6 +85,8 @@ const searchText = (product) => normalizeText([
   product?.procesador,
   product?.ram,
   product?.almacenamiento,
+  product?.categoria,
+  product?.compatibilidad,
 ].filter(Boolean).join(' '));
 
 const productSearchScore = (product, terms) => {
@@ -130,6 +139,7 @@ export default function VentaEditForm({
       ? inventarioEdicion.productosGenerales
       : productosGenerales,
     producto_apple: inventarioEdicion.productosApple || [],
+    pieza: inventarioEdicion.piezas || [],
   }), [inventarioEdicion, productosGenerales]);
 
   const findProduct = (tipo, id) => (
@@ -237,7 +247,7 @@ export default function VentaEditForm({
       return;
     }
 
-    const cantidad = tipoReemplazo === 'producto_general' ? Math.max(1, Number(item.cantidad || 1)) : 1;
+    const cantidad = POR_CANTIDAD.includes(tipoReemplazo) ? Math.max(1, Number(item.cantidad || 1)) : 1;
 
     patchItem(index, {
       tipo: tipoReemplazo,
@@ -627,7 +637,7 @@ export default function VentaEditForm({
                         <div className="mt-4 grid gap-3 border-t border-gris-100 pt-4 sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_auto] lg:items-end">
                           <Field label="Cantidad" error={errors[`items.${index}.cantidad`]}>
                             <Input type="number" min="1" className="text-right" value={item.cantidad}
-                              onChange={(e) => updateItem(index, 'cantidad', e.target.value)} disabled={item.tipo !== 'producto_general'} />
+                              onChange={(e) => updateItem(index, 'cantidad', e.target.value)} disabled={!POR_CANTIDAD.includes(item.tipo)} />
                           </Field>
                           <Field label="Precio de venta">
                             <Input type="number" min="0" step="0.01" className="text-right" value={item.precio_venta} onChange={(e) => updateItem(index, 'precio_venta', e.target.value)} />

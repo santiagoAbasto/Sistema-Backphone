@@ -3,8 +3,8 @@ import { route } from 'ziggy-js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import {
-  AlertTriangle, CalendarRange, Download, FileSpreadsheet, FileText, Hammer, Pencil, Plus, Printer, Search, TrendingUp, Users, Wallet,
-  Wrench, X,
+  AlertTriangle, CalendarRange, Download, FileSpreadsheet, FileText, Hammer, KeyRound, Pencil, Plus, Printer, Search, TrendingUp,
+  Users, Wallet, Wrench, X,
 } from 'lucide-react';
 import { useAutoRefresh } from '@/Hooks/useAutoRefresh';
 import { Badge, EmptyState, Field, Input, Modal, PageHeader, Toast, bsFmt, buttonCls, inputCls, useToast } from '@/Components/Admin/ui';
@@ -99,6 +99,17 @@ function Tecnico({ nombre }) {
   return <Badge tone="lila"><Wrench className="h-3 w-3" /> {nombre || '—'}</Badge>;
 }
 
+/**
+ * Aviso de que el equipo entró sin código de desbloqueo.
+ *
+ * Se muestra porque cambia el trabajo: sin el código no se puede probar el equipo ni antes ni
+ * después de repararlo, y el técnico tiene que saberlo antes de abrirlo, no al agarrarlo.
+ */
+function SinCodigo({ recepcion }) {
+  if (recepcion?.desbloqueo?.modo !== 'no_deja') return null;
+  return <Badge tone="amber"><KeyRound className="h-3 w-3" /> Sin código</Badge>;
+}
+
 /** El administrador completa el costo de cada trabajo. La nota del cliente no cambia: solo se suma lo que costó. */
 function ModalCosto({ servicio, onCerrar }) {
   const guardados = trabajosGuardados(servicio);
@@ -111,7 +122,10 @@ function ModalCosto({ servicio, onCerrar }) {
   const costo = guardados
     ? data.costos.reduce((a, c) => a + (Number(c) || 0), 0)
     : Number(data.costo_total) || 0;
-  const completo = guardados ? data.costos.every((c) => c !== '' && Number(c) >= 0) : data.costo_total !== '' && Number(data.costo_total) >= 0;
+  // Lo que salió del inventario ya trae su costo: no se pregunta, y tampoco frena el «Guardar».
+  const completo = guardados
+    ? guardados.every((t, i) => t.pieza_id || (data.costos[i] !== '' && Number(data.costos[i]) >= 0))
+    : data.costo_total !== '' && Number(data.costo_total) >= 0;
   const utilidad = cobrado - costo;
   const errorGeneral = errors.costos || errors.costo_total || Object.entries(errors).find(([k]) => k.startsWith('costos.'))?.[1];
 
@@ -137,22 +151,36 @@ function ModalCosto({ servicio, onCerrar }) {
         <p className="rounded-xl bg-gris-50 px-4 py-3 text-[13px] leading-relaxed text-gris-600">
           <span className="font-semibold text-gris-900">{servicio.equipo}</span> de {servicio.cliente}
           {servicio.vendedor?.name ? `, registrado por ${servicio.vendedor.name}` : ''}. Escribe lo que costó cada trabajo:
-          la nota del cliente no cambia.
+          la nota del cliente no cambia. Las piezas del inventario ya vienen con su costo.
         </p>
 
         {guardados ? (
           <ul className="space-y-2">
-            {guardados.map((t, i) => (
-              <li key={i} className="grid grid-cols-[minmax(0,1fr)_140px] items-center gap-3 rounded-xl border border-gris-200 px-3.5 py-2.5">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-gris-900">{t.descripcion || 'Trabajo sin descripción'}</p>
-                  <p className="text-xs text-gris-500">El cliente paga {bsFmt(Number(t.precio) || 0)}</p>
-                </div>
-                <Input type="number" min="0" step="0.01" inputMode="decimal" placeholder="Costo" autoFocus={i === 0}
-                  aria-label={`Costo de ${t.descripcion || `el trabajo ${i + 1}`}`} className="tabular-nums" value={data.costos[i]}
-                  onChange={(e) => setData('costos', data.costos.map((c, j) => (j === i ? e.target.value : c)))} />
-              </li>
-            ))}
+            {guardados.map((t, i) => {
+              const delInventario = Boolean(t.pieza_id);
+              const primeroEditable = guardados.findIndex((g) => !g.pieza_id) === i;
+              return (
+                <li key={i} className={`grid grid-cols-[minmax(0,1fr)_140px] items-center gap-3 rounded-xl border px-3.5 py-2.5 ${delInventario ? 'border-[rgb(var(--acento-rgb)_/_0.3)] bg-[rgb(var(--acento-rgb)_/_0.04)]' : 'border-gris-200'}`}>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-gris-900">{t.descripcion || 'Trabajo sin descripción'}</p>
+                    <p className="text-xs text-gris-500">
+                      El cliente paga {bsFmt(Number(t.precio) || 0)}
+                      {delInventario && <span className="text-[color:var(--acento)]"> · del inventario{t.cantidad > 1 ? ` · ${t.cantidad} unidades` : ''}</span>}
+                    </p>
+                  </div>
+                  {delInventario ? (
+                    <p className="flex h-11 items-center justify-end rounded-[10px] border border-dashed border-gris-300 px-3 text-sm font-semibold tabular-nums text-gris-600"
+                      title="El costo sale del inventario de piezas">
+                      {bsFmt(Number(t.costo) || 0)}
+                    </p>
+                  ) : (
+                    <Input type="number" min="0" step="0.01" inputMode="decimal" placeholder="Costo" autoFocus={primeroEditable}
+                      aria-label={`Costo de ${t.descripcion || `el trabajo ${i + 1}`}`} className="tabular-nums" value={data.costos[i]}
+                      onChange={(e) => setData('costos', data.costos.map((c, j) => (j === i ? e.target.value : c)))} />
+                  )}
+                </li>
+              );
+            })}
           </ul>
         ) : (
           <Field label="Costo del servicio (Bs)" hint="Este servicio es de antes: tiene un solo costo total.">
@@ -513,6 +541,7 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
                               {s.trabajos[0]?.descripcion ?? '—'}
                               {s.trabajos.length > 1 && <span className="text-gris-400"> y {s.trabajos.length - 1} más</span>}
                             </p>
+                            <SinCodigo recepcion={s.recepcion} />
                           </td>
                           <td className="px-4 py-3"><Tecnico nombre={s.tecnico} /></td>
                           {conCostos && (
@@ -577,7 +606,10 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
                             {s.codigo_nota || '—'} <span className="font-sans font-normal text-gris-400">· {fechaCorta(s.fecha)}</span>
                           </p>
                         </div>
-                        <Tecnico nombre={s.tecnico} />
+                        <div className="flex shrink-0 flex-col items-end gap-1">
+                          <Tecnico nombre={s.tecnico} />
+                          <SinCodigo recepcion={s.recepcion} />
+                        </div>
                       </div>
                       <p className="text-sm text-gris-600">
                         <span className="font-semibold text-gris-900">{s.equipo}</span>

@@ -33,6 +33,7 @@ class Permisos
         'clientes'     => ['Clientes',             'Ventas y operación',  ['admin.clientes']],
 
         'inventario'   => ['Inventario',           'Inventario',          ['admin.celulares', 'admin.computadoras', 'admin.productos-apple', 'admin.productos-generales']],
+        'piezas'       => ['Piezas y repuestos',   'Inventario',          ['admin.piezas']],
         'auditoria'    => ['Auditoría',            'Inventario',          ['admin.inventory-audits']],
 
         'exportar'     => ['Exportar datos',       'Exportar datos',      ['admin.exportaciones', 'admin.exportar']],

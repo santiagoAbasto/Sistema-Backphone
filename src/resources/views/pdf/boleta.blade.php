@@ -206,6 +206,7 @@
   $computadoras = $venta->items->where('tipo', 'computadora');
   $productosApple = $venta->items->where('tipo', 'producto_apple');
   $generales = $venta->items->where('tipo', 'producto_general');
+  $piezas = $venta->items->where('tipo', 'pieza');
   @endphp
 
   <!-- El contenido del <head> permanece igual (omitido aquí por brevedad) -->
@@ -352,6 +353,37 @@
         <td>{{ $item->productoGeneral->nombre }}</td>
         <td>{{ $item->productoGeneral->tipo }}</td>
         <td>{{ $item->productoGeneral->codigo }}</td>
+        <td class="table-right">Bs {{ number_format($item->precio_venta, 2) }}</td>
+        <td class="table-right">Bs {{ number_format($item->descuento, 2) }}</td>
+        <td class="table-right">Bs {{ number_format($item->subtotal, 2) }}</td>
+      </tr>
+      @endforeach
+    </tbody>
+  </table>
+  @endif
+
+  @if ($piezas->count())
+  <div class="section-title">Piezas y Repuestos</div>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Pieza</th>
+        <th>Compatible con</th>
+        <th>Cantidad</th>
+        <th class="table-right">Precio</th>
+        <th class="table-right">Descuento</th>
+        <th class="table-right">Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach ($piezas as $i => $item)
+      <tr>
+        {{-- El nombre sale del ítem, no de la pieza: es lo que se vendió ese día, aunque después se corrija la ficha --}}
+        <td>{{ $i + 1 }}</td>
+        <td>{{ $item->nombre_producto ?? optional($item->pieza)->nombre ?? 'Pieza' }}</td>
+        <td>{{ $item->modelo ?? optional($item->pieza)->compatibilidad ?? '---' }}</td>
+        <td>{{ $item->cantidad }}</td>
         <td class="table-right">Bs {{ number_format($item->precio_venta, 2) }}</td>
         <td class="table-right">Bs {{ number_format($item->descuento, 2) }}</td>
         <td class="table-right">Bs {{ number_format($item->subtotal, 2) }}</td>
