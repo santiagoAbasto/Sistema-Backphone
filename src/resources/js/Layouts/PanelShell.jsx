@@ -6,6 +6,7 @@ import { ChevronDown, LogOut, Menu, UserPlus, X } from 'lucide-react';
 import ConfirmLogoutModal from '@/Components/ConfirmLogoutModal';
 import Logotipo from '@/Components/Marca/Logotipo';
 import SelectorSucursal from '@/Components/Panel/SelectorSucursal';
+import Avatar from '@/Components/Panel/Avatar';
 
 /**
  * Armazón del panel: barra lateral negra, encabezado claro y el contenido en el medio.
@@ -279,7 +280,6 @@ function Sidebar({ nav, homeRoute, insignia, filtrarPorPermisos, tema, nombreNeg
 function MenuUsuario({ user, onLogout }) {
     const [abierto, setAbierto] = useState(false);
     const ref = useRef(null);
-    const iniciales = (user?.name ?? 'A').split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
 
     useEffect(() => {
         const cerrar = (e) => { if (ref.current && !ref.current.contains(e.target)) setAbierto(false); };
@@ -295,12 +295,7 @@ function MenuUsuario({ user, onLogout }) {
                 aria-expanded={abierto}
                 className="flex items-center gap-2.5 rounded-[10px] py-1.5 pl-1.5 pr-2.5 transition-colors hover:bg-gris-100"
             >
-                <span
-                    className="grid h-9 w-9 place-items-center rounded-[10px] font-marca text-[13px] font-bold"
-                    style={{ background: 'var(--carbon-900)', color: 'var(--bronce-400)' }}
-                >
-                    {iniciales}
-                </span>
+                <Avatar foto={user?.foto_url} iniciales={user?.iniciales ?? 'U'} nombre={user?.name} tamano="sm" />
                 <span className="hidden text-left sm:block">
                     <span className="block text-[13px] font-semibold leading-tight text-gris-900">{user?.name}</span>
                     <span className="block text-[11px] font-medium capitalize leading-tight text-gris-500">{user?.rol ?? 'admin'}</span>
@@ -317,9 +312,12 @@ function MenuUsuario({ user, onLogout }) {
                         transition={{ duration: 0.16 }}
                         className="absolute right-0 top-full z-50 mt-2 w-60 overflow-hidden rounded-[14px] border border-gris-200 bg-white p-1.5 shadow-alzada"
                     >
-                        <div className="px-3 py-2">
-                            <p className="truncate text-sm font-semibold text-gris-900">{user?.name}</p>
-                            <p className="truncate text-xs text-gris-500">{user?.email}</p>
+                        <div className="flex items-center gap-3 px-3 py-2.5">
+                            <Avatar foto={user?.foto_url} iniciales={user?.iniciales ?? 'U'} nombre={user?.name} tamano="md" />
+                            <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-gris-900">{user?.name}</p>
+                                <p className="truncate text-xs text-gris-500">{user?.email}</p>
+                            </div>
                         </div>
                         <div className="my-1 h-px bg-gris-100" />
                         <Link href={route('profile.edit')} className="flex items-center gap-2.5 rounded-[10px] px-3 py-2 text-sm font-medium text-gris-700 hover:bg-gris-50">

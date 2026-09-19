@@ -36,6 +36,7 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+
     /**
      * Casts de atributos.
      *
@@ -48,6 +49,31 @@ class User extends Authenticatable
             'password'          => 'hashed',
             'meta_mensual'      => 'decimal:2',
         ];
+    }
+
+    /* ─── Foto de perfil ─── */
+
+    /**
+     * La dirección pública de la foto, o `null` si no cargó ninguna.
+     *
+     * A propósito NO va en `$appends`: si fuera global, cada listado que trae el nombre de quien
+     * registró algo (`vendedor:id,name`) arrastraría también la foto y las iniciales de esa persona.
+     * Lo agrega `HandleInertiaRequests` solo para la cuenta que tiene la sesión abierta.
+     */
+    public function getFotoUrlAttribute(): ?string
+    {
+        // Relativa a propósito: `Storage::url()` le pega adelante APP_URL, y entonces la foto se
+        // rompe si al sistema se entra por la IP de la red, por otro dominio o detrás de un túnel.
+        return $this->foto ? '/storage/' . ltrim($this->foto, '/') : null;
+    }
+
+    /** Las iniciales con las que se dibuja el avatar mientras no haya foto. */
+    public function getInicialesAttribute(): string
+    {
+        $partes = preg_split('/\s+/', trim((string) $this->name)) ?: [];
+        $letras = array_slice(array_filter($partes), 0, 2);
+
+        return mb_strtoupper(implode('', array_map(fn ($p) => mb_substr($p, 0, 1), $letras))) ?: 'U';
     }
 
     /* ─── Sucursal ─── */

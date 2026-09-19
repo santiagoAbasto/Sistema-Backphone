@@ -38,7 +38,9 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                // El avatar se agrega solo acá: los listados siguen trayendo del usuario
+                // únicamente el id y el nombre.
+                'user' => $request->user()?->append(['foto_url', 'iniciales']),
                 // Qué módulos del panel abre su rol: el menú esconde lo que el servidor va a rechazar igual
                 'permisos' => fn () => $request->user()
                     ? \App\Models\Role::mapa()[$request->user()->rol] ?? ($request->user()->rol === 'admin' ? ['*'] : [])

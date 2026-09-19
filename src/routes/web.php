@@ -48,7 +48,9 @@ Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // La foto: subir y quitar. Una cuenta no se borra a sí misma; la da de baja un administrador.
+    Route::post('/profile/foto', [ProfileController::class, 'foto'])->name('profile.foto')->middleware('throttle:20,1');
+    Route::delete('/profile/foto', [ProfileController::class, 'quitarFoto'])->name('profile.foto.quitar');
 });
 
 
