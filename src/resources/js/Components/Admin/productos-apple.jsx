@@ -114,7 +114,7 @@ function CampoImei({ label, valor, error, onChange, inputRef, onEnter }) {
     <Field label={label} error={error}>
       <div className="relative">
         <Input ref={inputRef} value={valor} inputMode="numeric" autoComplete="off" maxLength={15} placeholder="15 dígitos"
-          className="pr-14 font-mono tracking-wider" onKeyDown={onEnter}
+          className="pr-14 cifra tracking-wider" onKeyDown={onEnter}
           onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 15))} />
         <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold tabular-nums text-gris-400">{valor.length}/15</span>
       </div>
@@ -183,7 +183,7 @@ export function CamposProductoApple({ form, sugerencias = {}, pasos = false, ref
 
       <StepCard step={pasos ? 2 : undefined} icon={Fingerprint} title="Identificación" subtitle="El número de serie y el IMEI sirven para garantías y control de stock.">
         <Field label="Número de serie (opcional)" error={errores.numero_serie} hint="Está en la caja o en Ajustes › General › Información. No se puede repetir.">
-          <Input ref={refs.serie} value={data.numero_serie} maxLength={100} autoComplete="off" placeholder="Ej.: LQ9FHJ7X42" className="font-mono uppercase tracking-wider"
+          <Input ref={refs.serie} value={data.numero_serie} maxLength={100} autoComplete="off" placeholder="Ej.: LQ9FHJ7X42" className="cifra uppercase tracking-wider"
             onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
             onChange={(e) => cambiar('numero_serie', e.target.value.trimStart().toUpperCase())} />
         </Field>
@@ -234,16 +234,16 @@ export function ResumenProductoApple({ data, children }) {
   const bateria = data.sellado ? 'Sellado (sin abrir)' : (data.bateria_pct ? `${data.bateria_pct} %` : '');
 
   return (
-    <section className="rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <section className="rounded-2xl border border-gris-200 bg-white shadow-sutil">
       <div className="border-b border-gris-100 px-5 py-4">
         <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
-          <Apple className="h-[18px] w-[18px] text-[#96684F]" /> Resumen
+          <Apple className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Resumen
         </h2>
       </div>
 
       <div className="space-y-4 p-5">
         <div className="flex items-center gap-3 rounded-xl bg-gris-50 px-4 py-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#121214] text-white"><Apple className="h-5 w-5" /></span>
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-carbon-900 text-white"><Apple className="h-5 w-5" /></span>
           <div className="min-w-0 flex-1">
             <p className="truncate font-bold text-gris-900">{bonito(data.modelo) || 'Nuevo producto'}</p>
             <p className="truncate text-xs text-gris-500">{detalleEquipo(data) || 'Capacidad y color'}</p>

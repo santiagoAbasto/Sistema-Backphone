@@ -98,7 +98,7 @@ function CampoDigitos({ id, label, value, onChange, error, placeholder }) {
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(onlyFourDigits(e.target.value))}
-          className={`${inputCls} h-12 pr-10 font-mono text-lg tracking-[0.35em] placeholder:font-sans placeholder:text-sm placeholder:tracking-normal ${error ? 'border-red-400' : ''}`}
+          className={`${inputCls} h-12 pr-10 cifra text-lg tracking-[0.35em] placeholder:font-sans placeholder:text-sm placeholder:tracking-normal ${error ? 'border-red-400' : ''}`}
         />
         {n === 4 && <CheckCircle2 className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-emerald-500" aria-hidden="true" />}
       </div>
@@ -184,7 +184,7 @@ export default function CardPaymentFields({
             </div>
 
             {/* Número: siempre en una sola línea */}
-            <p className="flex items-center gap-[0.6em] whitespace-nowrap font-mono text-[18px] font-semibold tabular-nums tracking-[0.04em] drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)] sm:text-[19px]">
+            <p className="flex items-center gap-[0.6em] whitespace-nowrap cifra text-[18px] font-semibold tabular-nums tracking-[0.04em] drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)] sm:text-[19px]">
               <Grupo valor={inicio || ''} reduce={reduce} />
               <span className="text-white/45">••••</span>
               <span className="text-white/45">••••</span>
@@ -198,7 +198,7 @@ export default function CardPaymentFields({
                 <p className="truncate text-[13px] font-semibold uppercase tracking-[0.06em]">{titular?.trim() || 'Nombre del cliente'}</p>
               </div>
               {red ? (
-                <motion.p key={red} className="shrink-0 text-[16px] font-extrabold italic tracking-tight"
+                <motion.p key={red} className="shrink-0 text-[16px] font-bold italic tracking-tight"
                   initial={reduce ? false : { opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                   {red}
                 </motion.p>

@@ -139,7 +139,7 @@ function CampoImei({ label, valor, error, onChange, inputRef, onEnter }) {
     <Field label={label} error={error}>
       <div className="relative">
         <Input ref={inputRef} value={valor} inputMode="numeric" autoComplete="off" maxLength={15} placeholder="15 dígitos"
-          className="pr-14 font-mono tracking-wider"
+          className="pr-14 cifra tracking-wider"
           onKeyDown={onEnter}
           onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 15))} />
         <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold tabular-nums text-gris-400">{valor.length}/15</span>
@@ -218,7 +218,7 @@ export function CamposCelular({ form, sugerencias = {}, pasos = false, refs = {}
             onEnter={alPresionarEnter(serieRef)} onChange={(v) => cambiar('imei_2', v)} />
           <Field label="Número de serie (opcional)" error={errores.numero_serie}
             hint="El número de serie del equipo. No escribas aquí el IMEI.">
-            <Input ref={serieRef} value={data.numero_serie} maxLength={100} autoComplete="off" className="font-mono uppercase"
+            <Input ref={serieRef} value={data.numero_serie} maxLength={100} autoComplete="off" className="cifra uppercase"
               onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
               onChange={(e) => cambiar('numero_serie', e.target.value.trimStart().toUpperCase())} />
           </Field>
@@ -251,16 +251,16 @@ export function ResumenCelular({ data, titulo = 'Resumen', children }) {
   const bateria = data.sellado ? 'Sellado (sin abrir)' : (data.bateria_pct ? `${data.bateria_pct} %` : '');
 
   return (
-    <section className="rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <section className="rounded-2xl border border-gris-200 bg-white shadow-sutil">
       <div className="border-b border-gris-100 px-5 py-4">
         <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
-          <Smartphone className="h-[18px] w-[18px] text-[#96684F]" /> {titulo}
+          <Smartphone className="h-[18px] w-[18px] text-[color:var(--acento)]" /> {titulo}
         </h2>
       </div>
 
       <div className="space-y-4 p-5">
         <div className="flex items-center gap-3 rounded-xl bg-gris-50 px-4 py-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#121214] text-white"><Smartphone className="h-5 w-5" /></span>
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-carbon-900 text-white"><Smartphone className="h-5 w-5" /></span>
           <div className="min-w-0 flex-1">
             <p className="truncate font-bold text-gris-900">{bonito(data.modelo) || 'Nuevo celular'}</p>
             <p className="truncate text-xs text-gris-500">{detalleEquipo(data) || 'Capacidad y color'}</p>

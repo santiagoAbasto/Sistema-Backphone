@@ -459,7 +459,7 @@ export default function VentaEditForm({
     <>
       <Head title={`Editar venta ${venta.codigo_nota}`} />
 
-      <form onSubmit={submit} className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <form onSubmit={submit} className="bp-reset mx-auto max-w-[1400px] space-y-5">
         {/* Encabezado */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -469,10 +469,10 @@ export default function VentaEditForm({
             </Link>
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-[32px] font-extrabold leading-tight tracking-tight text-[#121214]" style={{ fontFamily: "'Chakra Petch', 'Inter', sans-serif" }}>
+                <h1 className="text-[32px] font-bold leading-tight tracking-tight text-carbon-900" style={{ fontFamily: "'Chakra Petch', 'Inter', sans-serif" }}>
                   Editar venta
                 </h1>
-                <span className="rounded-lg bg-[#96684F]/10 px-2 py-1 font-mono text-sm font-bold text-[#3F4585]">{venta.codigo_nota}</span>
+                <span className="rounded-lg bg-[rgb(var(--acento-rgb)_/_0.1)] px-2 py-1 cifra text-sm font-bold text-[color:var(--acento)]">{venta.codigo_nota}</span>
               </div>
               <p className="text-sm text-gris-500">
                 {venta.vendedor?.name ? `Registrada por ${venta.vendedor.name}` : 'Venta registrada'}{fechaVenta ? ` el ${fechaVenta}` : ''} · los totales se recalculan al guardar.
@@ -641,7 +641,7 @@ export default function VentaEditForm({
                           <div className="flex items-end justify-between gap-3 sm:col-span-2 lg:col-span-1 lg:flex-col lg:items-end">
                             <div className="text-right">
                               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-gris-400">Subtotal</p>
-                              <p className="text-lg font-extrabold tabular-nums text-gris-900">{bsFmt(subtotal)}</p>
+                              <p className="text-lg font-bold tabular-nums text-gris-900">{bsFmt(subtotal)}</p>
                             </div>
                             {!item.id && (
                               <button type="button" onClick={() => removeNewItem(index)} title="Quitar producto"
@@ -735,7 +735,7 @@ export default function VentaEditForm({
 
           {/* Resumen */}
           <aside className="xl:sticky xl:top-24">
-            <section className="rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <section className="rounded-2xl border border-gris-200 bg-white shadow-sutil">
               <div className="border-b border-gris-100 px-5 py-4">
                 <h2 className="text-base font-bold text-gris-900">Resumen</h2>
                 <p className="text-[13px] text-gris-500">Así queda la venta con tus cambios.</p>
@@ -757,9 +757,9 @@ export default function VentaEditForm({
                   )}
                 </dl>
 
-                <div className="rounded-xl bg-[#121214] px-4 py-3.5 text-white">
+                <div className="rounded-xl bg-carbon-900 px-4 py-3.5 text-white">
                   <p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/60">Total a cobrar</p>
-                  <p className="mt-1 text-[28px] font-extrabold leading-none tracking-tight">{bsFmt(total)}</p>
+                  <p className="mt-1 text-[28px] font-bold leading-none tracking-tight">{bsFmt(total)}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">

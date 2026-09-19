@@ -46,18 +46,18 @@ const fechaCls = 'h-9 w-full min-w-0 border-0 bg-transparent p-0 text-sm text-gr
 
 function Stat({ icon: Icon, label, value, hint, tone = 'navy' }) {
   const tones = {
-    navy: 'bg-[#121214]/[0.07] text-[#121214]',
+    navy: 'bg-carbon-900/[0.07] text-carbon-900',
     emerald: 'bg-emerald-50 text-emerald-700',
-    lila: 'bg-[#96684F]/10 text-[#96684F]',
+    lila: 'bg-[rgb(var(--acento-rgb)_/_0.1)] text-[color:var(--acento)]',
     rose: 'bg-rose-50 text-rose-600',
   };
   return (
-    <div className="rounded-2xl border border-gris-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <div className="rounded-2xl border border-gris-200 bg-white p-5 shadow-sutil">
       <div className="flex items-center gap-3">
         <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${tones[tone]}`}><Icon className="h-5 w-5" /></span>
         <p className="text-[13px] font-semibold text-gris-500">{label}</p>
       </div>
-      <p className="mt-4 truncate text-[24px] font-extrabold leading-none tracking-tight text-gris-900">{value}</p>
+      <p className="mt-4 truncate text-[24px] font-bold leading-none tracking-tight text-gris-900">{value}</p>
       {hint && <p className="mt-2 truncate text-xs text-gris-400">{hint}</p>}
     </div>
   );
@@ -87,10 +87,10 @@ function Ganancia({ valor }) {
 function PorVendedor({ filas = [] }) {
   const vendidoTotal = filas.reduce((a, v) => a + Number(v.vendido || 0), 0);
   return (
-    <section className="rounded-2xl border border-gris-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-6">
+    <section className="rounded-2xl border border-gris-200 bg-white p-5 shadow-sutil sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#96684F]/10 text-[#96684F]"><Users className="h-5 w-5" /></span>
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-[rgb(var(--acento-rgb)_/_0.1)] text-[color:var(--acento)]"><Users className="h-5 w-5" /></span>
           <div>
             <p className="text-base font-bold text-gris-900">Rendimiento por vendedor</p>
             <p className="text-[13px] text-gris-500">Lo vendido y lo ganado por cada persona</p>
@@ -112,13 +112,13 @@ function PorVendedor({ filas = [] }) {
             return (
               <li key={v.nombre} className="rounded-xl border border-gris-100 px-4 py-3">
                 <div className="flex items-center gap-3">
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#121214] text-xs font-bold text-white">{iniciales(v.nombre)}</span>
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-carbon-900 text-xs font-bold text-white">{iniciales(v.nombre)}</span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-gris-900">{v.nombre}</p>
                     <p className="text-xs text-gris-500">{Number(v.movimientos).toLocaleString('es-BO')} {Number(v.movimientos) === 1 ? 'movimiento' : 'movimientos'}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-extrabold tabular-nums text-gris-900">{bsFmt(v.vendido)}</p>
+                    <p className="text-sm font-bold tabular-nums text-gris-900">{bsFmt(v.vendido)}</p>
                     <p className={`text-xs font-semibold tabular-nums ${Number(v.ganancia) < 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
                       {conSigno(Number(v.ganancia))} de ganancia
                     </p>
@@ -126,7 +126,7 @@ function PorVendedor({ filas = [] }) {
                 </div>
                 <div className="mt-2.5 flex items-center gap-2">
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gris-100">
-                    <div className="h-full rounded-full bg-[#96684F]" style={{ width: `${parte * 100}%` }} />
+                    <div className="h-full rounded-full bg-[color:var(--acento)]" style={{ width: `${parte * 100}%` }} />
                   </div>
                   <span className="w-10 text-right text-[11px] font-bold tabular-nums text-gris-500">{Math.round(parte * 100)} %</span>
                 </div>
@@ -291,22 +291,22 @@ export default function ReporteIndex({
     <AdminLayout>
       <Head title="Reportes" />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <PageHeader
           title="Reportes"
           subtitle="Ventas y servicios técnicos: cuánto se vendió, cuánto se ganó y cuánto capital se usó en el período."
         />
 
         {/* Período, vendedor y exportación */}
-        <section className="rounded-2xl border border-gris-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section className="rounded-2xl border border-gris-200 bg-white p-4 shadow-sutil">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="mr-1.5 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.1em] text-gris-400">
-                <CalendarRange className="h-4 w-4 text-[#96684F]" /> Período
+                <CalendarRange className="h-4 w-4 text-[color:var(--acento)]" /> Período
               </span>
               {periodos.map((p) => (
                 <button key={p.key} type="button" onClick={() => cambiarPeriodo({ desde: p.desde, hasta: p.hasta })} aria-pressed={periodoActivo === p.key}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${periodoActivo === p.key ? 'bg-[#121214] text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
+                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${periodoActivo === p.key ? 'bg-carbon-900 text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
                   {p.label}
                 </button>
               ))}
@@ -322,7 +322,7 @@ export default function ReporteIndex({
               )}
 
               {/* Las fechas y el botón de exportar van juntos: el PDF sale con este mismo período */}
-              <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-gris-200 bg-white transition focus-within:border-[#96684F] focus-within:ring-4 focus-within:ring-[#96684F]/15 sm:flex sm:h-11 sm:items-stretch">
+              <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-gris-200 bg-white transition focus-within:border-[color:var(--acento)] focus-within:ring-4 focus-within:ring-[#96684F]/15 sm:flex sm:h-11 sm:items-stretch">
                 <label className="flex min-w-0 flex-col justify-center gap-0.5 px-3 py-2 sm:flex-row sm:items-center sm:gap-2 sm:py-0">
                   <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-gris-400">Desde</span>
                   <input type="date" value={f.desde} max={f.hasta || undefined} className={fechaCls}
@@ -339,7 +339,7 @@ export default function ReporteIndex({
                 </label>
                 {exportarHref ? (
                   <a href={exportarHref} title="Descarga el PDF del período, vendedor y tipo elegidos"
-                    className="col-span-2 flex items-center justify-center gap-2 border-t border-gris-200 bg-[#121214] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1D1D21] sm:border-l sm:border-t-0 sm:py-0">
+                    className="col-span-2 flex items-center justify-center gap-2 border-t border-gris-200 bg-carbon-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-carbon-800 sm:border-l sm:border-t-0 sm:py-0">
                     <Download className="h-4 w-4" /> Exportar PDF
                   </a>
                 ) : (
@@ -390,17 +390,17 @@ export default function ReporteIndex({
         </div>
 
         {/* Detalle */}
-        <section ref={tablaRef} className="scroll-mt-24 overflow-hidden rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section ref={tablaRef} className="scroll-mt-24 overflow-hidden rounded-2xl border border-gris-200 bg-white shadow-sutil">
           <div className="border-b border-gris-100 px-5 py-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
-                  <FileText className="h-[18px] w-[18px] text-[#96684F]" /> Detalle de movimientos
+                  <FileText className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Detalle de movimientos
                 </h2>
                 <span className="text-xs font-semibold text-gris-400">Lo más reciente primero · {periodoTexto}</span>
                 {(cargandoTabla || cargando) && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#96684F]">
-                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#96684F]/25 border-t-[#96684F]" /> Actualizando…
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--acento)]">
+                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[color:var(--acento)]/25 border-t-[#96684F]" /> Actualizando…
                   </span>
                 )}
               </div>
@@ -426,14 +426,14 @@ export default function ReporteIndex({
 
             <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="Tipo de movimiento">
               <button type="button" onClick={() => cambiarTipo('')} aria-pressed={!f.tipo}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${!f.tipo ? 'bg-[#121214] text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${!f.tipo ? 'bg-carbon-900 text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
                 Todos <span className={!f.tipo ? 'text-white/70' : 'text-gris-400'}>{movimientos.toLocaleString('es-BO')}</span>
               </button>
               {TIPOS.map((t) => {
                 const activo = f.tipo === t.key;
                 return (
                   <button key={t.key} type="button" onClick={() => cambiarTipo(t.key)} aria-pressed={activo}
-                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${activo ? 'bg-[#121214] text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${activo ? 'bg-carbon-900 text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
                     <span className="h-2 w-2 rounded-full" style={{ background: t.color }} />
                     {t.label} <span className={activo ? 'text-white/70' : 'text-gris-400'}>{(Number(conteoTipos?.[t.key]) || 0).toLocaleString('es-BO')}</span>
                   </button>
@@ -484,7 +484,7 @@ export default function ReporteIndex({
                             </td>
                             <td className="px-4 py-3">
                               <p className="max-w-[280px] truncate font-semibold text-gris-900" title={r.producto}>{r.producto}</p>
-                              {r.codigo && r.codigo !== '—' && <p className="mt-0.5 font-mono text-xs font-bold text-[#96684F]">{r.codigo}</p>}
+                              {r.codigo && r.codigo !== '—' && <p className="mt-0.5 cifra text-xs font-bold text-[color:var(--acento)]">{r.codigo}</p>}
                             </td>
                             <td className="px-4 py-3"><TipoEtiqueta tipo={r.tipo} /></td>
                             <td className="px-4 py-3 text-gris-600">{r.vendedor || '—'}</td>
@@ -517,8 +517,8 @@ export default function ReporteIndex({
                         </td>
                         <td className="px-4 py-3 text-right font-semibold tabular-nums text-gris-600">{bsFmt(totalesVista.capital)}</td>
                         <td className="px-4 py-3 text-right font-semibold tabular-nums text-rose-600">{rebajasVista > 0 ? `−${bsFmt(rebajasVista)}` : bsFmt(0)}</td>
-                        <td className="px-4 py-3 text-right font-extrabold tabular-nums text-gris-900">{bsFmt(totalesVista.subtotal)}</td>
-                        <td className={`px-5 py-3 text-right font-extrabold tabular-nums ${Number(totalesVista.ganancia) < 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
+                        <td className="px-4 py-3 text-right font-bold tabular-nums text-gris-900">{bsFmt(totalesVista.subtotal)}</td>
+                        <td className={`px-5 py-3 text-right font-bold tabular-nums ${Number(totalesVista.ganancia) < 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
                           {conSigno(Number(totalesVista.ganancia) || 0)}
                         </td>
                       </tr>

@@ -76,14 +76,14 @@ export function TablaStock({ items, tipo }) {
                                 <p className="truncate text-[15px] font-bold text-gris-900">{txt(item[principal.key]) || 'Producto'}</p>
                                 <div className="mt-1"><CondicionBadge condicion={item.condicion} vacio={null} /></div>
                             </div>
-                            {precio && <p className="shrink-0 text-[15px] font-extrabold tabular-nums text-gris-900">{bsFmt(item[precio.key])}</p>}
+                            {precio && <p className="shrink-0 text-[15px] font-bold tabular-nums text-gris-900">{bsFmt(item[precio.key])}</p>}
                         </div>
 
                         <dl className="mt-3 grid grid-cols-2 gap-2">
                             {resto.filter((c) => !c.condicion && txt(item[c.key])).map((c) => (
                                 <div key={c.key} className="min-w-0 rounded-lg bg-gris-50 px-2.5 py-1.5">
                                     <dt className="text-[10px] font-bold uppercase tracking-wide text-gris-400">{c.label}</dt>
-                                    <dd className={`truncate text-[13px] font-semibold text-gris-700 ${c.mono ? 'font-mono text-[11px]' : ''}`}>
+                                    <dd className={`truncate text-[13px] font-semibold text-gris-700 ${c.mono ? 'cifra text-[11px]' : ''}`}>
                                         <Celda item={item} col={c} />
                                     </dd>
                                 </div>
@@ -110,7 +110,7 @@ export function TablaStock({ items, tipo }) {
                             <tr key={item.id} className="transition-colors hover:bg-[rgb(var(--acento-rgb)_/_0.04)]">
                                 {cols.map((c) => (
                                     <td key={c.key} className={`px-4 py-3 align-middle text-gris-700 ${c.centro ? 'text-center' : ''} ${c.precio ? 'text-right' : ''}`}>
-                                        <div className={`min-w-0 truncate ${c.principal ? 'font-semibold text-gris-900' : ''} ${c.mono ? 'font-mono text-[11px]' : ''}`} title={txt(item[c.key])}>
+                                        <div className={`min-w-0 truncate ${c.principal ? 'font-semibold text-gris-900' : ''} ${c.mono ? 'cifra text-[11px]' : ''}`} title={txt(item[c.key])}>
                                             <Celda item={item} col={c} />
                                         </div>
                                     </td>

@@ -62,7 +62,7 @@ export default function Create({ sugerencias = {} }) {
       <PremiumNotice notice={notice} onClose={() => setNotice(null)} />
       <Toast toast={toast} />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <EncabezadoFormulario volverUrl={route('admin.computadoras.index')} volverLabel="Volver a computadoras"
           titulo="Registrar computadora" subtitulo="Carga un equipo al inventario para poder venderlo y cotizarlo." />
 

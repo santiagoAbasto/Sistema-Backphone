@@ -29,7 +29,7 @@ function TarjetaExportar({ icon: Icon, titulo, detalle, href, vacia = false, nue
   const contenido = (
     <>
       <div className="flex items-start gap-3">
-        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${vacia ? 'bg-gris-100 text-gris-400' : 'bg-[#121214]/[0.07] text-[#121214]'}`}>
+        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${vacia ? 'bg-gris-100 text-gris-400' : 'bg-carbon-900/[0.07] text-carbon-900'}`}>
           <Icon className="h-5 w-5" />
         </span>
         <div className="min-w-0">
@@ -37,15 +37,15 @@ function TarjetaExportar({ icon: Icon, titulo, detalle, href, vacia = false, nue
           <p className="mt-0.5 text-[13px] leading-relaxed text-gris-500">{detalle}</p>
         </div>
       </div>
-      <span className={`mt-3 inline-flex items-center gap-1.5 text-xs font-bold ${vacia ? 'text-gris-400' : 'text-[#96684F]'}`}>
+      <span className={`mt-3 inline-flex items-center gap-1.5 text-xs font-bold ${vacia ? 'text-gris-400' : 'text-[color:var(--acento)]'}`}>
         <FileDown className="h-3.5 w-3.5" /> {vacia ? 'Nada para exportar' : 'Abrir el PDF'}
       </span>
     </>
   );
 
   const clase = `block rounded-2xl border p-4 text-left transition-shadow ${vacia
-    ? 'cursor-not-allowed border-gris-200/80 bg-gris-50/60'
-    : 'border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)]'}`;
+    ? 'cursor-not-allowed border-gris-200 bg-gris-50/60'
+    : 'border-gris-200 bg-white shadow-sutil hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)]'}`;
 
   if (vacia) return <div className={clase} aria-disabled="true">{contenido}</div>;
 
@@ -66,7 +66,7 @@ export default function ExportacionesIndex({ subtipos = [], inventarios = [], ti
       <Head title="Exportaciones" />
       <Toast toast={toast} />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <PageHeader
           title="Exportaciones"
           subtitle="El inventario en PDF, listo para imprimir o mandar por WhatsApp a tu equipo. Cada listado trae el costo, el precio de venta y la ganancia esperada."
@@ -111,9 +111,9 @@ export default function ExportacionesIndex({ subtipos = [], inventarios = [], ti
           </Aviso>
         )}
 
-        <section className="rounded-2xl border border-gris-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section className="rounded-2xl border border-gris-200 bg-white p-5 shadow-sutil">
           <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
-            <Boxes className="h-[18px] w-[18px] text-[#96684F]" /> Por inventario
+            <Boxes className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Por inventario
           </h2>
           <p className="mt-0.5 text-[13px] text-gris-500">Todo lo que está disponible hoy, en un solo listado.</p>
 
@@ -141,9 +141,9 @@ export default function ExportacionesIndex({ subtipos = [], inventarios = [], ti
           </div>
         </section>
 
-        <section className="rounded-2xl border border-gris-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section className="rounded-2xl border border-gris-200 bg-white p-5 shadow-sutil">
           <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
-            <Tags className="h-[18px] w-[18px] text-[#96684F]" /> Por tipo de producto general
+            <Tags className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Por tipo de producto general
             <span className="text-sm font-semibold text-gris-400">{subtipos.length}</span>
           </h2>
           <p className="mt-0.5 text-[13px] text-gris-500">

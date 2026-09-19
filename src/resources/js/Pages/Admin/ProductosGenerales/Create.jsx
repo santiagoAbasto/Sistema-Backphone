@@ -66,7 +66,7 @@ export default function Create({ sugerencias = {} }) {
       <PremiumNotice notice={notice} onClose={() => setNotice(null)} />
       <Toast toast={toast} />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <EncabezadoFormulario volverUrl={route('admin.productos-generales.index')} volverLabel="Volver a productos generales"
           titulo="Registrar producto general" subtitulo="Fundas, vidrios, cargadores y accesorios: cada unidad con su código." />
 

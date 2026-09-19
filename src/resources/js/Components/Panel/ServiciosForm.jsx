@@ -153,7 +153,7 @@ export default function ServiciosForm({ tecnicos = [], Layout, prefijo = 'admin'
       <Head title="Nuevo servicio técnico" />
       <PremiumNotice notice={notice} onClose={() => setNotice(null)} />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         {/* Encabezado */}
         <div className="flex items-center gap-3">
           <Link href={route(`${prefijo}.servicios.index`)} aria-label="Volver a servicios"
@@ -161,7 +161,7 @@ export default function ServiciosForm({ tecnicos = [], Layout, prefijo = 'admin'
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-[32px] font-extrabold leading-tight tracking-tight text-[#121214]" style={{ fontFamily: "'Chakra Petch', 'Inter', sans-serif" }}>
+            <h1 className="text-[32px] font-bold leading-tight tracking-tight text-carbon-900" style={{ fontFamily: "'Chakra Petch', 'Inter', sans-serif" }}>
               Nuevo servicio técnico
             </h1>
             <p className="text-sm text-gris-500">Registra la reparación: cliente, equipo, técnico y lo que se cobra.</p>
@@ -227,7 +227,7 @@ export default function ServiciosForm({ tecnicos = [], Layout, prefijo = 'admin'
                     <span className="mr-1 text-xs text-gris-400">Anteriores:</span>
                     {tecnicos.slice(0, 10).map((t) => (
                       <button key={t} type="button" onClick={() => cambiar('tecnico', t)} aria-pressed={data.tecnico === t}
-                        className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition-colors ${data.tecnico === t ? 'bg-[#121214] text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
+                        className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition-colors ${data.tecnico === t ? 'bg-carbon-900 text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
                         <Wrench className="h-3 w-3" /> {t}
                       </button>
                     ))}
@@ -282,7 +282,7 @@ export default function ServiciosForm({ tecnicos = [], Layout, prefijo = 'admin'
               </ul>
 
               <button type="button" onClick={agregarTrabajo}
-                className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-gris-300 text-sm font-semibold text-gris-600 transition-colors hover:border-[color:var(--acento)] hover:bg-[rgb(var(--acento-rgb)_/_0.04)] hover:text-[#121214]">
+                className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-gris-300 text-sm font-semibold text-gris-600 transition-colors hover:border-[color:var(--acento)] hover:bg-[rgb(var(--acento-rgb)_/_0.04)] hover:text-carbon-900">
                 <Plus className="h-4 w-4" /> Agregar otro trabajo
               </button>
               {errores.trabajos && <p className="mt-2 text-xs font-semibold text-rose-600">{errores.trabajos}</p>}
@@ -298,7 +298,7 @@ export default function ServiciosForm({ tecnicos = [], Layout, prefijo = 'admin'
 
           {/* Resumen */}
           <aside className="xl:sticky xl:top-24">
-            <section className="rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <section className="rounded-2xl border border-gris-200 bg-white shadow-sutil">
               <div className="flex items-center justify-between gap-3 border-b border-gris-100 px-5 py-4">
                 <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
                   <Hammer className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Resumen del servicio
@@ -343,9 +343,9 @@ export default function ServiciosForm({ tecnicos = [], Layout, prefijo = 'admin'
                   </dl>
                 )}
 
-                <div className="rounded-xl bg-[#121214] px-4 py-3.5 text-white">
+                <div className="rounded-xl bg-carbon-900 px-4 py-3.5 text-white">
                   <p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/60">El cliente paga</p>
-                  <p className="mt-1 text-[28px] font-extrabold leading-none tracking-tight">{bsFmt(totalCobro)}</p>
+                  <p className="mt-1 text-[28px] font-bold leading-none tracking-tight">{bsFmt(totalCobro)}</p>
                   <p className="mt-1.5 text-xs text-white/60">Es el total que aparece en la nota.</p>
                 </div>
 

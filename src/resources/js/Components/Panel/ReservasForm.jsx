@@ -191,7 +191,7 @@ export default function ReservasForm({ Layout, prefijo = 'admin', guia = null })
       <Head title="Nueva reserva" />
       <PremiumNotice notice={notice} onClose={() => setNotice(null)} />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         {/* Encabezado */}
         <div className="flex items-center gap-3">
           <Link href={route(`${prefijo}.reservas.index`)} aria-label="Volver a reservas"
@@ -199,7 +199,7 @@ export default function ReservasForm({ Layout, prefijo = 'admin', guia = null })
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-[32px] font-extrabold leading-tight tracking-tight text-[#121214]" style={{ fontFamily: "'Chakra Petch', 'Inter', sans-serif" }}>
+            <h1 className="text-[32px] font-bold leading-tight tracking-tight text-carbon-900" style={{ fontFamily: "'Chakra Petch', 'Inter', sans-serif" }}>
               Nueva reserva
             </h1>
             <p className="text-sm text-gris-500">Separa productos con un abono. Al guardar se abre la nota para el cliente.</p>
@@ -312,7 +312,7 @@ export default function ReservasForm({ Layout, prefijo = 'admin', guia = null })
                         {etiquetaTipo(productoSeleccionado.tipo)} · {productoActual.codigo || productoActual.imei_1 || productoActual.numero_serie || 'sin código'}
                       </p>
                     </div>
-                    <p className="text-xl font-extrabold text-gris-900">{bsFmt(productoActual.precio_venta)}</p>
+                    <p className="text-xl font-bold text-gris-900">{bsFmt(productoActual.precio_venta)}</p>
                   </div>
                   <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
                     <Field label="Descuento (Bs)">
@@ -372,7 +372,7 @@ export default function ReservasForm({ Layout, prefijo = 'admin', guia = null })
                     <div className="flex flex-wrap gap-2">
                       {sugerenciasAbono.map((m, i) => (
                         <button key={i} type="button" onClick={() => setData({ ...data, monto_reserva: String(m) })}
-                          className={`h-11 rounded-xl border px-4 text-sm font-semibold transition-colors ${abono === m ? 'border-[#121214] bg-[#121214] text-white' : 'border-gris-200 bg-white text-gris-600 hover:border-gris-300 hover:text-gris-900'}`}>
+                          className={`h-11 rounded-xl border px-4 text-sm font-semibold transition-colors ${abono === m ? 'border-carbon-900 bg-carbon-900 text-white' : 'border-gris-200 bg-white text-gris-600 hover:border-gris-300 hover:text-gris-900'}`}>
                           {[20, 30, 50][i]}% · {bsFmt(m)}
                         </button>
                       ))}
@@ -386,7 +386,7 @@ export default function ReservasForm({ Layout, prefijo = 'admin', guia = null })
                   <span className="text-xs font-semibold uppercase tracking-wide text-gris-600">Condiciones que se imprimen en la nota</span>
                   {data.terminos_condiciones !== TERMINOS && (
                     <button type="button" onClick={() => setData({ ...data, terminos_condiciones: TERMINOS })}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-[color:var(--acento)] hover:text-[#121214]">
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-[color:var(--acento)] hover:text-carbon-900">
                       <RotateCcw className="h-3.5 w-3.5" /> Usar el texto de siempre
                     </button>
                   )}
@@ -398,7 +398,7 @@ export default function ReservasForm({ Layout, prefijo = 'admin', guia = null })
 
           {/* Resumen */}
           <aside className="xl:sticky xl:top-24">
-            <section className="rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <section className="rounded-2xl border border-gris-200 bg-white shadow-sutil">
               <div className="flex items-center justify-between gap-3 border-b border-gris-100 px-5 py-4">
                 <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
                   <CalendarCheck className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Resumen de la reserva
@@ -423,9 +423,9 @@ export default function ReservasForm({ Layout, prefijo = 'admin', guia = null })
                   <div className="flex justify-between gap-3"><dt className="text-gris-500">Abono de hoy</dt><dd className="font-semibold tabular-nums text-emerald-700">−{bsFmt(abono)}</dd></div>
                 </dl>
 
-                <div className="rounded-xl bg-[#121214] px-4 py-3.5 text-white">
+                <div className="rounded-xl bg-carbon-900 px-4 py-3.5 text-white">
                   <p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/60">Saldo al vender</p>
-                  <p className="mt-1 text-[28px] font-extrabold leading-none tracking-tight">{bsFmt(saldo)}</p>
+                  <p className="mt-1 text-[28px] font-bold leading-none tracking-tight">{bsFmt(saldo)}</p>
                   <p className="mt-1.5 text-xs text-white/60">Se descuenta el abono al concretar la venta.</p>
                 </div>
 

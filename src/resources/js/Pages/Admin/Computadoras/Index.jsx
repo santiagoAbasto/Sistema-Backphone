@@ -146,7 +146,7 @@ export default function Index({ computadoras = [], conHistorial = [] }) {
       <Head title="Computadoras" />
       <Toast toast={toast} />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <PageHeader
           title="Computadoras"
           subtitle="Notebooks y computadoras de escritorio: las disponibles van primero."
@@ -188,7 +188,7 @@ export default function Index({ computadoras = [], conHistorial = [] }) {
         )}
 
         {/* Búsqueda y filtros */}
-        <section className="rounded-2xl border border-gris-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section className="rounded-2xl border border-gris-200 bg-white p-4 shadow-sutil">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gris-400" />
@@ -222,10 +222,10 @@ export default function Index({ computadoras = [], conHistorial = [] }) {
         </section>
 
         {/* Listado */}
-        <section ref={tablaRef} className="scroll-mt-24 overflow-hidden rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section ref={tablaRef} className="scroll-mt-24 overflow-hidden rounded-2xl border border-gris-200 bg-white shadow-sutil">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gris-100 px-5 py-4">
             <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
-              <Laptop className="h-[18px] w-[18px] text-[#96684F]" /> Listado de computadoras
+              <Laptop className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Listado de computadoras
             </h2>
             <div className="flex items-center gap-2">
               {visibles.length > 0 && (
@@ -272,17 +272,17 @@ export default function Index({ computadoras = [], conHistorial = [] }) {
                     {visibles.map((c) => {
                       const marcado = sel.seleccion.includes(c.id);
                       return (
-                        <tr key={c.id} className={`transition-colors ${marcado ? 'bg-[#96684F]/[0.06]' : 'hover:bg-gris-50/70'}`}>
+                        <tr key={c.id} className={`transition-colors ${marcado ? 'bg-[rgb(var(--acento-rgb)_/_0.06)]' : 'hover:bg-gris-50/70'}`}>
                           <td className="py-3 pl-5 pr-2">
                             <input type="checkbox" checked={marcado} onChange={() => sel.alternar(c.id)} aria-label={`Seleccionar ${c.nombre}`} className={checkCls} />
                           </td>
                           <td className="px-3 py-3">
                             <div className="flex items-center gap-3">
-                              <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${c.estado === 'vendido' ? 'bg-gris-100 text-gris-400' : 'bg-[#121214]/[0.07] text-[#121214]'}`}>
+                              <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${c.estado === 'vendido' ? 'bg-gris-100 text-gris-400' : 'bg-carbon-900/[0.07] text-carbon-900'}`}>
                                 <Laptop className="h-4 w-4" />
                               </span>
                               <div className="min-w-0">
-                                <Link href={route('admin.computadoras.edit', c.id)} className="block max-w-[280px] truncate font-semibold text-gris-900 hover:text-[#96684F]">
+                                <Link href={route('admin.computadoras.edit', c.id)} className="block max-w-[280px] truncate font-semibold text-gris-900 hover:text-[color:var(--acento)]">
                                   {c.nombre}
                                 </Link>
                                 <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
@@ -292,7 +292,7 @@ export default function Index({ computadoras = [], conHistorial = [] }) {
                               </div>
                             </div>
                           </td>
-                          <td className="px-3 py-3 font-mono text-xs text-gris-800">{c.numero_serie || '—'}</td>
+                          <td className="px-3 py-3 cifra text-xs text-gris-800">{c.numero_serie || '—'}</td>
                           <td className="px-3 py-3"><BateriaMac valor={c.bateria} /></td>
                           <td className="px-3 py-3">
                             <p className="max-w-[170px] truncate text-gris-600" title={c.procedencia}>{c.procedencia || '—'}</p>
@@ -316,7 +316,7 @@ export default function Index({ computadoras = [], conHistorial = [] }) {
                 {visibles.map((c) => {
                   const marcado = sel.seleccion.includes(c.id);
                   return (
-                    <li key={c.id} className={`px-4 py-4 ${marcado ? 'bg-[#96684F]/[0.06]' : ''}`}>
+                    <li key={c.id} className={`px-4 py-4 ${marcado ? 'bg-[rgb(var(--acento-rgb)_/_0.06)]' : ''}`}>
                       <div className="flex items-start gap-3">
                         <input type="checkbox" checked={marcado} onChange={() => sel.alternar(c.id)} aria-label={`Seleccionar ${c.nombre}`} className={`${checkCls} mt-1`} />
                         <div className="min-w-0 flex-1">
@@ -332,7 +332,7 @@ export default function Index({ computadoras = [], conHistorial = [] }) {
                             <PrecioConGanancia costo={c.costo} venta={c.venta} />
                           </div>
                           <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-gris-500">
-                            <span className="font-mono text-gris-700">{c.numero_serie}</span>
+                            <span className="cifra text-gris-700">{c.numero_serie}</span>
                             <BateriaMac valor={c.bateria} />
                             {c.procedencia && <span className="max-w-[200px] truncate">{c.procedencia}</span>}
                           </div>

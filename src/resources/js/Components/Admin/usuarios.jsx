@@ -12,7 +12,7 @@ export function iniciales(nombre = '') {
 export function ListaPermisos({ permisos = [], catalogo = [], max = 4, panelPropio = false }) {
   if (permisos.includes('*')) {
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#96684F]">
+      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[color:var(--acento)]">
         <ShieldCheck className="h-3.5 w-3.5" /> Todo el panel
       </span>
     );
@@ -60,8 +60,8 @@ export function SelectorPermisos({ catalogo = [], valor = [], onChange, bloquead
 
   if (bloqueado) {
     return (
-      <p className="flex items-start gap-2 rounded-xl bg-[#96684F]/[0.06] px-3.5 py-3 text-[13px] leading-relaxed text-gris-600">
-        <Lock className="mt-0.5 h-4 w-4 shrink-0 text-[#96684F]" />
+      <p className="flex items-start gap-2 rounded-xl bg-[rgb(var(--acento-rgb)_/_0.06)] px-3.5 py-3 text-[13px] leading-relaxed text-gris-600">
+        <Lock className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--acento)]" />
         El administrador entra a todo el panel, siempre. Es la única forma de que nadie quede afuera de la
         los datos del negocio.
       </p>
@@ -83,7 +83,7 @@ export function SelectorPermisos({ catalogo = [], valor = [], onChange, bloquead
           <div className="flex items-center justify-between gap-3 border-b border-gris-100 px-3.5 py-2">
             <p className="text-xs font-bold uppercase tracking-wide text-gris-500">{grupo}</p>
             <button type="button" onClick={() => alternarGrupo(modulos)}
-              className="text-xs font-semibold text-[#96684F] hover:underline">
+              className="text-xs font-semibold text-[color:var(--acento)] hover:underline">
               {grupoCompleto(modulos) ? 'Quitar todo' : 'Marcar todo'}
             </button>
           </div>
@@ -92,8 +92,8 @@ export function SelectorPermisos({ catalogo = [], valor = [], onChange, bloquead
               const activo = marcados.has(m.clave);
               return (
                 <label key={m.clave}
-                  className={`flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition-colors ${activo ? 'bg-[#96684F]/[0.08] font-semibold text-gris-900' : 'text-gris-600 hover:bg-gris-50'}`}>
-                  <span className={`grid h-4 w-4 shrink-0 place-items-center rounded border ${activo ? 'border-[#96684F] bg-[#96684F] text-white' : 'border-gris-300 bg-white'}`}>
+                  className={`flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition-colors ${activo ? 'bg-[rgb(var(--acento-rgb)_/_0.08)] font-semibold text-gris-900' : 'text-gris-600 hover:bg-gris-50'}`}>
+                  <span className={`grid h-4 w-4 shrink-0 place-items-center rounded border ${activo ? 'border-[color:var(--acento)] bg-[color:var(--acento)] text-white' : 'border-gris-300 bg-white'}`}>
                     {activo && <Check className="h-3 w-3" />}
                   </span>
                   <input type="checkbox" className="sr-only" checked={activo} onChange={() => alternar(m.clave)} />

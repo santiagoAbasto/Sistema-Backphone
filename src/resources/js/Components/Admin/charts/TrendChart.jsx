@@ -287,7 +287,7 @@ export default function TrendChart({ serie, totales = {}, rango, cargando = fals
             {/* Encabezado */}
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#96684F]/10 text-[#96684F]">
+                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-[rgb(var(--acento-rgb)_/_0.1)] text-[color:var(--acento)]">
                         <ChartLine className="h-5 w-5" />
                     </span>
                     <div>
@@ -331,7 +331,7 @@ export default function TrendChart({ serie, totales = {}, rango, cargando = fals
 
             {/* Cifra del período */}
             <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2">
-                <p className="text-[34px] font-extrabold leading-none tracking-tight text-gris-900 sm:text-[38px]">
+                <p className="text-[34px] font-bold leading-none tracking-tight text-gris-900 sm:text-[38px]">
                     {heroValor < 0 ? `−${bs(Math.abs(heroValor))}` : bs(heroValor)}
                 </p>
                 <span className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-bold" style={{ background: deltaTono.bg, color: deltaTono.fg }}>
@@ -430,7 +430,7 @@ export default function TrendChart({ serie, totales = {}, rango, cargando = fals
                             onKeyDown={onKey}
                             onFocus={() => setActivo((a) => a ?? ultimo)}
                             onBlur={() => setActivo(null)}
-                            className="relative rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#96684F]/40"
+                            className="relative rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--acento-rgb)_/_0.4)]"
                             style={{ height: H }}
                         >
                             {geo && (

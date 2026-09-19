@@ -111,7 +111,7 @@ export default function ModalPermutaComponent({ show, onClose, tipo, onGuardar }
     <Transition.Root show={show} as={Fragment}>
       <Dialog as="div" className="relative z-[1060]" onClose={onClose}>
         <Transition.Child as={Fragment} enter="ease-out duration-200" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-150" leaveFrom="opacity-100" leaveTo="opacity-0">
-          <div className="fixed inset-0 bg-[#121214]/40 backdrop-blur-[2px]" />
+          <div className="fixed inset-0 bg-carbon-950/50 backdrop-blur-[2px]" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -120,7 +120,7 @@ export default function ModalPermutaComponent({ show, onClose, tipo, onGuardar }
               <Dialog.Panel className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white text-left shadow-2xl" style={{ fontFamily: "var(--fuente-texto)" }}>
                 <div className="flex items-start justify-between gap-4 border-b border-gris-100 px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#96684F]/10 text-[#96684F]"><Repeat className="h-5 w-5" /></span>
+                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-[rgb(var(--acento-rgb)_/_0.1)] text-[color:var(--acento)]"><Repeat className="h-5 w-5" /></span>
                     <div>
                       <Dialog.Title className="text-base font-bold text-gris-900">Equipo que entrega el cliente</Dialog.Title>
                       <p className="text-[13px] text-gris-500">Tipo: {TITULOS[tipo] ?? '—'} · entra al inventario como permuta</p>
@@ -168,7 +168,7 @@ export default function ModalPermutaComponent({ show, onClose, tipo, onGuardar }
                     Cancelar
                   </button>
                   <button type="button" onClick={handleGuardar}
-                    className="inline-flex items-center rounded-xl bg-[#121214] px-5 py-2 text-sm font-semibold text-white shadow-[0_8px_18px_-10px_rgba(10, 10, 11,0.6)] hover:bg-[#1D1D21]">
+                    className="inline-flex items-center rounded-xl bg-carbon-900 px-5 py-2 text-sm font-semibold text-white shadow-[0_8px_18px_-10px_rgba(10,10,11,0.6)] hover:bg-carbon-800">
                     Guardar equipo
                   </button>
                 </div>

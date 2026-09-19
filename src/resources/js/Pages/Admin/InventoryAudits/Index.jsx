@@ -177,7 +177,7 @@ export default function Index({ audit: auditInicial, history = [] }) {
       <Head title="Auditoría de inventario" />
       <Toast toast={toast} />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <PageHeader
           title="Auditoría de inventario"
           subtitle="Conteo físico: al iniciar se guarda una foto de todo lo disponible y luego escaneas cada unidad. No modifica el inventario."
@@ -185,7 +185,7 @@ export default function Index({ audit: auditInicial, history = [] }) {
         />
 
         {!audit ? (
-          <section className="rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <section className="rounded-2xl border border-gris-200 bg-white shadow-sutil">
             <EmptyState icon={ClipboardCheck} title="Todavía no hay auditorías"
               text="Inicia el conteo para guardar la lista de celulares, computadoras, equipos de marca y accesorios disponibles."
               action={<button type="button" onClick={() => setConfirmar('iniciar')} className={buttonCls('primary')}><Play className="h-4 w-4" /> Iniciar auditoría</button>} />
@@ -204,7 +204,7 @@ export default function Index({ audit: auditInicial, history = [] }) {
             </div>
 
             {abierta ? (
-              <section className="rounded-2xl bg-[#121214] p-5 text-white shadow-[0_18px_40px_-24px_rgba(10, 10, 11,0.8)] sm:p-6">
+              <section className="rounded-2xl bg-carbon-900 p-5 text-white shadow-[0_18px_40px_-24px_rgba(10, 10, 11,0.8)] sm:p-6">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                   <div className="min-w-0 lg:max-w-sm">
                     <h2 className="flex items-center gap-2 text-lg font-bold"><ScanLine className="h-5 w-5" /> Escanear producto</h2>
@@ -218,7 +218,7 @@ export default function Index({ audit: auditInicial, history = [] }) {
                     <label htmlFor="codigo-auditoria" className="sr-only">Código del producto</label>
                     <input ref={inputRef} id="codigo-auditoria" value={codigo} onChange={(e) => setCodigo(e.target.value)} autoComplete="off"
                       placeholder="Escanea o escribe el código"
-                      className="h-12 flex-1 rounded-xl border-0 bg-white px-4 font-mono text-base text-gris-900 placeholder:font-sans placeholder:text-gris-400 focus:outline-none focus:ring-4 focus:ring-white/30" />
+                      className="h-12 flex-1 rounded-xl border-0 bg-white px-4 cifra text-base text-gris-900 placeholder:font-sans placeholder:text-gris-400 focus:outline-none focus:ring-4 focus:ring-white/30" />
                     <button type="submit" disabled={!codigo.trim() || escaneando}
                       className="h-12 rounded-xl bg-emerald-500 px-6 text-sm font-bold text-white transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-white/20">
                       {escaneando ? 'Verificando…' : 'Confirmar'}
@@ -227,7 +227,7 @@ export default function Index({ audit: auditInicial, history = [] }) {
                 </div>
               </section>
             ) : (
-              <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gris-200/80 bg-white px-5 py-3.5 text-sm text-gris-700">
+              <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gris-200 bg-white px-5 py-3.5 text-sm text-gris-700">
                 <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
                 <p className="flex-1">
                   <span className="font-bold">Auditoría finalizada</span>
@@ -240,7 +240,7 @@ export default function Index({ audit: auditInicial, history = [] }) {
             {aviso && <AvisoEscaneo aviso={aviso} onCerrar={() => setAviso(null)} />}
 
             {/* Búsqueda y filtros */}
-            <section className="rounded-2xl border border-gris-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <section className="rounded-2xl border border-gris-200 bg-white p-4 shadow-sutil">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
                 <div className="relative flex-1">
                   <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gris-400" />
@@ -262,10 +262,10 @@ export default function Index({ audit: auditInicial, history = [] }) {
             </section>
 
             {/* Resultado */}
-            <section ref={tablaRef} className="scroll-mt-24 overflow-hidden rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <section ref={tablaRef} className="scroll-mt-24 overflow-hidden rounded-2xl border border-gris-200 bg-white shadow-sutil">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gris-100 px-5 py-4">
                 <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
-                  <PackageSearch className="h-[18px] w-[18px] text-[#96684F]" /> Resultado del conteo
+                  <PackageSearch className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Resultado del conteo
                 </h2>
                 {hayFiltros && (
                   <button type="button" onClick={() => { setTexto(''); setCategoria('todas'); }} className={buttonCls('ghost', 'h-8 px-2.5 text-xs')}>
@@ -299,7 +299,7 @@ export default function Index({ audit: auditInicial, history = [] }) {
                                 {[CATEGORIAS[item.category], ...(item.details ?? []).map(bonito)].filter(Boolean).join(' · ')}
                               </p>
                             </td>
-                            <td className="px-3 py-3 font-mono text-xs">
+                            <td className="px-3 py-3 cifra text-xs">
                               <p className="text-gris-800">{item.primary_code || 'Sin código'}</p>
                               {item.secondary_code && <p className="text-gris-400">{item.secondary_code}</p>}
                               {item.tertiary_code && <p className="text-gris-400">{item.tertiary_code}</p>}
@@ -325,7 +325,7 @@ export default function Index({ audit: auditInicial, history = [] }) {
                         <p className="mt-1.5 truncate text-[15px] font-bold text-gris-900">{bonito(item.name) || 'Sin nombre'}</p>
                         <p className="truncate text-xs text-gris-500">{(item.details ?? []).map(bonito).join(' · ')}</p>
                         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gris-500">
-                          <span className="font-mono text-gris-700">{item.primary_code || 'Sin código'}</span>
+                          <span className="cifra text-gris-700">{item.primary_code || 'Sin código'}</span>
                           {item.scanned_by && <span>{item.scanned_by} · {horaCorta(item.scanned_at)}</span>}
                         </div>
                       </li>
@@ -389,7 +389,7 @@ function AvisoEscaneo({ aviso, onCerrar }) {
       <div className="min-w-0 flex-1">
         <p className="font-bold">{aviso.mensaje}</p>
         {aviso.item && (
-          <p className="mt-0.5 truncate">{bonito(aviso.item.name)} · <span className="font-mono">{aviso.item.primary_code || aviso.item.secondary_code}</span></p>
+          <p className="mt-0.5 truncate">{bonito(aviso.item.name)} · <span className="cifra">{aviso.item.primary_code || aviso.item.secondary_code}</span></p>
         )}
       </div>
       <button type="button" onClick={onCerrar} aria-label="Cerrar aviso" className="grid h-7 w-7 place-items-center rounded-lg opacity-60 hover:opacity-100">
@@ -401,10 +401,10 @@ function AvisoEscaneo({ aviso, onCerrar }) {
 
 function Historial({ history }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <section className="overflow-hidden rounded-2xl border border-gris-200 bg-white shadow-sutil">
       <div className="border-b border-gris-100 px-5 py-4">
         <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
-          <History className="h-[18px] w-[18px] text-[#96684F]" /> Auditorías anteriores
+          <History className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Auditorías anteriores
         </h2>
       </div>
       <div className="overflow-x-auto">

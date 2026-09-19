@@ -31,22 +31,22 @@ const primerNombre = (nombre) => {
   return p && p === p.toUpperCase() ? p.charAt(0) + p.slice(1).toLowerCase() : p;
 };
 const personalizar = (plantilla, c) => plantilla.replaceAll('{nombre}', primerNombre(c.nombre)).trim();
-const checkCls = 'h-4 w-4 cursor-pointer rounded border-gris-300 text-[#121214] focus:ring-2 focus:ring-[rgb(var(--acento-rgb)_/_0.3)] focus:ring-offset-0';
+const checkCls = 'h-4 w-4 cursor-pointer rounded border-gris-300 text-carbon-900 focus:ring-2 focus:ring-[rgb(var(--acento-rgb)_/_0.3)] focus:ring-offset-0';
 
 function Stat({ icon: Icon, label, value, hint, tone = 'navy' }) {
   const tones = {
-    navy: 'bg-[#121214]/[0.07] text-[#121214]',
+    navy: 'bg-carbon-900/[0.07] text-carbon-900',
     emerald: 'bg-emerald-50 text-emerald-700',
     lila: 'bg-[rgb(var(--acento-rgb)_/_0.1)] text-[color:var(--acento)]',
     amber: 'bg-amber-50 text-amber-700',
   };
   return (
-    <div className="rounded-2xl border border-gris-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <div className="rounded-2xl border border-gris-200 bg-white p-5 shadow-sutil">
       <div className="flex items-center gap-3">
         <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${tones[tone]}`}><Icon className="h-5 w-5" /></span>
         <p className="text-[13px] font-semibold text-gris-500">{label}</p>
       </div>
-      <p className="mt-4 text-[24px] font-extrabold leading-none tracking-tight text-gris-900">{value}</p>
+      <p className="mt-4 text-[24px] font-bold leading-none tracking-tight text-gris-900">{value}</p>
       {hint && <p className="mt-2 truncate text-xs text-gris-400">{hint}</p>}
     </div>
   );
@@ -66,7 +66,7 @@ function Acciones({ c, prefijo }) {
         </span>
       )}
       <Link href={route(`${prefijo}.clientes.edit`, c.id)}
-        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-gris-200 bg-white px-2.5 text-xs font-semibold text-gris-600 transition-colors hover:border-[#121214] hover:bg-[#121214] hover:text-white">
+        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-gris-200 bg-white px-2.5 text-xs font-semibold text-gris-600 transition-colors hover:border-carbon-900 hover:bg-carbon-900 hover:text-white">
         <Pencil className="h-3.5 w-3.5" /> Editar
       </Link>
     </div>
@@ -246,7 +246,7 @@ export default function ClientesIndex({ clientes = [], Layout, prefijo = 'admin'
       <Head title="Clientes" />
       <Toast toast={toast} />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <PageHeader
           title={titulo ?? 'Clientes'}
           subtitle={subtitulo ?? 'Se registran solos al vender, reservar, cotizar o recibir un servicio técnico. Desde aquí corriges sus datos o les envías una promoción.'}
@@ -270,7 +270,7 @@ export default function ClientesIndex({ clientes = [], Layout, prefijo = 'admin'
         </div>
 
         {/* Búsqueda y filtros */}
-        <section className="rounded-2xl border border-gris-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section className="rounded-2xl border border-gris-200 bg-white p-4 shadow-sutil">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gris-400" />
@@ -299,7 +299,7 @@ export default function ClientesIndex({ clientes = [], Layout, prefijo = 'admin'
           <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="Filtrar clientes">
             {FILTROS.map((fx) => (
               <button key={fx.key} type="button" onClick={() => setFiltro(fx.key)} aria-pressed={filtro === fx.key}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${filtro === fx.key ? 'bg-[#121214] text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${filtro === fx.key ? 'bg-carbon-900 text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
                 {fx.label} <span className={filtro === fx.key ? 'text-white/70' : 'text-gris-400'}>{conteo[fx.key].toLocaleString('es-BO')}</span>
               </button>
             ))}
@@ -307,7 +307,7 @@ export default function ClientesIndex({ clientes = [], Layout, prefijo = 'admin'
         </section>
 
         {/* Listado */}
-        <section ref={tablaRef} className="scroll-mt-24 overflow-hidden rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section ref={tablaRef} className="scroll-mt-24 overflow-hidden rounded-2xl border border-gris-200 bg-white shadow-sutil">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gris-100 px-5 py-4">
             <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
               <Users className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Listado de clientes
@@ -359,7 +359,7 @@ export default function ClientesIndex({ clientes = [], Layout, prefijo = 'admin'
                           </td>
                           <td className="px-3 py-3">
                             <div className="flex items-center gap-3">
-                              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#121214]/[0.07] text-xs font-bold text-[#121214]">{iniciales(c.nombre)}</span>
+                              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-carbon-900/[0.07] text-xs font-bold text-carbon-900">{iniciales(c.nombre)}</span>
                               <div className="min-w-0">
                                 <p className="max-w-[260px] truncate font-semibold text-gris-900">{c.nombre}</p>
                                 <p className="text-xs text-gris-400">Desde {fechaCorta(c.created_at)}</p>
@@ -411,7 +411,7 @@ export default function ClientesIndex({ clientes = [], Layout, prefijo = 'admin'
         {/* Acciones con los seleccionados */}
         {seleccion.length > 0 && (
           <div className="sticky bottom-4 z-30">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl bg-[#121214] px-5 py-3 text-white shadow-[0_18px_40px_-18px_rgba(10, 10, 11,0.8)]">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl bg-carbon-900 px-5 py-3 text-white shadow-[0_18px_40px_-18px_rgba(10, 10, 11,0.8)]">
               <p className="text-sm font-bold">
                 {seleccion.length} {seleccion.length === 1 ? 'seleccionado' : 'seleccionados'}
                 <span className="font-normal text-white/70"> · {seleccionConWhatsapp} con WhatsApp</span>

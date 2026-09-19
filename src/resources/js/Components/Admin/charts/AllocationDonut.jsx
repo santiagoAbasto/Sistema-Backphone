@@ -133,7 +133,7 @@ export default function AllocationDonut({ distribucion = [], total = 0, serie, c
         <ChartCard cargando={cargando}>
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#96684F]/10 text-[#96684F]">
+                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-[rgb(var(--acento-rgb)_/_0.1)] text-[color:var(--acento)]">
                         <PieChart className="h-5 w-5" />
                     </span>
                     <div>
@@ -239,13 +239,13 @@ export default function AllocationDonut({ distribucion = [], total = 0, serie, c
                                 {sel ? (
                                     <motion.div key={sel.label} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }}>
                                         <p className="truncate text-[11px] font-semibold text-gris-500">{sel.label}</p>
-                                        <p className="mt-0.5 text-[20px] font-extrabold leading-tight text-gris-900">{bs(sel.valor, 0)}</p>
+                                        <p className="mt-0.5 text-[20px] font-bold leading-tight text-gris-900">{bs(sel.valor, 0)}</p>
                                         <p className="text-xs font-bold text-gris-600">{porcentaje.format(sel.frac)}</p>
                                     </motion.div>
                                 ) : (
                                     <div>
                                         <p className="text-[11px] font-semibold text-gris-500">Ganancia neta</p>
-                                        <p className="mt-0.5 text-[21px] font-extrabold leading-tight text-gris-900">
+                                        <p className="mt-0.5 text-[21px] font-bold leading-tight text-gris-900">
                                             {totalAnim < 0 ? `−${bs(Math.abs(totalAnim), 0)}` : bs(totalAnim, 0)}
                                         </p>
                                         <p className="text-[11px] text-gris-500">del período</p>
@@ -273,7 +273,7 @@ export default function AllocationDonut({ distribucion = [], total = 0, serie, c
                                         onMouseEnter={() => setFoco(s.label)} onMouseLeave={() => setFoco(null)}
                                         onFocus={() => setFoco(s.label)} onBlur={() => setFoco(null)}
                                         aria-label={`${s.label}: ${bs(s.valor, 0)}, ${porcentaje.format(s.frac)} de la ganancia`}
-                                        className={`grid grid-cols-[minmax(0,1fr)_44px_92px] items-center gap-3 rounded-xl px-3 py-2 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#96684F]/30 sm:grid-cols-[minmax(0,1fr)_84px_44px_92px] ${activo ? 'bg-gris-50' : ''}`}>
+                                        className={`grid grid-cols-[minmax(0,1fr)_44px_92px] items-center gap-3 rounded-xl px-3 py-2 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[rgb(var(--acento-rgb)_/_0.3)] sm:grid-cols-[minmax(0,1fr)_84px_44px_92px] ${activo ? 'bg-gris-50' : ''}`}>
                                         <div className="flex min-w-0 items-center gap-3">
                                             <span className="h-8 w-1 shrink-0 rounded-full" style={{ background: s.color }} />
                                             <div className="min-w-0 flex-1">

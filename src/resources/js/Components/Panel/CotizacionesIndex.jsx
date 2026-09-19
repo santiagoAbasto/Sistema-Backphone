@@ -19,7 +19,7 @@ const fechaCorta = (iso) => (iso
   : '—');
 const whatsappValido = (tel) => String(tel ?? '').replace(/\D/g, '').length >= 8;
 const nombreItem = (item) => item?.nombre || item?.modelo || 'Producto';
-const checkCls = 'h-4 w-4 cursor-pointer rounded border-gris-300 text-[#121214] focus:ring-2 focus:ring-[rgb(var(--acento-rgb)_/_0.3)] focus:ring-offset-0';
+const checkCls = 'h-4 w-4 cursor-pointer rounded border-gris-300 text-carbon-900 focus:ring-2 focus:ring-[rgb(var(--acento-rgb)_/_0.3)] focus:ring-offset-0';
 
 const PERIODOS = [
   { key: 'todo', label: 'Todo' },
@@ -38,18 +38,18 @@ function rangoDe(periodo) {
 
 function Stat({ icon: Icon, label, value, hint, tone = 'navy' }) {
   const tones = {
-    navy: 'bg-[#121214]/[0.07] text-[#121214]',
+    navy: 'bg-carbon-900/[0.07] text-carbon-900',
     lila: 'bg-[rgb(var(--acento-rgb)_/_0.1)] text-[color:var(--acento)]',
     amber: 'bg-amber-50 text-amber-700',
     emerald: 'bg-emerald-50 text-emerald-700',
   };
   return (
-    <div className="rounded-2xl border border-gris-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <div className="rounded-2xl border border-gris-200 bg-white p-5 shadow-sutil">
       <div className="flex items-center gap-3">
         <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${tones[tone]}`}><Icon className="h-5 w-5" /></span>
         <p className="text-[13px] font-semibold text-gris-500">{label}</p>
       </div>
-      <p className="mt-4 text-[24px] font-extrabold leading-none tracking-tight text-gris-900">{value}</p>
+      <p className="mt-4 text-[24px] font-bold leading-none tracking-tight text-gris-900">{value}</p>
       {hint && <p className="mt-2 truncate text-xs text-gris-400">{hint}</p>}
     </div>
   );
@@ -63,7 +63,7 @@ function Chips({ label, icon: Icon, options, value, onChange }) {
       </span>
       {options.map((o) => (
         <button key={o.key} type="button" onClick={() => onChange(o.key)} aria-pressed={value === o.key}
-          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${value === o.key ? 'bg-[#121214] text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
+          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${value === o.key ? 'bg-carbon-900 text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
           {o.label}
           {o.n !== undefined && <span className={value === o.key ? 'text-white/70' : 'text-gris-400'}>{o.n}</span>}
         </button>
@@ -109,7 +109,7 @@ function Acciones({ c, onReenviar, prefijo }) {
       )}
       {c.correo_cliente && (
         <button type="button" onClick={() => onReenviar(c)} title={`Reenviar a ${c.correo_cliente}`} aria-label={`Reenviar ${numeroCotizacion(c.id)} por correo`}
-          className="grid h-8 w-8 place-items-center rounded-lg border border-gris-200 bg-white text-gris-600 transition-colors hover:border-[#121214] hover:bg-[#121214] hover:text-white">
+          className="grid h-8 w-8 place-items-center rounded-lg border border-gris-200 bg-white text-gris-600 transition-colors hover:border-carbon-900 hover:bg-carbon-900 hover:text-white">
           <Mail className="h-3.5 w-3.5" />
         </button>
       )}
@@ -206,7 +206,7 @@ export default function CotizacionesIndex({ cotizaciones = [], Layout, prefijo =
       <Head title="Cotizaciones" />
       <Toast toast={toast} />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <PageHeader
           title={titulo ?? 'Cotizaciones'}
           subtitle={subtitulo ?? 'Propuestas de precio para clientes. Desde aquí ves el PDF, lo compartes por WhatsApp o lo reenvías por correo.'}
@@ -228,7 +228,7 @@ export default function CotizacionesIndex({ cotizaciones = [], Layout, prefijo =
         </div>
 
         {/* Búsqueda y filtros */}
-        <section className="rounded-2xl border border-gris-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section className="rounded-2xl border border-gris-200 bg-white p-4 shadow-sutil">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gris-400" />
@@ -262,7 +262,7 @@ export default function CotizacionesIndex({ cotizaciones = [], Layout, prefijo =
         </section>
 
         {/* Listado */}
-        <section className="overflow-hidden rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section className="overflow-hidden rounded-2xl border border-gris-200 bg-white shadow-sutil">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gris-100 px-5 py-4">
             <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
               <Receipt className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Detalle de cotizaciones
@@ -316,7 +316,7 @@ export default function CotizacionesIndex({ cotizaciones = [], Layout, prefijo =
                             <input type="checkbox" checked={marcada} onChange={() => alternar(c.id)} aria-label={`Seleccionar ${numeroCotizacion(c.id)}`} className={checkCls} />
                           </td>
                           <td className="px-3 py-3">
-                            <p className="font-mono text-[13px] font-bold text-[color:var(--acento)]">{numeroCotizacion(c.id)}</p>
+                            <p className="cifra text-[13px] font-bold text-[color:var(--acento)]">{numeroCotizacion(c.id)}</p>
                             <p className="mt-0.5 whitespace-nowrap text-xs text-gris-400">
                               {fechaCorta(c.fecha_cotizacion || c.created_at)}
                               {creadores.length > 1 && c.usuario?.name ? ` · ${c.usuario.name}` : ''}
@@ -349,7 +349,7 @@ export default function CotizacionesIndex({ cotizaciones = [], Layout, prefijo =
                       <td className="px-5 py-3 font-bold text-gris-900" colSpan={4}>
                         Total {hayFiltros ? 'filtrado' : 'general'} · {filtradas.length.toLocaleString('es-BO')} {filtradas.length === 1 ? 'cotización' : 'cotizaciones'}
                       </td>
-                      <td className="px-4 py-3 text-right font-extrabold tabular-nums text-gris-900">{bsFmt(totalCon)}</td>
+                      <td className="px-4 py-3 text-right font-bold tabular-nums text-gris-900">{bsFmt(totalCon)}</td>
                       <td className="px-4 py-3 text-right font-semibold tabular-nums text-gris-600">{bsFmt(totalSin)}</td>
                       <td colSpan={2} />
                     </tr>
@@ -367,7 +367,7 @@ export default function CotizacionesIndex({ cotizaciones = [], Layout, prefijo =
                         <input type="checkbox" checked={marcada} onChange={() => alternar(c.id)} aria-label={`Seleccionar ${numeroCotizacion(c.id)}`} className={`${checkCls} mt-1`} />
                         <div className="min-w-0 flex-1">
                           <p className="truncate font-semibold text-gris-900">{c.nombre_cliente}</p>
-                          <p className="font-mono text-xs font-bold text-[color:var(--acento)]">
+                          <p className="cifra text-xs font-bold text-[color:var(--acento)]">
                             {numeroCotizacion(c.id)} <span className="font-sans font-normal text-gris-400">· {fechaCorta(c.fecha_cotizacion || c.created_at)}</span>
                           </p>
                         </div>
@@ -401,7 +401,7 @@ export default function CotizacionesIndex({ cotizaciones = [], Layout, prefijo =
         {/* Acciones con las marcadas */}
         {seleccionadas.length > 0 && (
           <div className="sticky bottom-4 z-30">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl bg-[#121214] px-5 py-3 text-white shadow-[0_18px_40px_-18px_rgba(10, 10, 11,0.8)]">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl bg-carbon-900 px-5 py-3 text-white shadow-[0_18px_40px_-18px_rgba(10, 10, 11,0.8)]">
               <p className="text-sm font-bold">
                 {seleccionadas.length} {seleccionadas.length === 1 ? 'seleccionada' : 'seleccionadas'}
               </p>
@@ -439,7 +439,7 @@ export default function CotizacionesIndex({ cotizaciones = [], Layout, prefijo =
           <p className="text-sm text-gris-600">Se vuelve a enviar el PDF de la cotización a este correo:</p>
           <div className="mt-4 rounded-xl border border-gris-200 bg-gris-50 px-4 py-3 text-sm">
             <p className="font-semibold text-gris-900">
-              {reenviar.nombre_cliente} <span className="font-mono text-[color:var(--acento)]">· {numeroCotizacion(reenviar.id)}</span>
+              {reenviar.nombre_cliente} <span className="cifra text-[color:var(--acento)]">· {numeroCotizacion(reenviar.id)}</span>
             </p>
             <p className="mt-0.5 text-gris-500">{reenviar.correo_cliente}</p>
           </div>

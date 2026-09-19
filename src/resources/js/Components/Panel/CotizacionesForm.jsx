@@ -91,7 +91,7 @@ function NotasPrevia({ texto: t }) {
         }
         const unido = lineas.join(' ').trim();
         if (/^\*\*[^*]+\*\*$/.test(unido)) {
-          return <p key={i} className="font-bold text-[#121214]">{unido.slice(2, -2)}</p>;
+          return <p key={i} className="font-bold text-carbon-900">{unido.slice(2, -2)}</p>;
         }
         return <p key={i}><Negritas texto={unido} /></p>;
       })}
@@ -334,7 +334,7 @@ export default function CotizacionesForm({
       <Head title="Nueva cotización" />
       <PremiumNotice notice={notice} onClose={() => setNotice(null)} />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         {/* Encabezado */}
         <div className="flex items-center gap-3">
           <Link href={route(`${prefijo}.cotizaciones.index`)} aria-label="Volver a cotizaciones"
@@ -342,7 +342,7 @@ export default function CotizacionesForm({
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-[32px] font-extrabold leading-tight tracking-tight text-[#121214]" style={{ fontFamily: "'Chakra Petch', 'Inter', sans-serif" }}>
+            <h1 className="text-[32px] font-bold leading-tight tracking-tight text-carbon-900" style={{ fontFamily: "'Chakra Petch', 'Inter', sans-serif" }}>
               Nueva cotización
             </h1>
             <p className="text-sm text-gris-500">Arma la propuesta para el cliente. Al guardar se genera el PDF con el total con y sin factura.</p>
@@ -449,7 +449,7 @@ export default function CotizacionesForm({
               <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-gris-500">
                 <span>{disponibles.toLocaleString('es-BO')} disponibles en {etiqueta.toLowerCase()}</span>
                 <button type="button" onClick={agregarExterno}
-                  className="inline-flex items-center gap-1.5 font-semibold text-[color:var(--acento)] transition-colors hover:text-[#121214]">
+                  className="inline-flex items-center gap-1.5 font-semibold text-[color:var(--acento)] transition-colors hover:text-carbon-900">
                   <PencilLine className="h-3.5 w-3.5" /> Agregar producto externo
                 </button>
               </div>
@@ -500,7 +500,7 @@ export default function CotizacionesForm({
                             </label>
                             <div className="text-right">
                               <span className={labelCls}>Con factura</span>
-                              <p className="mt-1 text-lg font-extrabold leading-tight tabular-nums text-gris-900">{bsFmt(i.calc.total)}</p>
+                              <p className="mt-1 text-lg font-bold leading-tight tabular-nums text-gris-900">{bsFmt(i.calc.total)}</p>
                               <p className="text-[11px] tabular-nums text-gris-400">Sin factura {bsFmt(i.calc.neto)}</p>
                             </div>
                           </div>
@@ -535,7 +535,7 @@ export default function CotizacionesForm({
 
           {/* Resumen */}
           <aside className="xl:sticky xl:top-24">
-            <section className="rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <section className="rounded-2xl border border-gris-200 bg-white shadow-sutil">
               <div className="flex items-center justify-between gap-3 border-b border-gris-100 px-5 py-4">
                 <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
                   <FileText className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Resumen
@@ -559,9 +559,9 @@ export default function CotizacionesForm({
                   <Importe label="IT 3 %" valor={bsFmt(totales.it)} />
                 </dl>
 
-                <div className="rounded-xl bg-[#121214] px-4 py-3.5 text-white">
+                <div className="rounded-xl bg-carbon-900 px-4 py-3.5 text-white">
                   <p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/60">Importe neto con factura</p>
-                  <p className="mt-1 text-[28px] font-extrabold leading-none tracking-tight tabular-nums">{bsFmt(totales.conFactura)}</p>
+                  <p className="mt-1 text-[28px] font-bold leading-none tracking-tight tabular-nums">{bsFmt(totales.conFactura)}</p>
                   <p className="mt-1.5 text-xs text-white/60">Es el total que ve el cliente en el PDF.</p>
                 </div>
 

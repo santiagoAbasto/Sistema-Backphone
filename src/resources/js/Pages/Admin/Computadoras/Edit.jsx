@@ -72,7 +72,7 @@ export default function Edit({ computadora, historial = [], bloqueo = null, suge
       <PremiumNotice notice={notice} onClose={() => setNotice(null)} />
       <Toast toast={toast} />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <EncabezadoFormulario volverUrl={route('admin.computadoras.index')} volverLabel="Volver a computadoras" titulo="Editar computadora"
           subtitulo={[nombre, detalle, `Registrada el ${fmtFecha(computadora.created_at, true)}`].filter(Boolean).join(' · ')} />
 

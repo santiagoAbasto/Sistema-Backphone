@@ -62,7 +62,7 @@ export default function Create({ sugerencias = {} }) {
       <PremiumNotice notice={notice} onClose={() => setNotice(null)} />
       <Toast toast={toast} />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <EncabezadoFormulario volverUrl={route('admin.productos-apple.index')} volverLabel="Volver a equipos de marca"
           titulo="Registrar producto Apple" subtitulo="iPad, AirPods, Apple Watch, Pencil o accesorios: cárgalo para poder venderlo y cotizarlo." />
 

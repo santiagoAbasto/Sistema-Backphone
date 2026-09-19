@@ -199,7 +199,7 @@ export function CamposComputadora({ form, sugerencias = {}, pasos = false, refs 
         <Field label="Número de serie" error={errores.numero_serie}
           hint="Está en Menú Apple › Acerca de esta Mac, o grabado debajo del equipo. No se puede repetir.">
           <Input ref={refs.serie} value={data.numero_serie} maxLength={100} autoComplete="off" placeholder="Ej.: C02XK1ABCD"
-            className="font-mono uppercase tracking-wider"
+            className="cifra uppercase tracking-wider"
             onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
             onChange={(e) => cambiar('numero_serie', e.target.value.trimStart().toUpperCase())} />
         </Field>
@@ -226,16 +226,16 @@ export function CamposComputadora({ form, sugerencias = {}, pasos = false, refs 
 export function ResumenComputadora({ data, children }) {
   const titulo = tituloTienda(data);
   return (
-    <section className="rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <section className="rounded-2xl border border-gris-200 bg-white shadow-sutil">
       <div className="border-b border-gris-100 px-5 py-4">
         <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
-          <Laptop className="h-[18px] w-[18px] text-[#96684F]" /> Resumen
+          <Laptop className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Resumen
         </h2>
       </div>
 
       <div className="space-y-4 p-5">
         <div className="flex items-center gap-3 rounded-xl bg-gris-50 px-4 py-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#121214] text-white"><Laptop className="h-5 w-5" /></span>
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-carbon-900 text-white"><Laptop className="h-5 w-5" /></span>
           <div className="min-w-0 flex-1">
             <p className="truncate font-bold text-gris-900">{bonito(data.nombre) || 'Nueva computadora'}</p>
             <p className="truncate text-xs text-gris-500">{detalleEquipo(data) || 'Chip, memoria y color'}</p>

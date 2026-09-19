@@ -49,18 +49,18 @@ const nombreItem = (item) => item?.nombre_producto || item?.modelo || item?.nomb
 
 function Stat({ icon: Icon, label, value, hint, tone = 'navy' }) {
   const tones = {
-    navy: 'bg-[#121214]/[0.07] text-[#121214]',
+    navy: 'bg-carbon-900/[0.07] text-carbon-900',
     emerald: 'bg-emerald-50 text-emerald-700',
     lila: 'bg-[rgb(var(--acento-rgb)_/_0.1)] text-[color:var(--acento)]',
     amber: 'bg-amber-50 text-amber-700',
   };
   return (
-    <div className="rounded-2xl border border-gris-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <div className="rounded-2xl border border-gris-200 bg-white p-5 shadow-sutil">
       <div className="flex items-center gap-3">
         <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${tones[tone]}`}><Icon className="h-5 w-5" /></span>
         <p className="text-[13px] font-semibold text-gris-500">{label}</p>
       </div>
-      <p className="mt-4 text-[24px] font-extrabold leading-none tracking-tight text-gris-900">{value}</p>
+      <p className="mt-4 text-[24px] font-bold leading-none tracking-tight text-gris-900">{value}</p>
       {hint && <p className="mt-2 text-xs text-gris-400">{hint}</p>}
     </div>
   );
@@ -124,14 +124,14 @@ export default function ReservasIndex({ reservas = [], Layout, prefijo = 'admin'
     <div className="flex flex-wrap justify-end gap-1.5">
       {r.estado === 'activa' && (
         <Link href={route(`${prefijo}.ventas.create`, { reserva_id: r.id })}
-          className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-[#121214] px-3 text-xs font-bold text-white transition-colors hover:bg-[#1D1D21]">
+          className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-carbon-900 px-3 text-xs font-bold text-white transition-colors hover:bg-carbon-800">
           <ShoppingCart className="h-3.5 w-3.5" /> Vender
         </Link>
       )}
       {r.estado === 'vendida' && r.venta && (
         <Link href={route(`${prefijo}.ventas.edit`, r.venta.id)}
           className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-gris-200 bg-white px-2.5 text-xs font-semibold text-gris-600 hover:border-gris-300 hover:text-gris-900">
-          Ver venta <span className="font-mono text-[color:var(--acento)]">{r.venta.codigo_nota}</span>
+          Ver venta <span className="cifra text-[color:var(--acento)]">{r.venta.codigo_nota}</span>
         </Link>
       )}
       <Doc href={route(`${prefijo}.reservas.boleta`, r.id)} icon={FileText} label="Nota" />
@@ -156,7 +156,7 @@ export default function ReservasIndex({ reservas = [], Layout, prefijo = 'admin'
       <Head title="Reservas" />
       <Toast toast={toast} />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <PageHeader
           title={titulo ?? 'Reservas'}
           subtitle={subtitulo ?? 'Productos separados con un abono. Desde aquí los vendes, cancelas o imprimes su nota.'}
@@ -177,7 +177,7 @@ export default function ReservasIndex({ reservas = [], Layout, prefijo = 'admin'
         </div>
 
         {/* Búsqueda y estados */}
-        <section className="rounded-2xl border border-gris-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section className="rounded-2xl border border-gris-200 bg-white p-4 shadow-sutil">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gris-400" />
             <input value={texto} onChange={(e) => setTexto(e.target.value)}
@@ -193,7 +193,7 @@ export default function ReservasIndex({ reservas = [], Layout, prefijo = 'admin'
           <div className="mt-3 flex flex-wrap gap-1.5">
             {[['todas', 'Todas', reservas.length], ...Object.entries(ESTADOS).map(([k, e]) => [k, e.label, conteo[k] || 0])].map(([k, label, n]) => (
               <button key={k} type="button" onClick={() => setEstado(k)}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${estado === k ? 'bg-[#121214] text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${estado === k ? 'bg-carbon-900 text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
                 {label} <span className={estado === k ? 'text-white/70' : 'text-gris-400'}>{n}</span>
               </button>
             ))}
@@ -201,7 +201,7 @@ export default function ReservasIndex({ reservas = [], Layout, prefijo = 'admin'
         </section>
 
         {/* Listado */}
-        <section className="overflow-hidden rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section className="overflow-hidden rounded-2xl border border-gris-200 bg-white shadow-sutil">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gris-100 px-5 py-4">
             <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
               <CalendarCheck className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Detalle de reservas
@@ -243,7 +243,7 @@ export default function ReservasIndex({ reservas = [], Layout, prefijo = 'admin'
                       return (
                         <tr key={r.id} className="align-top transition-colors hover:bg-gris-50/70">
                           <td className="px-5 py-3">
-                            <p className="font-mono text-[13px] font-bold text-[color:var(--acento)]">{r.codigo_nota}</p>
+                            <p className="cifra text-[13px] font-bold text-[color:var(--acento)]">{r.codigo_nota}</p>
                             <p className="mt-0.5 whitespace-nowrap text-xs text-gris-400">{fecha(r.fecha || r.created_at)}</p>
                           </td>
                           <td className="px-4 py-3">
@@ -276,7 +276,7 @@ export default function ReservasIndex({ reservas = [], Layout, prefijo = 'admin'
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="truncate font-semibold text-gris-900">{r.nombre_cliente}</p>
-                        <p className="font-mono text-xs font-bold text-[color:var(--acento)]">{r.codigo_nota} <span className="font-sans font-normal text-gris-400">· {fecha(r.fecha || r.created_at)}</span></p>
+                        <p className="cifra text-xs font-bold text-[color:var(--acento)]">{r.codigo_nota} <span className="font-sans font-normal text-gris-400">· {fecha(r.fecha || r.created_at)}</span></p>
                       </div>
                       <EstadoBadge estado={r.estado} />
                     </div>
@@ -309,7 +309,7 @@ export default function ReservasIndex({ reservas = [], Layout, prefijo = 'admin'
         >
           <p className="text-sm text-gris-600">{conf.texto}</p>
           <div className="mt-4 rounded-xl border border-gris-200 bg-gris-50 px-4 py-3 text-sm">
-            <p className="font-semibold text-gris-900">{confirmar.reserva.nombre_cliente} <span className="font-mono text-[color:var(--acento)]">· {confirmar.reserva.codigo_nota}</span></p>
+            <p className="font-semibold text-gris-900">{confirmar.reserva.nombre_cliente} <span className="cifra text-[color:var(--acento)]">· {confirmar.reserva.codigo_nota}</span></p>
             <p className="mt-0.5 text-gris-500">Abono registrado: {bsFmt(confirmar.reserva.monto_reserva)}</p>
           </div>
         </Modal>

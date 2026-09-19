@@ -235,7 +235,7 @@ function FormularioRol({ rol, catalogo, onCerrar }) {
               </span>
             </span>
             <input type="checkbox" checked={data.activo} onChange={(e) => setData('activo', e.target.checked)}
-              className="h-5 w-5 rounded border-gris-300 text-[#96684F]" />
+              className="h-5 w-5 rounded border-gris-300 text-[color:var(--acento)]" />
           </label>
         )}
         {errors.activo && <p className="text-xs font-semibold text-red-600">{errors.activo}</p>}
@@ -314,7 +314,7 @@ export default function UsuariosIndex({ usuarios = [], roles = [], permisos = []
         />
       )}
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <PageHeader
           title="Usuarios y roles"
           subtitle="Quién entra al panel y a qué parte. Cada persona tiene su cuenta y su rol; el rol decide los módulos que ve."
@@ -365,12 +365,12 @@ export default function UsuariosIndex({ usuarios = [], roles = [], permisos = []
 
         <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
           <div className="min-w-0 space-y-5">
-            <section className="rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <section className="rounded-2xl border border-gris-200 bg-white shadow-sutil">
               <div className="border-b border-gris-100 px-5 py-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">
                     <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
-                      <IconoUsuarios className="h-[18px] w-[18px] text-[#96684F]" /> Usuarios
+                      <IconoUsuarios className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Usuarios
                       <span className="text-sm font-semibold text-gris-400">{usuarios.length}</span>
                     </h2>
                     <p className="mt-0.5 text-[13px] text-gris-500">Los administradores van primero.</p>
@@ -408,7 +408,7 @@ export default function UsuariosIndex({ usuarios = [], roles = [], permisos = []
                 <ul className="divide-y divide-gris-100">
                   {usuarios.map((u) => (
                     <li key={u.id} className="flex flex-col gap-3 px-5 py-4 lg:flex-row lg:items-center">
-                      <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-[13px] font-extrabold ${u.rol === 'admin' ? 'bg-[#121214] text-white' : 'bg-[#96684F]/12 text-[#96684F]'}`}>
+                      <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-[13px] font-bold ${u.rol === 'admin' ? 'bg-carbon-900 text-white' : 'bg-[color:var(--acento)]/12 text-[color:var(--acento)]'}`}>
                         {iniciales(u.name)}
                       </span>
 
@@ -422,7 +422,7 @@ export default function UsuariosIndex({ usuarios = [], roles = [], permisos = []
                       </div>
 
                       <div className="lg:w-[150px] lg:shrink-0">
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${u.rol === 'admin' ? 'bg-[#121214]/[0.08] text-[#121214]' : 'bg-gris-100 text-gris-600'}`}>
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${u.rol === 'admin' ? 'bg-carbon-900/[0.08] text-carbon-900' : 'bg-gris-100 text-gris-600'}`}>
                           {u.rol === 'admin' ? <ShieldCheck className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
                           {u.rol_nombre}
                         </span>
@@ -452,7 +452,7 @@ export default function UsuariosIndex({ usuarios = [], roles = [], permisos = []
               )}
             </section>
 
-            <section className="rounded-2xl border border-gris-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <section className="rounded-2xl border border-gris-200 bg-white p-5 shadow-sutil">
               <h2 className="text-base font-bold text-gris-900">Cómo dar acceso sin perder el control</h2>
               <p className="mt-0.5 text-[13px] text-gris-500">El panel tiene los costos, los precios y los datos de tus clientes.</p>
               <Consejos
@@ -468,11 +468,11 @@ export default function UsuariosIndex({ usuarios = [], roles = [], permisos = []
           </div>
 
           <aside className="space-y-5 xl:sticky xl:top-24">
-            <section className="rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <section className="rounded-2xl border border-gris-200 bg-white shadow-sutil">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gris-100 px-5 py-4">
                 <div className="min-w-0">
                   <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
-                    <Shield className="h-[18px] w-[18px] text-[#96684F]" /> Roles
+                    <Shield className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Roles
                     <span className="text-sm font-semibold text-gris-400">{roles.length}</span>
                   </h2>
                   <p className="mt-0.5 text-[13px] text-gris-500">Cada uno abre su parte del panel.</p>

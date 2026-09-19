@@ -72,7 +72,7 @@ export default function Edit({ celular, historial = [], bloqueo = null, sugerenc
       <PremiumNotice notice={notice} onClose={() => setNotice(null)} />
       <Toast toast={toast} />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <EncabezadoFormulario volverUrl={route('admin.celulares.index')} volverLabel="Volver a celulares" titulo="Editar celular"
           subtitulo={[nombre, detalle, `Registrado el ${fmtFecha(celular.created_at, true)}`].filter(Boolean).join(' · ')} />
 

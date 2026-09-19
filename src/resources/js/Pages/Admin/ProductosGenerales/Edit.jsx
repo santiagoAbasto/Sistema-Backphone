@@ -75,7 +75,7 @@ export default function Edit({ producto, historial = [], bloqueo = null, sugeren
       <PremiumNotice notice={notice} onClose={() => setNotice(null)} />
       <Toast toast={toast} />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <EncabezadoFormulario volverUrl={route('admin.productos-generales.index')} volverLabel="Volver a productos generales" titulo="Editar producto general"
           subtitulo={[nombre, detalle, `Registrado el ${fmtFecha(producto.created_at, true)}`].filter(Boolean).join(' · ')} />
 

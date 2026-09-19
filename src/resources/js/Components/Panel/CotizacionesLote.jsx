@@ -25,14 +25,14 @@ export default function CotizacionesLote({ links = [], omitidas = [], Layout, pr
     <Layout title="Enviar cotizaciones por WhatsApp">
       <Head title="Enviar cotizaciones por WhatsApp" />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <div className="flex items-center gap-3">
           <Link href={route(`${prefijo}.cotizaciones.index`)} aria-label="Volver a cotizaciones"
             className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-gris-200 bg-white text-gris-500 transition-colors hover:text-gris-900">
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-[32px] font-extrabold leading-tight tracking-tight text-[#121214]" style={{ fontFamily: "'Chakra Petch', 'Inter', sans-serif" }}>
+            <h1 className="text-[32px] font-bold leading-tight tracking-tight text-carbon-900" style={{ fontFamily: "'Chakra Petch', 'Inter', sans-serif" }}>
               Enviar por WhatsApp
             </h1>
             <p className="text-sm text-gris-500">Cada botón abre el chat del cliente con el mensaje listo; solo falta presionar enviar.</p>
@@ -40,7 +40,7 @@ export default function CotizacionesLote({ links = [], omitidas = [], Layout, pr
         </div>
 
         {links.length > 0 && (
-          <div className="flex items-start gap-3 rounded-2xl border border-gris-200/80 bg-white px-5 py-4 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="flex items-start gap-3 rounded-2xl border border-gris-200 bg-white px-5 py-4 text-sm shadow-sutil">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--acento)]" />
             <div className="space-y-1">
               <p className="font-semibold text-gris-900">
@@ -55,7 +55,7 @@ export default function CotizacionesLote({ links = [], omitidas = [], Layout, pr
         )}
 
         {links.length === 0 ? (
-          <section className="rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <section className="rounded-2xl border border-gris-200 bg-white shadow-sutil">
             <EmptyState icon={MessageCircle} title="No hay mensajes para enviar"
               text={omitidas.length > 0
                 ? `Estas cotizaciones no tienen un número de WhatsApp válido: ${omitidas.join(', ')}.`
@@ -68,13 +68,13 @@ export default function CotizacionesLote({ links = [], omitidas = [], Layout, pr
               const abierto = abiertos.includes(item.id);
               return (
                 <li key={item.id}
-                  className={`flex flex-col rounded-2xl border bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors ${abierto ? 'border-emerald-300' : 'border-gris-200/80'}`}>
+                  className={`flex flex-col rounded-2xl border bg-white p-5 shadow-sutil transition-colors ${abierto ? 'border-emerald-300' : 'border-gris-200'}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate text-base font-bold text-gris-900">{item.nombre}</p>
                       <p className="mt-0.5 text-xs text-gris-500">{fmtTelefono(item.telefono)} · Bs {item.total}</p>
                     </div>
-                    <Badge tone="lila" className="font-mono">{numeroCotizacion(item.id)}</Badge>
+                    <Badge tone="lila" className="cifra">{numeroCotizacion(item.id)}</Badge>
                   </div>
 
                   <div className="mt-4 flex-1 whitespace-pre-wrap break-words rounded-xl bg-gris-50 p-3.5 text-[13px] leading-relaxed text-gris-700">

@@ -34,7 +34,7 @@ export default function ConfirmLogoutModal({ open, onClose, onConfirm }) {
         <AnimatePresence>
             {open && (
                 <motion.div
-                    className="ab-reset fixed inset-0 z-[1200] grid place-items-center px-4"
+                    className="bp-reset fixed inset-0 z-[1200] grid place-items-center px-4"
                     style={{ background: 'rgba(10, 10, 11,0.45)', backdropFilter: 'blur(6px)' }}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -53,7 +53,7 @@ export default function ConfirmLogoutModal({ open, onClose, onConfirm }) {
                         transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                     >
                         <div className="flex items-start gap-3 px-6 pb-4 pt-6">
-                            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#96684F]/10 text-[#96684F]">
+                            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[rgb(var(--acento-rgb)_/_0.1)] text-[color:var(--acento)]">
                                 <LogOut className="h-5 w-5" />
                             </span>
                             <div className="min-w-0">
@@ -66,7 +66,7 @@ export default function ConfirmLogoutModal({ open, onClose, onConfirm }) {
 
                         {usuario?.name && (
                             <div className="mx-6 flex items-center gap-3 rounded-xl border border-gris-200 bg-gris-50 px-3 py-2.5">
-                                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-[13px] font-extrabold" style={{ background: '#121214', color: '#C49A7C' }}>
+                                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-[13px] font-bold" style={{ background: 'var(--carbon-900)', color: 'var(--bronce-400)' }}>
                                     {iniciales}
                                 </span>
                                 <span className="min-w-0">

@@ -135,7 +135,7 @@ export function TarjetaMeta({ total, meta, mes, faltaLabel = 'Te falta' }) {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
       whileHover={anima ? { scale: 1.012 } : undefined}
-      className="bp-meta relative overflow-hidden rounded-2xl p-6 text-white"
+      className="bp-meta relative overflow-hidden rounded-[16px] p-6 text-white"
       aria-label="Meta del mes"
     >
       {/* Fondo morado con profundidad y una aurora que respira */}
@@ -145,10 +145,10 @@ export function TarjetaMeta({ total, meta, mes, faltaLabel = 'Te falta' }) {
       <span aria-hidden="true" className="absolute -bottom-24 -left-10 h-48 w-48 rounded-full" style={{ background: 'rgba(10, 10, 11,0.3)' }} />
       {anima && <motion.span aria-hidden="true" className="absolute inset-0" style={{ background: brillo }} />}
       {anima && (
-        <motion.span aria-hidden="true" className="absolute inset-0 rounded-2xl"
+        <motion.span aria-hidden="true" className="absolute inset-0 rounded-[16px]"
           style={{ background: borde, WebkitMask: 'linear-gradient(#000,#000) content-box, linear-gradient(#000,#000)', WebkitMaskComposite: 'xor', maskComposite: 'exclude', padding: 1 }} />
       )}
-      <span aria-hidden="true" className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/15" />
+      <span aria-hidden="true" className="absolute inset-0 rounded-[16px] ring-1 ring-inset ring-white/15" />
       <Chispas activo={hayMeta && cumplida && !reduce} />
 
       <div className="relative" style={anima ? { transform: 'translateZ(48px)' } : undefined}>
@@ -165,7 +165,7 @@ export function TarjetaMeta({ total, meta, mes, faltaLabel = 'Te falta' }) {
             <p className="mt-0.5 text-[12px] text-white/55 first-letter:uppercase">{mes}</p>
           </div>
           {hayMeta && cumplida && (
-            <span className="ml-auto inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-extrabold" style={{ background: LIMA, color: '#2B2E12' }}>
+            <span className="ml-auto inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold" style={{ background: LIMA, color: '#2B2E12' }}>
               <PartyPopper className="h-3 w-3" /> Cumplida
             </span>
           )}
@@ -200,14 +200,14 @@ export function TarjetaMeta({ total, meta, mes, faltaLabel = 'Te falta' }) {
                   />
                 </svg>
                 <div className="absolute inset-x-0 bottom-0 text-center">
-                  <span className="block text-[38px] font-extrabold leading-none tabular-nums">
+                  <span className="block text-[38px] font-bold leading-none tabular-nums">
                     {Math.round(mostrado)}<span className="text-[22px]">%</span>
                   </span>
                 </div>
               </div>
 
               <div className="min-w-0">
-                <p className="text-[26px] font-extrabold leading-none tabular-nums">{bsFmt(acumulado)}</p>
+                <p className="text-[26px] font-bold leading-none tabular-nums">{bsFmt(acumulado)}</p>
                 <p className="mt-1 text-[13px] text-white/65">de {bsFmt(meta)}</p>
               </div>
             </div>
@@ -229,7 +229,7 @@ export function TarjetaMeta({ total, meta, mes, faltaLabel = 'Te falta' }) {
           </>
         ) : (
           <div className="mt-5">
-            <p className="text-[26px] font-extrabold leading-none tabular-nums">{bsFmt(acumulado)}</p>
+            <p className="text-[26px] font-bold leading-none tabular-nums">{bsFmt(acumulado)}</p>
             <p className="mt-1 text-[13px] text-white/65">vendido este mes</p>
             <p className="mt-5 rounded-xl bg-white/[0.14] px-3 py-2 text-[13px] leading-relaxed backdrop-blur-sm">
               Todavía no tienes una meta cargada. La pone el administrador desde Usuarios y roles.
@@ -265,8 +265,8 @@ export function Numero({ icon: Icon, label, valor, hint, moneda = false, i = 0, 
   const entra = useEntrada();
   const n = useConteo(Number(valor) || 0, anima && entra, 900);
   const tonos = {
-    navy: 'bg-[#121214]/[0.07] text-[#121214]',
-    emerald: 'bg-emerald-50 text-emerald-700',
+    navy: 'bg-carbon-900/[0.07] text-carbon-900',
+    emerald: 'bg-[color:var(--ok-fondo)] text-[color:var(--ok-texto)]',
     lila: 'bg-[rgb(var(--acento-rgb)_/_0.1)] text-[color:var(--acento)]',
     amber: 'bg-amber-50 text-amber-700',
     slate: 'bg-gris-100 text-gris-600',
@@ -274,14 +274,14 @@ export function Numero({ icon: Icon, label, valor, hint, moneda = false, i = 0, 
 
   return (
     <Entrada i={i}>
-      <div className="group h-full rounded-2xl border border-gris-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-300 hover:-translate-y-0.5 hover:border-[rgb(var(--acento-rgb)_/_0.35)] hover:shadow-[0_16px_30px_-22px_rgb(var(--acento-rgb)_/_0.9)]">
+      <div className="group h-full rounded-[14px] border border-gris-200 bg-white p-5 shadow-sutil transition-all duration-300 hover:-translate-y-0.5 hover:border-[rgb(var(--acento-rgb)_/_0.35)] hover:shadow-tarjeta">
         <div className="flex items-center gap-3">
           <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl transition-transform duration-300 group-hover:scale-110 ${tonos[tono]}`}>
             <Icon className="h-5 w-5" />
           </span>
           <p className="text-[13px] font-semibold text-gris-500">{label}</p>
         </div>
-        <p className="mt-4 text-[24px] font-extrabold leading-none tracking-tight tabular-nums text-gris-900">
+        <p className="mt-4 text-[24px] font-bold leading-none tracking-tight tabular-nums text-gris-900">
           {moneda ? bsFmt(n) : Math.round(n).toLocaleString('es-BO')}
         </p>
         {hint && <p className="mt-2 truncate text-xs text-gris-400">{hint}</p>}
@@ -306,7 +306,7 @@ export function AccesoRapido({ href, icon: Icon, label, hint, i = 0 }) {
     >
       <Link
         href={href}
-        className="group relative flex h-full items-center gap-3 overflow-hidden rounded-2xl border border-gris-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-[rgb(var(--acento-rgb)_/_0.4)] hover:shadow-[0_18px_32px_-24px_rgb(var(--acento-rgb)_/_1)]"
+        className="group relative flex h-full items-center gap-3 overflow-hidden rounded-[14px] border border-gris-200 bg-white p-4 shadow-sutil transition-all hover:-translate-y-0.5 hover:border-[rgb(var(--acento-rgb)_/_0.4)] hover:shadow-tarjeta"
       >
         {/* Barrido de luz al pasar el mouse */}
         <span aria-hidden="true" className="bp-barrido pointer-events-none absolute inset-0" />
@@ -328,7 +328,7 @@ export function ListaReciente({ icon: Icon, titulo, verTodo, items, vacio, rende
   const entra = useEntrada();
   return (
     <Entrada i={i} className="h-full">
-      <section className="flex h-full flex-col rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+      <section className="flex h-full flex-col overflow-hidden rounded-[14px] border border-gris-200 bg-white shadow-sutil">
         <header className="flex items-center gap-2.5 border-b border-gris-100 px-5 py-4">
           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[rgb(var(--acento-rgb)_/_0.1)] text-[color:var(--acento)]">
             <Icon className="h-4 w-4" />
@@ -370,15 +370,15 @@ export function ListaReciente({ icon: Icon, titulo, verTodo, items, vacio, rende
 export function animoDelDia({ ventas = 0, servicios = 0, pct = null }) {
   const movimientos = Number(ventas) + Number(servicios);
   if (movimientos === 0) {
-    return { icon: Sparkles, texto: 'El día recién empieza. La primera venta cambia todos estos números.' };
+    return { icon: Sparkles, texto: 'El día recién empieza. La primera venta mueve todos estos números.' };
   }
   if (pct !== null && pct >= 100) {
-    return { icon: PartyPopper, texto: `¡Meta cumplida! Y hoy ya llevas ${movimientos} ${movimientos === 1 ? 'movimiento' : 'movimientos'}.` };
+    return { icon: PartyPopper, texto: `¡Meta cumplida! Y hoy ya llevás ${movimientos} ${movimientos === 1 ? 'movimiento' : 'movimientos'}.` };
   }
   if (movimientos >= 5) {
     return { icon: Flame, texto: `Día fuerte: ${movimientos} movimientos registrados.` };
   }
-  return { icon: TrendingUp, texto: `Vas ${movimientos} ${movimientos === 1 ? 'movimiento' : 'movimientos'} hoy. Sigue así.` };
+  return { icon: TrendingUp, texto: `Llevás ${movimientos} ${movimientos === 1 ? 'movimiento' : 'movimientos'} hoy. Seguí así.` };
 }
 
 export const CONSEJOS_VENDEDOR = [

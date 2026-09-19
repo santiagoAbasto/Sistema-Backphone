@@ -43,7 +43,7 @@ export default function Index({ tipo, pestanas = [], productos, filtros = {}, re
     <VendedorLayout title="Productos en stock">
       <Head title="Productos en stock" />
 
-      <div className="ab-reset space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <PageHeader
           title="Productos en stock"
           subtitle="Lo que hay disponible hoy para vender, con su precio. Si no está acá, ya se vendió o está reservado."
@@ -76,7 +76,7 @@ export default function Index({ tipo, pestanas = [], productos, filtros = {}, re
             hint="Sumando los precios de venta" />
         </div>
 
-        <section className="overflow-hidden rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section className="overflow-hidden rounded-[14px] border border-gris-200 bg-white shadow-sutil">
           <div className="border-b border-gris-100 p-4">
             <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Tipo de producto">
               {pestanas.map((p) => {
@@ -89,11 +89,11 @@ export default function Index({ tipo, pestanas = [], productos, filtros = {}, re
                     aria-selected={activa}
                     onClick={() => !activa && cambiarPestana(p.clave)}
                     className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition-colors ${
-                      activa ? 'bg-[#121214] text-white' : 'border border-gris-200 bg-white text-gris-600 hover:border-gris-300 hover:text-gris-900'
+                      activa ? 'bg-carbon-900 text-white' : 'border border-gris-200 bg-white text-gris-600 hover:border-gris-300 hover:text-gris-900'
                     }`}
                   >
                     {p.label}
-                    <span className={`rounded-full px-1.5 py-px text-[11px] font-bold tabular-nums ${activa ? 'bg-white/20' : 'bg-gris-100 text-gris-500'}`}>
+                    <span className={`rounded-full px-1.5 py-px text-[11px] font-semibold tabular-nums ${activa ? 'bg-white/20' : 'bg-gris-100 text-gris-500'}`}>
                       {p.total}
                     </span>
                   </button>

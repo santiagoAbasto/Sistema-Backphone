@@ -72,6 +72,9 @@ class DashboardVendedorController extends Controller
                 'mes'              => now()->locale('es')->isoFormat('MMMM [de] YYYY'),
             ],
 
+            // Los últimos 14 días del vendedor, para el gráfico mínimo de su tarjeta.
+            'serie' => $this->ultimosCatorceDias($user->id),
+
             'ultimasVentas' => Venta::with('items')
                 ->where('user_id', $user->id)
                 ->latest('fecha')->latest('id')->take(5)->get()
@@ -103,6 +106,45 @@ class DashboardVendedorController extends Controller
                     'fecha'  => optional($s->fecha)->toDateString() ?? $s->created_at?->toDateString(),
                 ])->values(),
         ]);
+    }
+
+    /**
+     * Lo vendido por día en las últimas dos semanas, con los días sin movimiento en cero.
+     *
+     * Se arma con dos consultas agrupadas (una de ventas y otra de servicios), no con una por día:
+     * si no, entrar a la pantalla haría veintiocho viajes a la base.
+     *
+     * @return list<array{fecha: string, total: float}>
+     */
+    private function ultimosCatorceDias(int $userId): array
+    {
+        $desde = now()->subDays(13)->startOfDay();
+
+        $ventas = Venta::with('items')
+            ->where('user_id', $userId)
+            ->whereDate('fecha', '>=', $desde->toDateString())
+            ->get()
+            ->groupBy(fn (Venta $v) => Carbon::parse($v->fecha ?? $v->created_at)->toDateString())
+            ->map(fn ($grupo) => (float) $grupo->sum(
+                fn (Venta $v) => $v->items->sum(fn ($i) => (float) $i->precio_venta - (float) $i->descuento)
+            ));
+
+        $servicios = ServicioTecnico::where('user_id', $userId)
+            ->whereDate('fecha', '>=', $desde->toDateString())
+            ->get()
+            ->groupBy(fn (ServicioTecnico $s) => optional($s->fecha)->toDateString() ?? $s->created_at?->toDateString())
+            ->map(fn ($grupo) => (float) $grupo->sum('precio_venta'));
+
+        $dias = [];
+        for ($cursor = $desde->copy(); $cursor->lte(now()); $cursor->addDay()) {
+            $clave = $cursor->toDateString();
+            $dias[] = [
+                'fecha' => $clave,
+                'total' => round((float) ($ventas[$clave] ?? 0) + (float) ($servicios[$clave] ?? 0), 2),
+            ];
+        }
+
+        return $dias;
     }
 
     /** Ventas y servicios del mes en curso. Se filtra también por año: si no, se sumaría el mismo mes de otros años. */

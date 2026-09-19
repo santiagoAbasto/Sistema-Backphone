@@ -309,7 +309,7 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
       <Head title="Nueva venta" />
       <PremiumNotice notice={notice} onClose={() => setNotice(null)} />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         {/* Encabezado */}
         <div className="flex items-center gap-3">
           <Link href={route(`${prefijo}.ventas.index`)} aria-label="Volver a ventas"
@@ -317,7 +317,7 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-[32px] font-extrabold leading-tight tracking-tight text-[#121214]" style={{ fontFamily: "'Chakra Petch', 'Inter', sans-serif" }}>
+            <h1 className="text-[32px] font-bold leading-tight tracking-tight text-carbon-900" style={{ fontFamily: "'Chakra Petch', 'Inter', sans-serif" }}>
               Nueva venta
             </h1>
             <p className="text-sm text-gris-500">Completa los pasos. Al registrar se abre la nota para imprimir.</p>
@@ -347,7 +347,7 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
                     </Select>
                   </Field>
                   {reservaSeleccionada && (
-                    <div className="rounded-xl border border-[rgb(var(--acento-rgb)_/_0.25)] bg-[rgb(var(--acento-rgb)_/_0.06)] px-4 py-2.5 text-sm text-[#3B2820]">
+                    <div className="rounded-xl border border-[rgb(var(--acento-rgb)_/_0.25)] bg-[rgb(var(--acento-rgb)_/_0.06)] px-4 py-2.5 text-sm text-bronce-800">
                       Se cobra solo la diferencia: <strong>{bsFmt(totalACobrar)}</strong>
                     </div>
                   )}
@@ -478,7 +478,7 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
                         {etiquetaTipo(productoSeleccionado.tipo)} · {productoActual.codigo || productoActual.imei_1 || productoActual.numero_serie || 'sin código'} · stock {productoActual.stock ?? 1}
                       </p>
                     </div>
-                    <p className="text-xl font-extrabold text-gris-900">{bsFmt(productoActual.precio_venta)}</p>
+                    <p className="text-xl font-bold text-gris-900">{bsFmt(productoActual.precio_venta)}</p>
                   </div>
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
@@ -570,7 +570,7 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
 
           {/* Resumen tipo carrito */}
           <aside className="xl:sticky xl:top-24">
-            <section className="rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <section className="rounded-2xl border border-gris-200 bg-white shadow-sutil">
               <div className="flex items-center justify-between gap-3 border-b border-gris-100 px-5 py-4">
                 <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
                   <ShoppingCart className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Resumen de la venta
@@ -600,9 +600,9 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
                   )}
                 </dl>
 
-                <div className="rounded-xl bg-[#121214] px-4 py-3.5 text-white">
+                <div className="rounded-xl bg-carbon-900 px-4 py-3.5 text-white">
                   <p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/60">Total a cobrar</p>
-                  <p className="mt-1 text-[28px] font-extrabold leading-none tracking-tight">{bsFmt(totalACobrar)}</p>
+                  <p className="mt-1 text-[28px] font-bold leading-none tracking-tight">{bsFmt(totalACobrar)}</p>
                   <p className="mt-1.5 text-xs text-white/60">{METODOS_PAGO.find((m) => m.value === data.metodo_pago)?.label}</p>
                 </div>
 

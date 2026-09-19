@@ -24,7 +24,7 @@ export function EstadoBadge({ estado }) {
   return e ? <Badge tone={e.tone}>{e.label}</Badge> : <Badge>{estado || '—'}</Badge>;
 }
 
-export const checkCls = 'h-4 w-4 cursor-pointer rounded border-gris-300 text-[#121214] focus:ring-2 focus:ring-[rgb(var(--acento-rgb)_/_0.3)] focus:ring-offset-0';
+export const checkCls = 'h-4 w-4 cursor-pointer rounded border-gris-300 text-carbon-900 focus:ring-2 focus:ring-[rgb(var(--acento-rgb)_/_0.3)] focus:ring-offset-0';
 
 // Palabras con escritura propia
 const PALABRAS = {
@@ -136,7 +136,7 @@ export function SelectorRapido({
           return (
             <button key={o} type="button" aria-pressed={sel} onClick={() => onChange(o)}
               className={`h-10 rounded-xl border px-3.5 text-sm font-semibold tabular-nums transition-colors ${
-                sel ? 'border-[#121214] bg-[#121214] text-white shadow-[0_8px_18px_-10px_rgba(10, 10, 11,0.6)]' : 'border-gris-200 bg-white text-gris-600 hover:border-gris-300 hover:text-gris-900'
+                sel ? 'border-carbon-900 bg-carbon-900 text-white shadow-[0_8px_18px_-10px_rgba(10,10,11,0.6)]' : 'border-gris-200 bg-white text-gris-600 hover:border-gris-300 hover:text-gris-900'
               }`}>
               {o}
             </button>
@@ -222,7 +222,7 @@ export function Linea({ label, valor, mono = false }) {
   return (
     <div className="flex justify-between gap-3">
       <dt className="shrink-0 text-gris-500">{label}</dt>
-      <dd className={`min-w-0 truncate text-right font-semibold text-gris-900 ${mono ? 'font-mono text-[13px]' : ''}`}>{valor || '—'}</dd>
+      <dd className={`min-w-0 truncate text-right font-semibold text-gris-900 ${mono ? 'cifra text-[13px]' : ''}`}>{valor || '—'}</dd>
     </div>
   );
 }
@@ -232,9 +232,9 @@ export function CajaPrecio({ costo, venta }) {
   const rent = rentabilidad(costo, venta);
   const hayPrecios = costo !== '' && venta !== '';
   return (
-    <div className="rounded-xl bg-[#121214] px-4 py-3.5 text-white">
+    <div className="rounded-xl bg-carbon-900 px-4 py-3.5 text-white">
       <p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/60">Precio de venta</p>
-      <p className="mt-1 text-[28px] font-extrabold leading-none tracking-tight tabular-nums">{bsFmt(venta)}</p>
+      <p className="mt-1 text-[28px] font-bold leading-none tracking-tight tabular-nums">{bsFmt(venta)}</p>
       <p className="mt-1.5 text-xs text-white/70">
         {hayPrecios
           ? `Costo ${bsFmt(costo)} · ${rent.ganancia >= 0 ? `Ganancia ${bsFmt(rent.ganancia)}` : 'Bajo el costo'}`
@@ -265,7 +265,7 @@ export function EncabezadoFormulario({ volverUrl, volverLabel, titulo, subtitulo
         <ArrowLeft className="h-5 w-5" />
       </Link>
       <div className="min-w-0">
-        <h1 className="truncate text-[32px] font-extrabold leading-tight tracking-tight text-[#121214]" style={{ fontFamily: "'Chakra Petch', 'Inter', sans-serif" }}>
+        <h1 className="truncate text-[32px] font-bold leading-tight tracking-tight text-carbon-900" style={{ fontFamily: "'Chakra Petch', 'Inter', sans-serif" }}>
           {titulo}
         </h1>
         {subtitulo && <p className="truncate text-sm text-gris-500">{subtitulo}</p>}
@@ -278,18 +278,18 @@ export function EncabezadoFormulario({ volverUrl, volverLabel, titulo, subtitulo
 
 export function Stat({ icon: Icon, label, value, hint, tone = 'navy' }) {
   const tones = {
-    navy: 'bg-[#121214]/[0.07] text-[#121214]',
+    navy: 'bg-carbon-900/[0.07] text-carbon-900',
     emerald: 'bg-emerald-50 text-emerald-700',
     lila: 'bg-[rgb(var(--acento-rgb)_/_0.1)] text-[color:var(--acento)]',
     slate: 'bg-gris-100 text-gris-600',
   };
   return (
-    <div className="rounded-2xl border border-gris-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <div className="rounded-2xl border border-gris-200 bg-white p-5 shadow-sutil">
       <div className="flex items-center gap-3">
         <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${tones[tone]}`}><Icon className="h-5 w-5" /></span>
         <p className="text-[13px] font-semibold text-gris-500">{label}</p>
       </div>
-      <p className="mt-4 text-[24px] font-extrabold leading-none tracking-tight tabular-nums text-gris-900">{value}</p>
+      <p className="mt-4 text-[24px] font-bold leading-none tracking-tight tabular-nums text-gris-900">{value}</p>
       {hint && <p className="mt-2 truncate text-xs text-gris-400">{hint}</p>}
     </div>
   );
@@ -328,7 +328,7 @@ export function AccionesFila({ editarUrl, nombre, estado, motivo, onBorrar, onHa
         </button>
       )}
       <Link href={editarUrl}
-        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-gris-200 bg-white px-2.5 text-xs font-semibold text-gris-600 transition-colors hover:border-[#121214] hover:bg-[#121214] hover:text-white">
+        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-gris-200 bg-white px-2.5 text-xs font-semibold text-gris-600 transition-colors hover:border-carbon-900 hover:bg-carbon-900 hover:text-white">
         <Pencil className="h-3.5 w-3.5" /> Editar
       </Link>
       {motivo ? (
@@ -368,7 +368,7 @@ export function ChipsEstado({ filtros, activo, conteo, onChange, etiqueta = 'Fil
       {filtros.map((f) => {
         const sel = activo === f.key;
         const color = sel
-          ? (f.alerta ? 'bg-amber-500 text-white' : 'bg-[#121214] text-white')
+          ? (f.alerta ? 'bg-amber-500 text-white' : 'bg-carbon-900 text-white')
           : (f.alerta ? 'bg-amber-50 text-amber-800 hover:bg-amber-100' : 'bg-gris-100 text-gris-600 hover:bg-gris-200');
         return (
           <button key={f.key} type="button" onClick={() => onChange(f.key)} aria-pressed={sel}
@@ -421,7 +421,7 @@ export function BarraSeleccion({ cantidad, total, todosMarcados, hayMas, onSelec
   if (!cantidad) return null;
   return (
     <div className="sticky bottom-4 z-30">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl bg-[#121214] px-5 py-3 text-white shadow-[0_18px_40px_-18px_rgba(10, 10, 11,0.8)]">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl bg-carbon-900 px-5 py-3 text-white shadow-[0_18px_40px_-18px_rgba(10, 10, 11,0.8)]">
         <p className="text-sm font-bold">{cantidad} {cantidad === 1 ? 'seleccionado' : 'seleccionados'}</p>
         {!todosMarcados && hayMas && (
           <button type="button" onClick={onSeleccionarTodos}
@@ -484,7 +484,7 @@ export function ModalEliminar({
 /* ─── Edición ─── */
 
 const MOVIMIENTOS = {
-  venta: { icon: ShoppingCart, tone: 'bg-[#121214]/[0.07] text-[#121214]' },
+  venta: { icon: ShoppingCart, tone: 'bg-carbon-900/[0.07] text-carbon-900' },
   permuta: { icon: Repeat, tone: 'bg-blue-50 text-blue-700' },
   reserva: { icon: CalendarCheck, tone: 'bg-amber-50 text-amber-700' },
 };
@@ -497,7 +497,7 @@ function Movimiento({ m }) {
       <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${tipo.tone}`}><Icon className="h-4 w-4" /></span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-semibold text-gris-900">
-          {m.titulo} {m.codigo && <span className="font-mono text-[color:var(--acento)]">{m.codigo}</span>}
+          {m.titulo} {m.codigo && <span className="cifra text-[color:var(--acento)]">{m.codigo}</span>}
         </span>
         <span className="block truncate text-xs text-gris-500">{fmtFecha(m.fecha)}{m.detalle ? ` · ${m.detalle}` : ''}</span>
       </span>
@@ -515,7 +515,7 @@ function Movimiento({ m }) {
 
 export function HistorialEquipo({ historial = [] }) {
   return (
-    <section className="rounded-2xl border border-gris-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-6">
+    <section className="rounded-2xl border border-gris-200 bg-white p-5 shadow-sutil sm:p-6">
       <div className="flex items-start gap-3">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[rgb(var(--acento-rgb)_/_0.1)] text-[color:var(--acento)]"><History className="h-5 w-5" /></span>
         <div>

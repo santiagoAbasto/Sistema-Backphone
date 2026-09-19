@@ -60,18 +60,18 @@ const fechaCls = 'h-9 w-full min-w-0 border-0 bg-transparent p-0 text-sm text-gr
 
 function Stat({ icon: Icon, label, value, hint, tone = 'navy' }) {
   const tones = {
-    navy: 'bg-[#121214]/[0.07] text-[#121214]',
+    navy: 'bg-carbon-900/[0.07] text-carbon-900',
     lila: 'bg-[rgb(var(--acento-rgb)_/_0.1)] text-[color:var(--acento)]',
     amber: 'bg-amber-50 text-amber-700',
     emerald: 'bg-emerald-50 text-emerald-700',
   };
   return (
-    <div className="rounded-2xl border border-gris-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <div className="rounded-2xl border border-gris-200 bg-white p-5 shadow-sutil">
       <div className="flex items-center gap-3">
         <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${tones[tone]}`}><Icon className="h-5 w-5" /></span>
         <p className="text-[13px] font-semibold text-gris-500">{label}</p>
       </div>
-      <p className="mt-4 text-[24px] font-extrabold leading-none tracking-tight text-gris-900">{value}</p>
+      <p className="mt-4 text-[24px] font-bold leading-none tracking-tight text-gris-900">{value}</p>
       {hint && <p className="mt-2 truncate text-xs text-gris-400">{hint}</p>}
     </div>
   );
@@ -293,7 +293,7 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
       <Toast toast={toast} />
       {cargandoCosto && <ModalCosto servicio={cargandoCosto} onCerrar={() => setCargandoCosto(null)} />}
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <PageHeader
           title={titulo ?? 'Servicios técnicos'}
           subtitle={subtitulo ?? 'Reparaciones registradas. Filtra por período o técnico y exporta el reporte en PDF.'}
@@ -361,7 +361,7 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
         </div>
 
         {/* Búsqueda, filtros, período y exportación */}
-        <section className="rounded-2xl border border-gris-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section className="rounded-2xl border border-gris-200 bg-white p-4 shadow-sutil">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gris-400" />
@@ -402,7 +402,7 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
               </span>
               {periodos.map((p) => (
                 <button key={p.key} type="button" onClick={() => cambiar({ desde: p.desde, hasta: p.hasta })} aria-pressed={periodoActivo === p.key}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${periodoActivo === p.key ? 'bg-[#121214] text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
+                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${periodoActivo === p.key ? 'bg-carbon-900 text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
                   {p.label}
                 </button>
               ))}
@@ -431,7 +431,7 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
                 </span>
               ) : (
                 <a href={route(`${prefijo}.servicios.exportarFiltrado`, paramsDe(filtro))} title="Descarga el reporte del período, técnico y registro elegidos"
-                  className="col-span-2 flex items-center justify-center gap-2 border-t border-gris-200 bg-[#121214] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1D1D21] sm:border-l sm:border-t-0 sm:py-0">
+                  className="col-span-2 flex items-center justify-center gap-2 border-t border-gris-200 bg-carbon-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-carbon-800 sm:border-l sm:border-t-0 sm:py-0">
                   <Download className="h-4 w-4" /> Exportar PDF
                   <span className="rounded-md bg-white/15 px-1.5 py-0.5 text-[11px] font-bold tabular-nums">{servicios.length}</span>
                 </a>
@@ -442,7 +442,7 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
         </section>
 
         {/* Listado */}
-        <section className="overflow-hidden rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section className="overflow-hidden rounded-2xl border border-gris-200 bg-white shadow-sutil">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gris-100 px-5 py-4">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
@@ -500,7 +500,7 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
                       {visibles.map((s) => (
                         <tr key={s.id} className="align-top transition-colors hover:bg-gris-50/70">
                           <td className="px-5 py-3">
-                            <p className="font-mono text-[13px] font-bold text-[color:var(--acento)]">{s.codigo_nota || '—'}</p>
+                            <p className="cifra text-[13px] font-bold text-[color:var(--acento)]">{s.codigo_nota || '—'}</p>
                             <p className="mt-0.5 whitespace-nowrap text-xs text-gris-400">{fechaCorta(s.fecha)}</p>
                           </td>
                           <td className="px-4 py-3">
@@ -558,8 +558,8 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
                           Total {hayFiltros ? 'filtrado' : 'general'} · {filtrados.length.toLocaleString('es-BO')} {filtrados.length === 1 ? 'servicio' : 'servicios'}
                         </td>
                         {conCostos && <td className="px-4 py-3 text-right font-semibold tabular-nums text-gris-600">{bsFmt(totalCosto)}</td>}
-                        <td className="px-4 py-3 text-right font-extrabold tabular-nums text-gris-900">{bsFmt(totalCobrado)}</td>
-                        {conCostos && <td className={`px-4 py-3 text-right font-extrabold tabular-nums ${totalGanancia < 0 ? 'text-rose-600' : 'text-emerald-700'}`}>{conSigno(totalGanancia)}</td>}
+                        <td className="px-4 py-3 text-right font-bold tabular-nums text-gris-900">{bsFmt(totalCobrado)}</td>
+                        {conCostos && <td className={`px-4 py-3 text-right font-bold tabular-nums ${totalGanancia < 0 ? 'text-rose-600' : 'text-emerald-700'}`}>{conSigno(totalGanancia)}</td>}
                         <td />
                       </tr>
                     </tfoot>
@@ -573,7 +573,7 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="truncate font-semibold text-gris-900">{s.cliente}</p>
-                          <p className="font-mono text-xs font-bold text-[color:var(--acento)]">
+                          <p className="cifra text-xs font-bold text-[color:var(--acento)]">
                             {s.codigo_nota || '—'} <span className="font-sans font-normal text-gris-400">· {fechaCorta(s.fecha)}</span>
                           </p>
                         </div>

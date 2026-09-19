@@ -30,7 +30,7 @@ const fmtFecha = (v, largo = false) => {
 };
 
 const MOVIMIENTOS = {
-  venta: { icon: ShoppingCart, tone: 'bg-[#121214]/[0.07] text-[#121214]' },
+  venta: { icon: ShoppingCart, tone: 'bg-carbon-900/[0.07] text-carbon-900' },
   servicio: { icon: Hammer, tone: 'bg-emerald-50 text-emerald-700' },
   cotizacion: { icon: FileText, tone: 'bg-[rgb(var(--acento-rgb)_/_0.1)] text-[color:var(--acento)]' },
   reserva: { icon: CalendarCheck, tone: 'bg-amber-50 text-amber-700' },
@@ -49,7 +49,7 @@ function Cifra({ icon: Icon, label, valor, extra }) {
   return (
     <div className="rounded-xl border border-gris-100 bg-gris-50/60 px-4 py-3">
       <p className="flex items-center gap-1.5 text-xs font-semibold text-gris-500"><Icon className="h-3.5 w-3.5" /> {label}</p>
-      <p className="mt-1.5 text-xl font-extrabold leading-none tabular-nums text-gris-900">{valor}</p>
+      <p className="mt-1.5 text-xl font-bold leading-none tabular-nums text-gris-900">{valor}</p>
       {extra && <p className="mt-1 truncate text-xs tabular-nums text-gris-500">{extra}</p>}
     </div>
   );
@@ -124,7 +124,7 @@ export default function ClienteForm({ cliente, actividad = {}, Layout, prefijo =
       <Head title={`Editar cliente · ${cliente.nombre}`} />
       <PremiumNotice notice={notice} onClose={() => setNotice(null)} />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         {/* Encabezado */}
         <div className="flex items-center gap-3">
           <Link href={route(`${prefijo}.clientes.index`)} aria-label="Volver a clientes"
@@ -132,7 +132,7 @@ export default function ClienteForm({ cliente, actividad = {}, Layout, prefijo =
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div className="min-w-0">
-            <h1 className="truncate text-[32px] font-extrabold leading-tight tracking-tight text-[#121214]" style={{ fontFamily: "'Chakra Petch', 'Inter', sans-serif" }}>
+            <h1 className="truncate text-[32px] font-bold leading-tight tracking-tight text-carbon-900" style={{ fontFamily: "'Chakra Petch', 'Inter', sans-serif" }}>
               Editar cliente
             </h1>
             <p className="text-sm text-gris-500">Sus datos de contacto se usan en ventas, cotizaciones y promociones.</p>
@@ -180,7 +180,7 @@ export default function ClienteForm({ cliente, actividad = {}, Layout, prefijo =
             </form>
 
             {/* Actividad */}
-            <section className="rounded-2xl border border-gris-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-6">
+            <section className="rounded-2xl border border-gris-200 bg-white p-5 shadow-sutil sm:p-6">
               <div className="flex items-start gap-3">
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[rgb(var(--acento-rgb)_/_0.1)] text-[color:var(--acento)]"><Receipt className="h-5 w-5" /></span>
                 <div>
@@ -212,7 +212,7 @@ export default function ClienteForm({ cliente, actividad = {}, Layout, prefijo =
                         <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${tipo.tone}`}><Icon className="h-4 w-4" /></span>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-semibold text-gris-900">
-                            {m.titulo} {m.codigo && <span className="font-mono text-[color:var(--acento)]">{m.codigo}</span>}
+                            {m.titulo} {m.codigo && <span className="cifra text-[color:var(--acento)]">{m.codigo}</span>}
                           </span>
                           <span className="block truncate text-xs text-gris-500">{fmtFecha(m.fecha)}{m.detalle ? ` · ${m.detalle}` : ''}</span>
                         </span>
@@ -239,9 +239,9 @@ export default function ClienteForm({ cliente, actividad = {}, Layout, prefijo =
 
           {/* Perfil */}
           <aside className="xl:sticky xl:top-24">
-            <section className="rounded-2xl border border-gris-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <section className="rounded-2xl border border-gris-200 bg-white p-5 shadow-sutil">
               <div className="flex items-center gap-3">
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#121214] text-base font-bold text-white">
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-carbon-900 text-base font-bold text-white">
                   {iniciales(data.nombre || cliente.nombre)}
                 </span>
                 <div className="min-w-0">

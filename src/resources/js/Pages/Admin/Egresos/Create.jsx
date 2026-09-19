@@ -112,7 +112,7 @@ export default function Create() {
       <Head title="Nuevo egreso" />
       <PremiumNotice notice={notice} onClose={() => setNotice(null)} />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         {/* Encabezado */}
         <div className="flex items-center gap-3">
           <Link href={route('admin.egresos.index')} aria-label="Volver a egresos"
@@ -120,7 +120,7 @@ export default function Create() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-[32px] font-extrabold leading-tight tracking-tight text-[#121214]" style={{ fontFamily: "'Chakra Petch', 'Inter', sans-serif" }}>
+            <h1 className="text-[32px] font-bold leading-tight tracking-tight text-carbon-900" style={{ fontFamily: "'Chakra Petch', 'Inter', sans-serif" }}>
               Nuevo egreso
             </h1>
             <p className="text-sm text-gris-500">Registra un gasto del negocio con la fecha de hoy. Se resta de la utilidad disponible del resumen.</p>
@@ -133,7 +133,7 @@ export default function Create() {
             <StepCard step={1} title="Tipo de gasto" subtitle="Elige a qué corresponde: así el resumen separa bien los gastos.">
               <Segmented options={TIPOS} value={data.tipo_gasto} ariaLabel="Tipo de gasto" onChange={(v) => cambiar('tipo_gasto', v)} />
               <p className="mt-3 flex items-start gap-2 rounded-xl bg-gris-50 px-3 py-2.5 text-[13px] text-gris-600">
-                <Info className="mt-0.5 h-4 w-4 shrink-0 text-[#96684F]" /> {tipo.ayuda}
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--acento)]" /> {tipo.ayuda}
               </p>
             </StepCard>
 
@@ -162,7 +162,7 @@ export default function Create() {
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {FRECUENCIAS.map((f) => (
                       <button key={f} type="button" onClick={() => cambiar('frecuencia', data.frecuencia === f ? '' : f)} aria-pressed={data.frecuencia === f}
-                        className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-colors ${data.frecuencia === f ? 'bg-[#121214] text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
+                        className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-colors ${data.frecuencia === f ? 'bg-carbon-900 text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
                         {f}
                       </button>
                     ))}
@@ -171,7 +171,7 @@ export default function Create() {
 
                 {esCuota && (
                   <Field label="Cuotas pendientes" error={errores.cuotas_pendientes} hint="Cuántas cuotas faltan después de esta.">
-                    <div className="flex h-11 items-stretch overflow-hidden rounded-xl border border-gris-200 bg-white transition focus-within:border-[#96684F] focus-within:ring-4 focus-within:ring-[#96684F]/15">
+                    <div className="flex h-11 items-stretch overflow-hidden rounded-xl border border-gris-200 bg-white transition focus-within:border-[color:var(--acento)] focus-within:ring-4 focus-within:ring-[#96684F]/15">
                       <button type="button" onClick={() => ajustarCuotas(-1)} aria-label="Una cuota menos"
                         className="grid w-11 shrink-0 place-items-center text-gris-500 transition-colors hover:bg-gris-50 hover:text-gris-900">
                         <Minus className="h-4 w-4" />
@@ -199,16 +199,16 @@ export default function Create() {
 
           {/* Resumen */}
           <aside className="xl:sticky xl:top-24">
-            <section className="rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <section className="rounded-2xl border border-gris-200 bg-white shadow-sutil">
               <div className="border-b border-gris-100 px-5 py-4">
                 <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
-                  <Wallet className="h-[18px] w-[18px] text-[#96684F]" /> Resumen del egreso
+                  <Wallet className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Resumen del egreso
                 </h2>
               </div>
 
               <div className="space-y-4 p-5">
                 <div className="flex items-center gap-3 rounded-xl bg-gris-50 px-4 py-3">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#96684F]/10 text-[#96684F]">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[rgb(var(--acento-rgb)_/_0.1)] text-[color:var(--acento)]">
                     <TipoIcon className="h-5 w-5" />
                   </span>
                   <div className="min-w-0">
@@ -224,9 +224,9 @@ export default function Create() {
                   <Linea label="Fecha" valor={`Hoy, ${hoyTexto}`} />
                 </dl>
 
-                <div className="rounded-xl bg-[#121214] px-4 py-3.5 text-white">
+                <div className="rounded-xl bg-carbon-900 px-4 py-3.5 text-white">
                   <p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/60">Monto del egreso</p>
-                  <p className="mt-1 text-[28px] font-extrabold leading-none tracking-tight tabular-nums">{bsFmt(monto)}</p>
+                  <p className="mt-1 text-[28px] font-bold leading-none tracking-tight tabular-nums">{bsFmt(monto)}</p>
                   <p className="mt-1.5 text-xs text-white/60">Se resta de la utilidad disponible de hoy en el resumen.</p>
                 </div>
 

@@ -42,18 +42,18 @@ const fechaCls = 'h-9 w-full min-w-0 border-0 bg-transparent p-0 text-sm text-gr
 
 function Stat({ icon: Icon, label, value, hint, tone = 'navy' }) {
   const tones = {
-    navy: 'bg-[#121214]/[0.07] text-[#121214]',
-    lila: 'bg-[#96684F]/10 text-[#96684F]',
+    navy: 'bg-carbon-900/[0.07] text-carbon-900',
+    lila: 'bg-[rgb(var(--acento-rgb)_/_0.1)] text-[color:var(--acento)]',
     amber: 'bg-amber-50 text-amber-700',
     rose: 'bg-rose-50 text-rose-600',
   };
   return (
-    <div className="rounded-2xl border border-gris-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <div className="rounded-2xl border border-gris-200 bg-white p-5 shadow-sutil">
       <div className="flex items-center gap-3">
         <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${tones[tone]}`}><Icon className="h-5 w-5" /></span>
         <p className="text-[13px] font-semibold text-gris-500">{label}</p>
       </div>
-      <p className="mt-4 truncate text-[24px] font-extrabold leading-none tracking-tight text-gris-900">{value}</p>
+      <p className="mt-4 truncate text-[24px] font-bold leading-none tracking-tight text-gris-900">{value}</p>
       {hint && <p className="mt-2 truncate text-xs text-gris-400">{hint}</p>}
     </div>
   );
@@ -161,7 +161,7 @@ export default function Index({ egresos = [], filtros = {} }) {
       <Head title="Egresos" />
       <Toast toast={toast} />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <PageHeader
           title="Egresos"
           subtitle="Gastos del negocio: servicios básicos, cuotas bancarias, sueldos y gastos personales. Se restan de la utilidad disponible del resumen."
@@ -184,7 +184,7 @@ export default function Index({ egresos = [], filtros = {} }) {
         </div>
 
         {/* Búsqueda, tipo, período y exportación */}
-        <section className="rounded-2xl border border-gris-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section className="rounded-2xl border border-gris-200 bg-white p-4 shadow-sutil">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gris-400" />
             <input value={texto} onChange={(e) => setTexto(e.target.value)} aria-label="Buscar egresos"
@@ -201,7 +201,7 @@ export default function Index({ egresos = [], filtros = {} }) {
           <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="Tipo de gasto">
             {[['todos', 'Todos', filas.length], ...Object.entries(TIPOS).map(([k, t]) => [k, t.label, conteo[k] || 0])].map(([k, label, n]) => (
               <button key={k} type="button" onClick={() => setTipo(k)} aria-pressed={tipo === k}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${tipo === k ? 'bg-[#121214] text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${tipo === k ? 'bg-carbon-900 text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
                 {label} <span className={tipo === k ? 'text-white/70' : 'text-gris-400'}>{n}</span>
               </button>
             ))}
@@ -210,18 +210,18 @@ export default function Index({ egresos = [], filtros = {} }) {
           <div className="mt-3 flex flex-col gap-3 border-t border-gris-100 pt-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="mr-1.5 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.1em] text-gris-400">
-                <CalendarRange className="h-4 w-4 text-[#96684F]" /> Período
+                <CalendarRange className="h-4 w-4 text-[color:var(--acento)]" /> Período
               </span>
               {periodos.map((p) => (
                 <button key={p.key} type="button" onClick={() => cambiarRango({ desde: p.desde, hasta: p.hasta })} aria-pressed={periodoActivo === p.key}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${periodoActivo === p.key ? 'bg-[#121214] text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
+                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${periodoActivo === p.key ? 'bg-carbon-900 text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
                   {p.label}
                 </button>
               ))}
             </div>
 
             {/* Las fechas y el botón de exportar van juntos: el PDF sale con este mismo período */}
-            <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-gris-200 bg-white transition focus-within:border-[#96684F] focus-within:ring-4 focus-within:ring-[#96684F]/15 sm:flex sm:h-11 sm:items-stretch sm:self-start xl:self-auto">
+            <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-gris-200 bg-white transition focus-within:border-[color:var(--acento)] focus-within:ring-4 focus-within:ring-[#96684F]/15 sm:flex sm:h-11 sm:items-stretch sm:self-start xl:self-auto">
               <label className="flex min-w-0 flex-col justify-center gap-0.5 px-3 py-2 sm:flex-row sm:items-center sm:gap-2 sm:py-0">
                 <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-gris-400">Desde</span>
                 <input type="date" value={rango.desde} max={rango.hasta || undefined} className={fechaCls}
@@ -235,7 +235,7 @@ export default function Index({ egresos = [], filtros = {} }) {
               {exportarHref ? (
                 <a href={exportarHref} target="_blank" rel="noopener noreferrer"
                   title={tipo !== 'todos' ? `Reporte del período, solo ${TIPOS[tipo].label.toLowerCase()}` : 'Reporte de todos los egresos del período'}
-                  className="col-span-2 flex items-center justify-center gap-2 border-t border-gris-200 bg-[#121214] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1D1D21] sm:border-l sm:border-t-0 sm:py-0">
+                  className="col-span-2 flex items-center justify-center gap-2 border-t border-gris-200 bg-carbon-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-carbon-800 sm:border-l sm:border-t-0 sm:py-0">
                   <Download className="h-4 w-4" /> Exportar PDF
                   {tipo !== 'todos' && <span className="rounded-md bg-white/15 px-1.5 py-0.5 text-[11px] font-bold">{TIPOS[tipo].label}</span>}
                 </a>
@@ -251,16 +251,16 @@ export default function Index({ egresos = [], filtros = {} }) {
         </section>
 
         {/* Listado */}
-        <section className="overflow-hidden rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section className="overflow-hidden rounded-2xl border border-gris-200 bg-white shadow-sutil">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gris-100 px-5 py-4">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
-                <Wallet className="h-[18px] w-[18px] text-[#96684F]" /> Detalle de egresos
+                <Wallet className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Detalle de egresos
               </h2>
               <span className="text-xs font-semibold text-gris-400">{periodoTexto}</span>
               {cargando && (
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#96684F]">
-                  <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#96684F]/25 border-t-[#96684F]" /> Actualizando…
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--acento)]">
+                  <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[color:var(--acento)]/25 border-t-[#96684F]" /> Actualizando…
                 </span>
               )}
             </div>
@@ -319,7 +319,7 @@ export default function Index({ egresos = [], filtros = {} }) {
                         <td className="px-5 py-3 font-bold text-gris-900" colSpan={6}>
                           Total {hayFiltros ? 'filtrado' : 'del período'} · {filtrados.length.toLocaleString('es-BO')} {filtrados.length === 1 ? 'egreso' : 'egresos'}
                         </td>
-                        <td className="px-5 py-3 text-right font-extrabold tabular-nums text-rose-600">{bsFmt(total)}</td>
+                        <td className="px-5 py-3 text-right font-bold tabular-nums text-rose-600">{bsFmt(total)}</td>
                       </tr>
                     </tfoot>
                   </table>
@@ -334,7 +334,7 @@ export default function Index({ egresos = [], filtros = {} }) {
                           <p className="truncate font-semibold text-gris-900">{e.concepto}</p>
                           <p className="text-xs text-gris-400">{fechaCorta(e.created_at)} · {hora(e.created_at)} · {e.user?.name || '—'}</p>
                         </div>
-                        <p className="shrink-0 text-base font-extrabold tabular-nums text-gris-900">{bsFmt(e.monto)}</p>
+                        <p className="shrink-0 text-base font-bold tabular-nums text-gris-900">{bsFmt(e.monto)}</p>
                       </div>
                       <div className="flex flex-wrap items-center gap-2 text-xs text-gris-500">
                         <TipoBadge tipo={e.tipo_gasto} />

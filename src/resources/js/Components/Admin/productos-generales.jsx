@@ -131,7 +131,7 @@ export function CamposProductoGeneral({ form, sugerencias = {}, pasos = false, r
       <StepCard step={pasos ? 2 : undefined} icon={Barcode} title="Código" subtitle="Cada unidad lleva su propio código; no se puede repetir.">
         <Field label="Código" error={errores.codigo} hint="Se guarda en mayúsculas. Con un lector de códigos puedes escanearlo directo.">
           <Input ref={refs.codigo} value={data.codigo} maxLength={255} autoComplete="off" placeholder="Ej.: FUNDACHAV_1"
-            className="font-mono uppercase tracking-wider"
+            className="cifra uppercase tracking-wider"
             onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
             onChange={(e) => cambiar('codigo', e.target.value.trimStart().toUpperCase())} />
         </Field>
@@ -155,16 +155,16 @@ export function CamposProductoGeneral({ form, sugerencias = {}, pasos = false, r
 /** Resumen en vivo con el precio y la ganancia. `children` agrega los botones de la página. */
 export function ResumenProductoGeneral({ data, children }) {
   return (
-    <section className="rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <section className="rounded-2xl border border-gris-200 bg-white shadow-sutil">
       <div className="border-b border-gris-100 px-5 py-4">
         <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
-          <Package className="h-[18px] w-[18px] text-[#96684F]" /> Resumen
+          <Package className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Resumen
         </h2>
       </div>
 
       <div className="space-y-4 p-5">
         <div className="flex items-center gap-3 rounded-xl bg-gris-50 px-4 py-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#121214] text-white"><Package className="h-5 w-5" /></span>
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-carbon-900 text-white"><Package className="h-5 w-5" /></span>
           <div className="min-w-0 flex-1">
             <p className="truncate font-bold text-gris-900">{bonito(data.nombre) || 'Nuevo producto'}</p>
             <p className="truncate text-xs text-gris-500">{data.tipo ? tipoTexto(data.tipo) : 'Tipo de producto'}</p>

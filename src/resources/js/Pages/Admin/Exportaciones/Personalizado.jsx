@@ -92,7 +92,7 @@ export default function ExportadorPersonalizado({ defaults = {}, inventarios = [
       <Head title="Exportador" />
       <Toast toast={toast} />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <Link href={route('admin.exportaciones.index')}
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-gris-500 hover:text-gris-800">
           <ArrowLeft className="h-4 w-4" /> Exportaciones
@@ -155,7 +155,7 @@ export default function ExportadorPersonalizado({ defaults = {}, inventarios = [
                 <span className="text-xs font-semibold text-gris-500">Ejemplos:</span>
                 {(EJEMPLOS[inventario] ?? []).map((ej) => (
                   <button key={ej} type="button" onClick={() => setNombre(ej)}
-                    className="rounded-lg border border-dashed border-gris-300 px-2.5 py-1 text-xs font-semibold text-gris-600 hover:border-[#96684F] hover:text-[#96684F]">
+                    className="rounded-lg border border-dashed border-gris-300 px-2.5 py-1 text-xs font-semibold text-gris-600 hover:border-[color:var(--acento)] hover:text-[color:var(--acento)]">
                     {ej}
                   </button>
                 ))}
@@ -169,7 +169,7 @@ export default function ExportadorPersonalizado({ defaults = {}, inventarios = [
               )}
             </StepCard>
 
-            <section className="rounded-2xl border border-gris-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <section className="rounded-2xl border border-gris-200 bg-white p-5 shadow-sutil">
               <h2 className="text-base font-bold text-gris-900">Cómo buscar bien</h2>
               <p className="mt-0.5 text-[13px] text-gris-500">La búsqueda es simple a propósito: encuentra por palabras sueltas.</p>
               <Consejos consejos={CONSEJOS_BUSQUEDA} />
@@ -177,7 +177,7 @@ export default function ExportadorPersonalizado({ defaults = {}, inventarios = [
           </div>
 
           <aside className="space-y-5 xl:sticky xl:top-24">
-            <section className="rounded-2xl border border-gris-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <section className="rounded-2xl border border-gris-200 bg-white p-5 shadow-sutil">
               <h2 className="text-base font-bold text-gris-900">Lo que va a salir</h2>
               <p className="mt-0.5 text-[13px] text-gris-500">
                 {cuenta.total === null
