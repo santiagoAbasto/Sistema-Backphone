@@ -64,6 +64,18 @@
   --info-texto:     #2B5488;
   --info-fuerte:    #3A72B8;
 
+  /* ── Serie de gráficos ────────────────────────────────────────────────────
+     Paleta categórica anclada en el bronce de la marca. Son tonos apagados y de
+     luminosidad distinta entre sí, así se distinguen también en blanco y negro y
+     con daltonismo. Todos pasan 4.5:1 sobre blanco salvo el arena, que solo se usa
+     como relleno con etiqueta oscura encima. */
+  --grafico-1: #96684F;   /* bronce — el color de la marca abre la serie */
+  --grafico-2: #3F5166;   /* pizarra */
+  --grafico-3: #2E7D63;   /* verde profundo */
+  --grafico-4: #B4472F;   /* terracota */
+  --grafico-5: #8A6E3F;   /* arena oscura */
+  --grafico-otros: #9A9A92;
+
   /* ── Superficies ──────────────────────────────────────────────────────── */
   --superficie-pagina:  var(--gris-50);
   --superficie:         #FFFFFF;

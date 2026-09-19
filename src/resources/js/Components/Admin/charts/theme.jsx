@@ -24,7 +24,7 @@ export const T = {
     bajaSuave: 'rgba(242,54,69,0.10)',
     subeTexto: '#067A67',
     bajaTexto: '#C81E2C',
-    acumulado: '#96684F',
+    acumulado: '#96684F',   // el bronce de la marca
     chip: '#F1F5F9',
     activo: '#121214',
     tag: '#0F172A',
@@ -73,7 +73,7 @@ export function ChartCard({ children, cargando = false }) {
     return (
         <section
             aria-busy={cargando}
-            className={`flex h-full flex-col rounded-2xl border border-gris-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-opacity duration-300 sm:p-6 ${cargando ? 'opacity-60' : ''}`}
+            className={`flex h-full flex-col rounded-[14px] border border-gris-200 bg-white p-5 shadow-sutil transition-opacity duration-300 sm:p-6 ${cargando ? 'opacity-60' : ''}`}
         >
             {children}
         </section>

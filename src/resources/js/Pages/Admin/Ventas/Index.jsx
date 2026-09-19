@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAutoRefresh } from '@/Hooks/useAutoRefresh';
 import { Badge, EmptyState, PageHeader, bsFmt, buttonCls, inputCls } from '@/Components/Admin/ui';
+import { BarraComposicion, Metrica } from '@/Components/Panel/Metricas';
 
 const TIPOS = {
   celular: { label: 'Celular', tone: 'blue' },
@@ -21,30 +22,11 @@ const normalizar = (v) => String(v ?? '').toLowerCase().normalize('NFD').replace
 const fecha = (iso) => new Date(iso).toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric' });
 const hora = (iso) => new Date(iso).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
 
-function Stat({ icon: Icon, label, value, hint, tone = 'navy' }) {
-  const tones = {
-    navy: 'bg-[#121214]/[0.07] text-[#121214]',
-    emerald: 'bg-emerald-50 text-emerald-700',
-    rose: 'bg-rose-50 text-rose-600',
-    lila: 'bg-[#96684F]/10 text-[#96684F]',
-  };
-  return (
-    <div className="rounded-2xl border border-gris-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-      <div className="flex items-center gap-3">
-        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${tones[tone]}`}><Icon className="h-5 w-5" /></span>
-        <p className="text-[13px] font-semibold text-gris-500">{label}</p>
-      </div>
-      <p className="mt-4 text-[24px] font-extrabold leading-none tracking-tight text-gris-900">{value}</p>
-      {hint && <p className="mt-2 text-xs text-gris-400">{hint}</p>}
-    </div>
-  );
-}
-
 function AccionNota({ href, icon: Icon, label }) {
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" title={label}
-      className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-gris-200 bg-white px-2.5 text-xs font-semibold text-gris-600 transition-colors hover:border-gris-300 hover:text-gris-900">
-      <Icon className="h-3.5 w-3.5" /> {label}
+    <a href={href} target="_blank" rel="noopener noreferrer" title={label} aria-label={label}
+      className="grid h-8 w-8 place-items-center rounded-[8px] border border-gris-200 bg-white text-gris-500 transition-colors hover:border-gris-300 hover:bg-gris-50 hover:text-gris-900">
+      <Icon className="h-3.5 w-3.5" />
     </a>
   );
 }
@@ -163,6 +145,8 @@ export default function Index({ ventas }) {
   const gananciaTotal = filtrados.reduce((acc, i) => (i.ganancia > 0 ? acc + i.ganancia : acc), 0);
   const perdidas = filtrados.reduce((acc, i) => (i.ganancia < 0 ? acc + Math.abs(i.ganancia) : acc), 0);
   const ventasUnicas = new Set(filtrados.map((i) => i.id_venta)).size;
+  const capitalTotal = filtrados.reduce((acc, i) => acc + i.capital, 0);
+  const rebajasTotal = filtrados.reduce((acc, i) => acc + i.descuento + i.permuta, 0);
   const hayFiltros = q || tipo !== 'todos' || vendedor !== 'todos';
 
   const limpiar = () => { setTexto(''); setTipo('todos'); setVendedor('todos'); setNotas(null); };
@@ -171,7 +155,7 @@ export default function Index({ ventas }) {
     <AdminLayout>
       <Head title="Ventas" />
 
-      <div className="ab-reset mx-auto max-w-[1400px] space-y-5">
+      <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <PageHeader
           title="Ventas"
           subtitle="Cada fila es un producto vendido. Desde aquí imprimes la nota o corriges una venta."
@@ -183,15 +167,38 @@ export default function Index({ ventas }) {
         />
 
         {/* Resumen de lo filtrado */}
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Stat icon={Receipt} label="Ventas" value={ventasUnicas.toLocaleString('es-BO')} hint={`${filtrados.length.toLocaleString('es-BO')} productos vendidos`} />
-          <Stat icon={Wallet} label="Total cobrado" value={bsFmt(totalCobrado)} tone="lila" />
-          <Stat icon={TrendingUp} label="Ganancia" value={bsFmt(gananciaTotal)} hint="Suma de las ventas con ganancia" tone="emerald" />
-          <Stat icon={TrendingDown} label="Invertido de más" value={bsFmt(perdidas)} hint={perdidas > 0 ? 'Ventas por debajo del costo' : 'Ninguna venta bajo el costo'} tone="rose" />
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+          <Metrica
+            destacada
+            etiqueta={hayFiltros ? 'Cobrado en lo filtrado' : 'Cobrado en total'}
+            valor={bsFmt(totalCobrado)}
+            hint={`${ventasUnicas.toLocaleString('es-BO')} ${ventasUnicas === 1 ? 'venta' : 'ventas'} · ${filtrados.length.toLocaleString('es-BO')} ${filtrados.length === 1 ? 'producto' : 'productos'}`}
+            icono={Wallet}
+          />
+
+          <div className="flex flex-col justify-between rounded-[14px] border border-gris-200 bg-white p-5 shadow-sutil">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gris-500">De dónde sale lo cobrado</p>
+              <p className="mt-3 font-marca text-[26px] font-bold leading-none tracking-tight tabular-nums text-[color:var(--ok-texto)]">
+                {bsFmt(gananciaTotal)}
+              </p>
+              <p className="mt-2 text-[12px] text-gris-500">
+                de ganancia{perdidas > 0 ? `, y ${bsFmt(perdidas)} vendido bajo el costo` : ', sin ventas bajo el costo'}
+              </p>
+            </div>
+            <BarraComposicion
+              className="mt-5"
+              partes={[
+                { etiqueta: 'Ganancia', valor: gananciaTotal, color: 'var(--ok-fuerte)' },
+                { etiqueta: 'Costo', valor: capitalTotal, color: 'var(--acento)' },
+                { etiqueta: 'Rebajas', valor: rebajasTotal, color: 'var(--gris-300)' },
+              ]}
+            />
+          </div>
         </div>
 
         {/* Búsqueda y filtros */}
-        <section className="rounded-2xl border border-gris-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section className="rounded-[14px] border border-gris-200 bg-white p-4 shadow-sutil">
           <form onSubmit={buscarNota} className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gris-400" />
@@ -220,7 +227,7 @@ export default function Index({ ventas }) {
           <div className="mt-3 flex flex-wrap gap-1.5">
             {[['todos', 'Todos', itemsDesglosados.length], ...Object.entries(TIPOS).filter(([k]) => conteoTipos[k]).map(([k, t]) => [k, t.label, conteoTipos[k]])].map(([k, label, n]) => (
               <button key={k} type="button" onClick={() => setTipo(k)}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${tipo === k ? 'bg-[#121214] text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${tipo === k ? 'bg-carbon-900 text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
                 {label} <span className={tipo === k ? 'text-white/70' : 'text-gris-400'}>{n}</span>
               </button>
             ))}
@@ -229,10 +236,10 @@ export default function Index({ ventas }) {
 
         {/* Notas encontradas (incluye servicios técnicos) */}
         {notas !== null && (
-          <section className="rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <section className="overflow-hidden rounded-[14px] border border-gris-200 bg-white shadow-sutil">
             <div className="flex items-center justify-between gap-3 border-b border-gris-100 px-5 py-3.5">
-              <p className="text-sm font-bold text-gris-900">
-                Notas encontradas <span className="font-semibold text-gris-400">· {notas.length}</span>
+              <p className="text-[15px] font-semibold text-gris-900">
+                Notas encontradas <span className="font-normal text-gris-400">· {notas.length}</span>
               </p>
               <button type="button" onClick={() => setNotas(null)} className={buttonCls('ghost', 'h-8 px-2.5 text-xs')}>
                 <X className="h-3.5 w-3.5" /> Cerrar
@@ -245,7 +252,7 @@ export default function Index({ ventas }) {
                 {notas.map((r) => (
                   <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="font-mono text-sm font-bold text-[#96684F]">{r.codigo_nota}</span>
+                      <span className="cifra text-[13px] font-semibold text-[color:var(--acento)]">{r.codigo_nota}</span>
                       <span className="truncate text-sm font-semibold text-gris-800">{r.nombre_cliente}</span>
                       <Badge tone={r.tipo === 'servicio_tecnico' ? 'emerald' : 'navy'}>{r.tipo === 'servicio_tecnico' ? 'Servicio técnico' : 'Venta'}</Badge>
                     </div>
@@ -268,10 +275,10 @@ export default function Index({ ventas }) {
         )}
 
         {/* Detalle */}
-        <section className="overflow-hidden rounded-2xl border border-gris-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <section className="overflow-hidden rounded-[14px] border border-gris-200 bg-white shadow-sutil">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gris-100 px-5 py-4">
-            <h2 className="flex items-center gap-2 text-base font-bold text-gris-900">
-              <ShoppingCart className="h-[18px] w-[18px] text-[#96684F]" /> Detalle de ventas
+            <h2 className="flex items-center gap-2 text-[15px] font-semibold text-gris-900">
+              <ShoppingCart className="h-[17px] w-[17px] text-[color:var(--acento)]" /> Detalle de ventas
             </h2>
             {hayFiltros && (
               <button type="button" onClick={limpiar} className={buttonCls('ghost', 'h-8 px-2.5 text-xs')}>
@@ -290,17 +297,17 @@ export default function Index({ ventas }) {
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[1080px] text-[13px]">
+                <table className="w-full min-w-[860px] text-[13px]">
                   <thead>
-                    <tr className="bg-gris-50 text-left text-[11px] font-bold uppercase tracking-[0.08em] text-gris-500">
+                    <tr className="border-b border-gris-200 bg-gris-50 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-gris-500">
                       <th className="px-5 py-3">Venta</th>
                       <th className="px-4 py-3">Cliente</th>
                       <th className="px-4 py-3">Producto</th>
-                      <th className="px-4 py-3 text-right">Precio</th>
-                      <th className="px-4 py-3 text-right">Descuentos</th>
-                      <th className="px-4 py-3 text-right">Costo</th>
-                      <th className="px-4 py-3 text-right">Cobrado</th>
-                      <th className="px-4 py-3 text-right">Ganancia</th>
+                      <th className="whitespace-nowrap px-3.5 py-3 text-right">Precio</th>
+                      <th className="whitespace-nowrap px-3.5 py-3 text-right">Descuentos</th>
+                      <th className="hidden whitespace-nowrap px-3.5 py-3 text-right 2xl:table-cell">Costo</th>
+                      <th className="whitespace-nowrap px-3.5 py-3 text-right">Cobrado</th>
+                      <th className="whitespace-nowrap px-3.5 py-3 text-right">Ganancia</th>
                       <th className="px-5 py-3 text-right">Acciones</th>
                     </tr>
                   </thead>
@@ -309,24 +316,24 @@ export default function Index({ ventas }) {
                       const tipoInfo = TIPOS[i.tipo] ?? { label: i.tipo, tone: 'slate' };
                       const rebajas = i.descuento + i.permuta;
                       return (
-                        <tr key={`${i.id_venta}-${idx}`} className="align-top transition-colors hover:bg-gris-50/70">
+                        <tr key={`${i.id_venta}-${idx}`} className="group align-top transition-colors hover:bg-gris-50">
                           <td className="px-5 py-3">
-                            <p className="font-mono text-[13px] font-bold text-[#96684F]">{i.codigoNota}</p>
-                            <p className="mt-0.5 whitespace-nowrap text-xs text-gris-400">{fecha(i.fecha)} · {hora(i.fecha)}</p>
+                            <p className="cifra text-[12.5px] font-semibold text-[color:var(--acento)]">{i.codigoNota}</p>
+                            <p className="mt-0.5 whitespace-nowrap text-[11.5px] text-gris-400">{fecha(i.fecha)} · {hora(i.fecha)}</p>
                           </td>
                           <td className="px-4 py-3">
-                            <p className="max-w-[180px] truncate font-semibold text-gris-900">{i.cliente || 'Sin nombre'}</p>
-                            <p className="mt-0.5 text-xs text-gris-400">por {i.vendedor}</p>
+                            <p className="max-w-[180px] truncate font-medium text-gris-900">{i.cliente || 'Sin nombre'}</p>
+                            <p className="mt-0.5 text-[11.5px] text-gris-400">por {i.vendedor}</p>
                           </td>
                           <td className="px-4 py-3">
                             <p className="max-w-[240px] truncate font-medium text-gris-800">{i.producto || '—'}</p>
                             <Badge tone={tipoInfo.tone} className="mt-1">{tipoInfo.label}</Badge>
                           </td>
-                          <td className="px-4 py-3 text-right tabular-nums text-gris-700">{bsFmt(i.precioVenta)}</td>
-                          <td className="px-4 py-3 text-right tabular-nums">
+                          <td className="whitespace-nowrap px-3.5 py-3 text-right tabular-nums text-gris-700">{bsFmt(i.precioVenta)}</td>
+                          <td className="whitespace-nowrap px-3.5 py-3 text-right tabular-nums">
                             {rebajas > 0 ? (
                               <>
-                                <p className="text-rose-600">−{bsFmt(rebajas)}</p>
+                                <p className="font-medium text-[color:var(--peligro-texto)]">−{bsFmt(rebajas)}</p>
                                 {i.descuento > 0 && i.permuta > 0 && (
                                   <p className="mt-0.5 text-[11px] text-gris-400">Desc. {bsFmt(i.descuento)} · Permuta {bsFmt(i.permuta)}</p>
                                 )}
@@ -334,27 +341,27 @@ export default function Index({ ventas }) {
                               </>
                             ) : <span className="text-gris-300">—</span>}
                           </td>
-                          <td className="px-4 py-3 text-right tabular-nums text-gris-500">{bsFmt(i.capital)}</td>
-                          <td className="px-4 py-3 text-right tabular-nums">
-                            <p className="font-bold text-gris-900">{bsFmt(i.precioFinal)}</p>
+                          <td className="hidden whitespace-nowrap px-3.5 py-3 text-right tabular-nums text-gris-500 2xl:table-cell">{bsFmt(i.capital)}</td>
+                          <td className="whitespace-nowrap px-3.5 py-3 text-right tabular-nums">
+                            <p className="font-semibold text-gris-900">{bsFmt(i.precioFinal)}</p>
                             {i.reserva > 0 && <p className="mt-0.5 text-[11px] text-gris-400">Abono previo {bsFmt(i.reserva)}</p>}
                           </td>
-                          <td className="px-4 py-3 text-right tabular-nums">
+                          <td className="whitespace-nowrap px-3.5 py-3 text-right tabular-nums">
                             {i.ganancia < 0 ? (
                               <span className="inline-flex flex-col items-end">
-                                <span className="font-bold text-rose-600">−{bsFmt(Math.abs(i.ganancia))}</span>
+                                <span className="font-semibold text-[color:var(--peligro-texto)]">−{bsFmt(Math.abs(i.ganancia))}</span>
                                 <span className="text-[11px] text-gris-400">Se invirtió</span>
                               </span>
                             ) : (
-                              <span className="font-bold text-emerald-700">+{bsFmt(i.ganancia)}</span>
+                              <span className="font-semibold text-[color:var(--ok-texto)]">+{bsFmt(i.ganancia)}</span>
                             )}
                           </td>
                           <td className="px-5 py-3">
-                            <div className="flex justify-end gap-1.5">
+                            <div className="flex justify-end gap-1.5 opacity-60 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                               <AccionNota icon={FileText} label="Nota" href={route('admin.ventas.boleta', i.id_venta)} />
                               <AccionNota icon={Printer} label="Térmica" href={route('admin.ventas.boleta80', i.id_venta)} />
                               <Link href={route('admin.ventas.edit', i.id_venta)} title="Editar venta" aria-label={`Editar venta ${i.codigoNota}`}
-                                className="grid h-8 w-8 place-items-center rounded-lg border border-gris-200 bg-white text-gris-600 transition-colors hover:border-[#121214] hover:bg-[#121214] hover:text-white">
+                                className="grid h-8 w-8 place-items-center rounded-[8px] border border-gris-200 bg-white text-gris-500 transition-colors hover:border-carbon-900 hover:bg-carbon-900 hover:text-white">
                                 <Pencil className="h-3.5 w-3.5" />
                               </Link>
                             </div>
@@ -364,12 +371,15 @@ export default function Index({ ventas }) {
                     })}
                   </tbody>
                   <tfoot>
-                    <tr className="border-t border-gris-200 bg-gris-50/70 text-[13px]">
-                      <td className="px-5 py-3 font-bold text-gris-900" colSpan={6}>
+                    <tr className="border-t border-gris-200 bg-gris-50 text-[13px]">
+                      <td className="px-5 py-3.5 font-semibold text-gris-900 2xl:hidden" colSpan={5}>
                         Total {hayFiltros ? 'filtrado' : 'general'} · {filtrados.length.toLocaleString('es-BO')} productos
                       </td>
-                      <td className="px-4 py-3 text-right font-extrabold tabular-nums text-gris-900">{bsFmt(totalCobrado)}</td>
-                      <td className="px-4 py-3 text-right font-extrabold tabular-nums text-emerald-700">+{bsFmt(gananciaTotal)}</td>
+                      <td className="hidden px-5 py-3.5 font-semibold text-gris-900 2xl:table-cell" colSpan={6}>
+                        Total {hayFiltros ? 'filtrado' : 'general'} · {filtrados.length.toLocaleString('es-BO')} productos
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3.5 text-right font-marca text-[15px] font-bold tabular-nums text-gris-900">{bsFmt(totalCobrado)}</td>
+                      <td className="whitespace-nowrap px-4 py-3.5 text-right font-marca text-[15px] font-bold tabular-nums text-[color:var(--ok-texto)]">+{bsFmt(gananciaTotal)}</td>
                       <td />
                     </tr>
                   </tfoot>

@@ -10,14 +10,16 @@ import { ChartCard, T, bs, porcentaje, useCountUp } from './theme';
  * porcentaje escrito y la lista muestra todos los montos (regla de alivio del validador).
  * El color sigue a la categoría y el anillo conserva siempre el orden.
  */
+// La paleta vive en tokens.css: ahí se cambia una vez y la siguen el anillo, los reportes
+// y cualquier gráfico que venga después.
 export const CATEGORIAS = [
-    { label: 'Celulares', color: '#2a78d6' },
-    { label: 'Computadoras', color: '#eb6834' },
-    { label: 'Productos Generales', color: '#1baf7a' },
-    { label: 'Equipos de marca', color: '#eda100' },
-    { label: 'Servicios Técnicos', color: '#e87ba4' },
+    { label: 'Celulares', color: 'var(--grafico-1)' },
+    { label: 'Computadoras', color: 'var(--grafico-2)' },
+    { label: 'Productos Generales', color: 'var(--grafico-3)' },
+    { label: 'Equipos de marca', color: 'var(--grafico-4)' },
+    { label: 'Servicios Técnicos', color: 'var(--grafico-5)' },
 ];
-const OTRO = '#94A3B8';
+const OTRO = 'var(--grafico-otros)';
 
 // Lienzo del anillo (con espacio para las etiquetas de porcentaje a los costados)
 const VW = 380;
