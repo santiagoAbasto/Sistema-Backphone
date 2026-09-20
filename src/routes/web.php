@@ -347,6 +347,15 @@ Route::middleware(['auth', 'verified', 'permiso'])
             ->parameters(['productos-apple' => 'productoApple']);
 
         // ========================
+        // 🔁 Traspasos entre sucursales
+        // ========================
+        // Enviar es del super administrador; confirmar que llegó, de quien recibe.
+        Route::get('/traspasos', [\App\Http\Controllers\Admin\TraspasoController::class, 'index'])->name('traspasos.index');
+        Route::post('/traspasos', [\App\Http\Controllers\Admin\TraspasoController::class, 'store'])->name('traspasos.store');
+        Route::post('/traspasos/{traspaso}/recibir', [\App\Http\Controllers\Admin\TraspasoController::class, 'recibir'])->name('traspasos.recibir');
+        Route::post('/traspasos/{traspaso}/cancelar', [\App\Http\Controllers\Admin\TraspasoController::class, 'cancelar'])->name('traspasos.cancelar');
+
+        // ========================
         // 🔎 Auditoría física de inventario
         // ========================
         Route::get('/auditoria-inventario', [InventoryAuditController::class, 'index'])

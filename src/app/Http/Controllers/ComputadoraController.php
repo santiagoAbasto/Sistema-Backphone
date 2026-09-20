@@ -95,6 +95,10 @@ class ComputadoraController extends Controller
 
     public function update(Request $request, Computadora $computadora)
     {
+        if ($frenado = $this->frenarSiViaja($computadora)) {
+            return $frenado;
+        }
+
         $computadora->update($this->validar($request, $computadora));
 
         return redirect()->route('admin.computadoras.index')->with('success', 'Computadora actualizada correctamente.');
@@ -151,6 +155,10 @@ class ComputadoraController extends Controller
 
     public function habilitar(Computadora $computadora)
     {
+        if ($frenado = $this->frenarSiViaja($computadora)) {
+            return $frenado;
+        }
+
         $computadora->update(['estado' => 'disponible']);
 
         return back()->with('success', 'Computadora habilitada para la venta.');

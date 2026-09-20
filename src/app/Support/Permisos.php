@@ -35,6 +35,7 @@ class Permisos
 
         'inventario'   => ['Inventario',           'Inventario',          ['admin.celulares', 'admin.computadoras', 'admin.productos-apple', 'admin.productos-generales']],
         'piezas'       => ['Piezas y repuestos',   'Inventario',          ['admin.piezas']],
+        'traspasos'    => ['Traspasos',            'Inventario',          ['admin.traspasos']],
         'auditoria'    => ['Auditoría',            'Inventario',          ['admin.inventory-audits']],
 
         'exportar'     => ['Exportar datos',       'Exportar datos',      ['admin.exportaciones', 'admin.exportar']],

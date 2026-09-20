@@ -102,6 +102,10 @@ class CelularController extends Controller
 
     public function update(Request $request, Celular $celular)
     {
+        if ($frenado = $this->frenarSiViaja($celular)) {
+            return $frenado;
+        }
+
         $celular->update($this->validar($request, $celular));
 
         return redirect()->route('admin.celulares.index')->with('success', 'Celular actualizado correctamente.');
@@ -152,6 +156,10 @@ class CelularController extends Controller
 
     public function habilitar(Celular $celular)
     {
+        if ($frenado = $this->frenarSiViaja($celular)) {
+            return $frenado;
+        }
+
         $celular->update(['estado' => 'disponible']);
 
         return back()->with('success', 'Celular habilitado para la venta.');

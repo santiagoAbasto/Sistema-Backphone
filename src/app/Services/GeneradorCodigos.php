@@ -21,6 +21,7 @@ class GeneradorCodigos
         'ventas'           => 'V',
         'reservas'         => 'R',
         'servicio_tecnico' => 'ST',
+        'traspasos'        => 'T',
     ];
 
     private const RELLENO = 3;
@@ -53,6 +54,12 @@ class GeneradorCodigos
     public static function crearReservaConCodigo(callable $callback, ?int $sucursalId = null): mixed
     {
         return self::crearConCodigo('reservas', $callback, $sucursalId);
+    }
+
+    /** El traspaso se numera con el prefijo de la sucursal que envía: CBA-T001. */
+    public static function crearTraspasoConCodigo(callable $callback, ?int $sucursalId = null): mixed
+    {
+        return self::crearConCodigo('traspasos', $callback, $sucursalId);
     }
 
     /**

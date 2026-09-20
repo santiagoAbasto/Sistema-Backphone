@@ -1,5 +1,5 @@
 import {
-  CalendarCheck, ChartLine, ClipboardCheck, FileDown, Hammer, Laptop, LayoutDashboard, Package, Receipt,
+  ArrowLeftRight, CalendarCheck, ChartLine, ClipboardCheck, FileDown, Hammer, Laptop, LayoutDashboard, Package, Receipt,
   Settings, ShoppingCart, SlidersHorizontal, Smartphone, Tablet, Users, Wallet, Wrench,
 } from 'lucide-react';
 import IconoUsuarios from '@/Components/Admin/IconoUsuarios';
@@ -36,6 +36,7 @@ const NAV = [
     { r: 'admin.productos-apple.index', icon: Tablet, label: 'Equipos de marca', modulo: 'inventario' },
     { r: 'admin.productos-generales.index', icon: Package, label: 'Accesorios y generales', modulo: 'inventario' },
     { r: 'admin.piezas.index', icon: IconoPieza, label: 'Piezas y repuestos', modulo: 'piezas' },
+    { r: 'admin.traspasos.index', icon: ArrowLeftRight, label: 'Traspasos', modulo: 'traspasos' },
     { r: 'admin.inventory-audits.index', icon: ClipboardCheck, label: 'Auditoría', modulo: 'auditoria' },
   ] },
   { key: 'datos', label: 'Exportar datos', items: [

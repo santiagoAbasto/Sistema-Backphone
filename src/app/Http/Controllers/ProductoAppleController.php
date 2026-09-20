@@ -105,6 +105,10 @@ class ProductoAppleController extends Controller
 
     public function update(Request $request, ProductoApple $productoApple)
     {
+        if ($frenado = $this->frenarSiViaja($productoApple)) {
+            return $frenado;
+        }
+
         $productoApple->update($this->validar($request, $productoApple));
 
         return redirect()->route('admin.productos-apple.index')->with('success', 'Equipo de marca actualizado correctamente.');
@@ -118,6 +122,10 @@ class ProductoAppleController extends Controller
 
     public function habilitar(ProductoApple $productoApple)
     {
+        if ($frenado = $this->frenarSiViaja($productoApple)) {
+            return $frenado;
+        }
+
         $productoApple->update(['estado' => 'disponible']);
 
         return back()->with('success', 'Producto habilitado para la venta.');

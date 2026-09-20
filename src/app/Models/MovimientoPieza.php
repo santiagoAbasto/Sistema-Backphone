@@ -20,6 +20,8 @@ class MovimientoPieza extends Model
     public const SERVICIO  = 'servicio';
     public const DEVOLUCION = 'devolucion';
     public const AJUSTE    = 'ajuste';
+    public const SALIDA_TRASPASO  = 'traspaso_sale';
+    public const ENTRADA_TRASPASO = 'traspaso_entra';
 
     protected $fillable = [
         'pieza_id',
@@ -46,6 +48,8 @@ class MovimientoPieza extends Model
         self::SERVICIO   => 'Servicio técnico',
         self::DEVOLUCION => 'Devolución',
         self::AJUSTE     => 'Ajuste de inventario',
+        self::SALIDA_TRASPASO  => 'Salió en un traspaso',
+        self::ENTRADA_TRASPASO => 'Llegó en un traspaso',
     ];
 
     public function pieza(): BelongsTo

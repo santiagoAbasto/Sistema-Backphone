@@ -100,6 +100,10 @@ class ProductoGeneralController extends Controller
 
     public function update(Request $request, ProductoGeneral $producto)
     {
+        if ($frenado = $this->frenarSiViaja($producto)) {
+            return $frenado;
+        }
+
         $producto->update($this->validar($request, $producto));
 
         return redirect()->route('admin.productos-generales.index')
@@ -153,6 +157,10 @@ class ProductoGeneralController extends Controller
 
     public function habilitar(ProductoGeneral $producto)
     {
+        if ($frenado = $this->frenarSiViaja($producto)) {
+            return $frenado;
+        }
+
         $producto->update(['estado' => 'disponible']);
 
         return back()->with('success', 'Producto habilitado para la venta.');

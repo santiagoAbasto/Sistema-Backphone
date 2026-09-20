@@ -24,6 +24,29 @@ trait EquipoDeInventario
     /** @return array{tipo: string, venta: ?string, permuta: string} */
     abstract protected function inventario(): array;
 
+    /** ¿Está en camino a otra sucursal? Mientras viaja, la ficha no se toca. */
+    protected function viajando(Model $equipo): bool
+    {
+        return $equipo->estado === \App\Models\Traspaso::ESTADO_EQUIPO_EN_VIAJE;
+    }
+
+    /**
+     * Corta cualquier edición de un equipo en tránsito.
+     *
+     * Sin esto, guardar la ficha lo devolvería a «disponible» y la sucursal que lo envió podría
+     * vender algo que ya está dentro de una caja camino a la otra ciudad.
+     */
+    protected function frenarSiViaja(Model $equipo): ?RedirectResponse
+    {
+        if (! $this->viajando($equipo)) {
+            return null;
+        }
+
+        $nombre = $equipo->modelo ?? $equipo->nombre ?? 'El equipo';
+
+        return back()->with('error', "«{$nombre}» está viajando a otra sucursal: se puede editar cuando confirmen que llegó.");
+    }
+
     /** Equipos que figuran en ventas, permutas o reservas. */
     protected function idsConHistorial(): array
     {
@@ -43,6 +66,10 @@ trait EquipoDeInventario
     /** Por qué no se puede eliminar (null si se puede). */
     protected function motivoBloqueo(Model $equipo): ?string
     {
+        if ($this->viajando($equipo)) {
+            return 'Está viajando a otra sucursal. Cuando confirmen que llegó, vuelve a estar disponible.';
+        }
+
         ['tipo' => $tipo, 'venta' => $venta, 'permuta' => $permuta] = $this->inventario();
         $id = $equipo->getKey();
 
