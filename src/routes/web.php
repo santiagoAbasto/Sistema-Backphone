@@ -227,6 +227,16 @@ Route::middleware(['auth', 'verified', 'permiso'])
             ->name('servicios.costo');
 
         // ========================
+        // 🧑‍🔧 Técnicos y comisiones
+        // ========================
+        // El taller no paga sueldo: reparte la ganancia de cada reparación.
+        Route::get('/tecnicos', [\App\Http\Controllers\Admin\TecnicoController::class, 'index'])->name('tecnicos.index');
+        Route::post('/tecnicos', [\App\Http\Controllers\Admin\TecnicoController::class, 'store'])->name('tecnicos.store');
+        Route::patch('/tecnicos/{tecnico}', [\App\Http\Controllers\Admin\TecnicoController::class, 'update'])->name('tecnicos.update');
+        Route::delete('/tecnicos/{tecnico}', [\App\Http\Controllers\Admin\TecnicoController::class, 'destroy'])->name('tecnicos.destroy');
+        Route::post('/tecnicos/{tecnico}/liquidar', [\App\Http\Controllers\Admin\TecnicoController::class, 'liquidar'])->name('tecnicos.liquidar');
+
+        // ========================
         // 📊 Reportes
         // ========================
         Route::get('/reportes', [ReporteController::class, 'index'])

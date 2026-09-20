@@ -14,6 +14,17 @@ class ServicioTecnico extends Model
 {
     use HasFactory, DeSucursal;
 
+    /** De qué es el equipo. Decide qué técnicos se pueden elegir. */
+    public const MARCA_APPLE   = 'apple';
+    public const MARCA_ANDROID = 'android';
+    public const MARCA_OTRO    = 'otro';
+
+    public const MARCAS = [
+        self::MARCA_APPLE   => 'iPhone / Apple',
+        self::MARCA_ANDROID => 'Android',
+        self::MARCA_OTRO    => 'Otro equipo',
+    ];
+
     /**
      * Campos asignables en masa
      */
@@ -29,6 +40,9 @@ class ServicioTecnico extends Model
         'precio_costo',
         'precio_venta',
         'tecnico',
+        'tecnico_id',
+        'marca',
+        'comision_porcentaje',
         'fecha',
         'user_id',
         'cliente_id',
@@ -42,7 +56,8 @@ class ServicioTecnico extends Model
      * Casts automáticos
      */
     protected $casts = [
-        'recepcion'        => 'array',
+        'recepcion'           => 'array',
+        'comision_porcentaje' => 'integer',
         'fecha'            => 'date',
         'costo_pendiente'  => 'boolean',
         'costo_cargado_en' => 'datetime',
@@ -73,6 +88,12 @@ class ServicioTecnico extends Model
     /* =========================
      |  RELACIONES
      ========================= */
+
+    /** Quién reparó el equipo. Puede ser null en los servicios viejos. */
+    public function tecnicoAsignado()
+    {
+        return $this->belongsTo(Tecnico::class, 'tecnico_id');
+    }
 
     /**
      * Usuario que registró el servicio (vendedor)
@@ -119,6 +140,40 @@ class ServicioTecnico extends Model
     public function gananciaParaReportes(): float
     {
         return $this->costo_pendiente ? 0.0 : (float) $this->precio_venta - (float) $this->precio_costo;
+    }
+
+    /* =========================
+     |  COMISIÓN DEL TÉCNICO
+     ========================= */
+
+    /**
+     * Lo que le toca al técnico por este servicio.
+     *
+     * Sale de la ganancia —lo que pagó el cliente menos lo que costaron los repuestos—, no del
+     * total de la nota: los repuestos los pone la tienda y los recupera antes de repartir.
+     *
+     * Devuelve null mientras falte cargar el costo: sin él no hay ganancia que repartir, y poner
+     * cero sería decir que el técnico no ganó nada.
+     */
+    public function comisionDelTecnico(): ?float
+    {
+        if ($this->costo_pendiente || $this->tecnico_id === null) {
+            return null;
+        }
+
+        // Un servicio que se cobró por debajo de lo que costó lo absorbe la tienda: al técnico
+        // no se le descuenta de otra reparación por un precio que él no puso.
+        $ganancia = max(0.0, $this->gananciaParaReportes());
+
+        return round($ganancia * ($this->comision_porcentaje ?? 0) / 100, 2);
+    }
+
+    /** Lo que queda para la tienda después de la comisión. */
+    public function parteDeLaTienda(): ?float
+    {
+        $comision = $this->comisionDelTecnico();
+
+        return $comision === null ? null : round(max(0.0, $this->gananciaParaReportes()) - $comision, 2);
     }
 
     /** Los trabajos del servicio (el JSON del detalle), o null si es un registro antiguo con texto libre. */

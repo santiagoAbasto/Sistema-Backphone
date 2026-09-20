@@ -6,7 +6,7 @@ import { route } from 'ziggy-js';
 import { ArrowLeft, Hammer, Plus, Search, Trash2, Wrench, X } from 'lucide-react';
 import PremiumNotice from '@/Components/PremiumNotice';
 import { notifyRecordsUpdated } from '@/Hooks/useAutoRefresh';
-import { Badge, Field, Input, StepCard, Textarea, bsFmt, buttonCls, inputCls } from '@/Components/Admin/ui';
+import { Badge, Field, Input, Segmented, StepCard, Textarea, bsFmt, buttonCls, inputCls } from '@/Components/Admin/ui';
 import { IconoPieza } from '@/Components/Admin/piezas';
 import RecepcionEquipo, { payloadRecepcion, recepcionInicial, textoDesbloqueo, validarRecepcion } from '@/Components/Panel/RecepcionEquipo';
 
@@ -90,7 +90,7 @@ function Linea({ label, valor }) {
   );
 }
 
-export default function ServiciosForm({ tecnicos = [], piezas = [], revision = [], Layout, prefijo = 'admin' }) {
+export default function ServiciosForm({ tecnicos = [], piezas = [], revision = [], marcas = [], Layout, prefijo = 'admin' }) {
   // El vendedor registra solo lo que paga el cliente: con eso sale la nota. El costo de cada trabajo lo carga
   // el administrador desde la lista (le llega el aviso), y recién ahí se calcula la utilidad.
   const conMargen = prefijo === 'admin';
@@ -98,7 +98,8 @@ export default function ServiciosForm({ tecnicos = [], piezas = [], revision = [
     cliente: '',
     telefono: '',
     equipo: '',
-    tecnico: '',
+    marca: '',
+    tecnico_id: '',
     fecha: dayjs().format('YYYY-MM-DD'), // fecha local (no UTC)
     notas_adicionales: '',
   });
@@ -180,6 +181,28 @@ export default function ServiciosForm({ tecnicos = [], piezas = [], revision = [
     quitarError('trabajos');
   };
 
+  // La regla del taller: un equipo Android no se le asigna al técnico de Apple. Acá se ve —
+  // al elegir la marca, los que no la atienden desaparecen de la lista— y el servidor la
+  // vuelve a comprobar al guardar.
+  const disponibles = data.marca
+    ? tecnicos.filter((t) => data.marca === 'otro' || t.especialidad === 'ambas' || t.especialidad === data.marca)
+    : tecnicos;
+  const tecnicoElegido = tecnicos.find((t) => String(t.id) === String(data.tecnico_id)) ?? null;
+  const fueraDeLista = data.marca ? tecnicos.filter((t) => !disponibles.includes(t)) : [];
+  const marcaTexto = marcas.find((m) => m.value === data.marca)?.label ?? data.marca;
+
+  const elegirMarca = (marca) => {
+    setData((d) => {
+      const sirve = tecnicos.find((t) => String(t.id) === String(d.tecnico_id)
+        && (marca === 'otro' || t.especialidad === 'ambas' || t.especialidad === marca));
+      // Si el que estaba elegido no atiende esta marca, se suelta: es más honesto que dejarlo
+      // puesto y que el servidor lo rechace recién al guardar.
+      return { ...d, marca, tecnico_id: sirve ? d.tecnico_id : '' };
+    });
+    quitarError('marca');
+    quitarError('tecnico_id');
+  };
+
   const puntosMarcados = recepcion.revision.filter((p) => p.estado).length;
   const descritos = trabajos.filter((t) => t.descripcion.trim());
   const totalCosto = monto(trabajos.reduce((a, t) => a + monto(t.costo), 0));
@@ -199,7 +222,8 @@ export default function ServiciosForm({ tecnicos = [], piezas = [], revision = [
     const e = {};
     if (!data.cliente.trim()) e.cliente = 'Escribe el nombre del cliente.';
     if (!data.equipo.trim()) e.equipo = 'Indica qué equipo deja el cliente.';
-    if (!data.tecnico.trim()) e.tecnico = 'Indica quién hace el trabajo.';
+    if (!data.marca) e.marca = 'Indica de qué es el equipo.';
+    if (!data.tecnico_id) e.tecnico_id = 'Elige quién va a reparar el equipo.';
     if (!data.fecha) e.fecha = 'Elige la fecha.';
     trabajos.forEach((t) => {
       if (!t.descripcion.trim() && (t.costo !== '' || t.precio !== '')) e[`trabajo.${t.id}`] = 'Describe este trabajo.';
@@ -242,7 +266,8 @@ export default function ServiciosForm({ tecnicos = [], piezas = [], revision = [
       cliente: data.cliente.trim(),
       telefono: data.telefono.trim(),
       equipo: data.equipo.trim(),
-      tecnico: data.tecnico.trim(),
+      marca: data.marca,
+      tecnico_id: data.tecnico_id,
       fecha: data.fecha,
       notas_adicionales: data.notas_adicionales.trim(),
       recepcion: payloadRecepcion(recepcion),
@@ -334,20 +359,51 @@ export default function ServiciosForm({ tecnicos = [], piezas = [], revision = [
               </div>
 
               <div className="mt-4">
-                <Field label="Técnico" error={errores.tecnico}>
-                  <Input value={data.tecnico} placeholder="Nombre de quien repara el equipo"
-                    onChange={(e) => cambiar('tecnico', e.target.value)} />
+                <Field label="¿De qué es el equipo?" error={errores.marca}
+                  hint="De acá sale quién lo puede reparar.">
+                  <Segmented options={marcas} value={data.marca} ariaLabel="Marca del equipo"
+                    cols="grid-cols-3" onChange={elegirMarca} />
                 </Field>
-                {tecnicos.length > 0 && (
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    <span className="mr-1 text-xs text-gris-400">Anteriores:</span>
-                    {tecnicos.slice(0, 10).map((t) => (
-                      <button key={t} type="button" onClick={() => cambiar('tecnico', t)} aria-pressed={data.tecnico === t}
-                        className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition-colors ${data.tecnico === t ? 'bg-carbon-900 text-white' : 'bg-gris-100 text-gris-600 hover:bg-gris-200'}`}>
-                        <Wrench className="h-3 w-3" /> {t}
-                      </button>
-                    ))}
-                  </div>
+              </div>
+
+              <div className="mt-4">
+                <Field label="Técnico" error={errores.tecnico_id}
+                  hint={data.marca
+                    ? 'Solo aparecen los que atienden esta marca.'
+                    : 'Elige primero de qué es el equipo.'}>
+                  {disponibles.length === 0 ? (
+                    <p className="rounded-xl border border-dashed border-amber-300 bg-amber-50 px-4 py-3 text-[13px] text-amber-900">
+                      Ningún técnico atiende esta marca todavía. El administrador la configura en
+                      «Técnicos y comisiones».
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Técnico">
+                      {disponibles.map((t) => {
+                        const elegido = String(data.tecnico_id) === String(t.id);
+                        return (
+                          <button key={t.id} type="button" role="radio" aria-checked={elegido}
+                            onClick={() => { cambiar('tecnico_id', t.id); quitarError('tecnico_id'); }}
+                            className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-sm font-semibold transition-all ${
+                              elegido
+                                ? 'border-carbon-900 bg-carbon-900 text-white shadow-[0_8px_18px_-10px_rgba(10,10,11,0.6)]'
+                                : 'border-gris-200 bg-white text-gris-700 hover:border-gris-300 hover:text-gris-900'}`}>
+                            <Wrench className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{t.nombre}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </Field>
+
+                {/* Que se vea por qué alguien dejó de estar en la lista, y no que simplemente
+                    desapareció: nombrarlo evita que parezca un error de la pantalla */}
+                {data.marca && fueraDeLista.length > 0 && (
+                  <p className="mt-2 text-[11.5px] leading-snug text-gris-500">
+                    {fueraDeLista.length <= 2
+                      ? `${fueraDeLista.map((t) => t.nombre).join(' y ')} no ${fueraDeLista.length === 1 ? 'aparece' : 'aparecen'}: no ${fueraDeLista.length === 1 ? 'atiende' : 'atienden'} ${marcaTexto}.`
+                      : `${fueraDeLista.length} técnicos no aparecen porque no atienden ${marcaTexto}.`}
+                  </p>
                 )}
               </div>
             </StepCard>
@@ -469,7 +525,7 @@ export default function ServiciosForm({ tecnicos = [], piezas = [], revision = [
                 <dl className="space-y-1.5 text-sm">
                   <Linea label="Cliente" valor={data.cliente.trim()} />
                   <Linea label="Equipo" valor={data.equipo.trim()} />
-                  <Linea label="Técnico" valor={data.tecnico.trim()} />
+                  <Linea label="Técnico" valor={tecnicoElegido?.nombre} />
                   <Linea label="Desbloqueo" valor={textoDesbloqueo(recepcion.desbloqueo)} />
                   <Linea label="Revisión" valor={puntosMarcados > 0 ? `${puntosMarcados} puntos anotados` : ''} />
                 </dl>

@@ -34,7 +34,7 @@ const trabajosDe = (s) => {
 
 // Parámetros que entiende el servidor (solo los que tienen valor)
 const paramsDe = (f) => Object.fromEntries(Object.entries({
-  fecha_inicio: f.desde, fecha_fin: f.hasta, vendedor_id: f.vendedor, tecnico: f.tecnico, pendientes: f.pendientes ? 1 : '',
+  fecha_inicio: f.desde, fecha_fin: f.hasta, vendedor_id: f.vendedor, tecnico_id: f.tecnico, pendientes: f.pendientes ? 1 : '',
 }).filter(([, v]) => v));
 
 // Todos los renglones del detalle tal como están guardados: el costo se carga en el mismo orden
@@ -232,7 +232,7 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
     desde: filtros.fecha_inicio || '',
     hasta: filtros.fecha_fin || '',
     vendedor: filtros.vendedor_id ? String(filtros.vendedor_id) : '',
-    tecnico: filtros.tecnico || '',
+    tecnico: filtros.tecnico_id || '',
     pendientes: ['1', 1, true, 'true'].includes(filtros.pendientes),
   });
   const [cargandoCosto, setCargandoCosto] = useState(null);
@@ -264,7 +264,7 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
     else aplicar(f);
   };
 
-  const problema = problemaDe(filtro) || errors.fecha_fin || errors.fecha_inicio || errors.tecnico || errors.vendedor_id || null;
+  const problema = problemaDe(filtro) || errors.fecha_fin || errors.fecha_inicio || errors.tecnico_id || errors.vendedor_id || null;
   const periodoActivo = periodos.find((p) => p.desde === filtro.desde && p.hasta === filtro.hasta)?.key ?? null;
 
   // Lo que muestra la lista ahora (filtros ya aplicados por el servidor)
@@ -274,7 +274,8 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
     ? (ini === fin ? fechaTexto(ini) : `${fechaTexto(ini, ini.slice(0, 4) !== fin.slice(0, 4))} – ${fechaTexto(fin)}`)
     : 'Todas las fechas';
   const soloPendientes = ['1', 1, true, 'true'].includes(filtros.pendientes);
-  const hayFiltrosServidor = Boolean((ini && fin) || filtros.vendedor_id || filtros.tecnico || soloPendientes);
+  const hayFiltrosServidor = Boolean((ini && fin) || filtros.vendedor_id || filtros.tecnico_id || soloPendientes);
+  const nombreTecnicoFiltrado = tecnicos.find((t) => String(t.id) === String(filtros.tecnico_id))?.nombre ?? '';
 
   // El costo y la ganancia son del administrador: al vendedor no le llegan desde el servidor
   const conCostos = prefijo === 'admin';
@@ -411,7 +412,7 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
               <select value={filtro.tecnico} onChange={(e) => cambiar({ tecnico: e.target.value })} aria-label="Técnico"
                 className={`${inputCls} h-11 pr-9 lg:w-52`}>
                 <option value="">Todos los técnicos</option>
-                {tecnicos.map((t) => <option key={t} value={t}>{t}</option>)}
+                {tecnicos.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
               </select>
             )}
             {vendedores.length > 0 && (
@@ -477,7 +478,7 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
                 <Hammer className="h-[18px] w-[18px] text-[color:var(--acento)]" /> Detalle de servicios
               </h2>
               <span className="text-xs font-semibold text-gris-400">
-                {periodoTexto}{filtros.tecnico ? ` · ${filtros.tecnico}` : ''}
+                {periodoTexto}{nombreTecnicoFiltrado ? ` · ${nombreTecnicoFiltrado}` : ''}
               </span>
               {cargando && (
                 <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--acento)]">

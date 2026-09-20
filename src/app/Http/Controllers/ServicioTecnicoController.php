@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MovimientoPieza;
 use App\Models\Pieza;
 use App\Models\ServicioTecnico;
+use App\Models\Tecnico;
 use App\Services\StockDePiezas;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -27,16 +28,32 @@ class ServicioTecnicoController extends Controller
         }
     }
 
-    /** Técnicos ya usados en servicios anteriores (para filtrar y elegir rápido). */
-    private function tecnicosConocidos()
+    /**
+     * Los técnicos para el filtro del listado.
+     *
+     * Salen de las fichas y se filtra por id, no por el nombre escrito en la nota: si a un
+     * técnico se le corrige el nombre, sus servicios viejos siguen siendo suyos.
+     */
+    private function tecnicosParaFiltro()
     {
-        return ServicioTecnico::query()
-            ->whereNotNull('tecnico')
-            ->where('tecnico', '<>', '')
-            ->distinct()
-            ->orderBy('tecnico')
-            ->pluck('tecnico')
-            ->values();
+        return Tecnico::query()
+            ->where(fn ($q) => $q->where('activo', true)->orWhereIn('id', ServicioTecnico::query()->select('tecnico_id')))
+            ->orderBy('nombre')
+            ->get(['id', 'nombre', 'especialidad'])
+            ->all();
+    }
+
+    /** Los que pueden recibir un equipo hoy, para el formulario. */
+    private function tecnicosParaElegir()
+    {
+        return Tecnico::activos()
+            ->orderBy('nombre')
+            ->get(['id', 'nombre', 'especialidad', 'comision'])
+            ->map(fn (Tecnico $t) => [
+                'id'           => $t->id,
+                'nombre'       => $t->nombre,
+                'especialidad' => $t->especialidad,
+            ])->all();
     }
 
     /* ======================================================
@@ -48,7 +65,7 @@ class ServicioTecnicoController extends Controller
             'fecha_inicio' => 'nullable|date',
             'fecha_fin' => 'nullable|date|after_or_equal:fecha_inicio',
             'vendedor_id' => 'nullable|exists:users,id',
-            'tecnico' => 'nullable|string|max:120',
+            'tecnico_id' => 'nullable|integer|exists:tecnicos,id',
             'buscar' => 'nullable|string',
             'pendientes' => 'nullable|boolean',
         ]);
@@ -71,8 +88,8 @@ class ServicioTecnicoController extends Controller
             $query->whereBetween('fecha', [$request->fecha_inicio, $request->fecha_fin]);
         }
 
-        if ($request->filled('tecnico')) {
-            $query->where('tecnico', $request->tecnico);
+        if ($request->filled('tecnico_id')) {
+            $query->where('tecnico_id', $request->tecnico_id);
         }
 
         if ($request->filled('buscar')) {
@@ -94,7 +111,7 @@ class ServicioTecnicoController extends Controller
             [
                 // Al vendedor no le viajan ni el costo del servicio ni el de cada trabajo
                 'servicios' => $esAdmin ? $query->get() : $this->sinCostos($query->get()),
-                'filtros' => $request->only(['fecha_inicio', 'fecha_fin', 'vendedor_id', 'tecnico', 'pendientes']),
+                'filtros' => $request->only(['fecha_inicio', 'fecha_fin', 'vendedor_id', 'tecnico_id', 'pendientes']),
                 // Cuántos servicios esperan su costo, sin importar el período que se esté mirando
                 'pendientesDeCosto' => $esAdmin ? ServicioTecnico::sinCosto()->count() : 0,
                 // Quienes registraron al menos un servicio (filtro «Registrado por»)
@@ -103,8 +120,8 @@ class ServicioTecnicoController extends Controller
                         ->orderBy('name')
                         ->get(['id', 'name'])
                     : [],
-                // Los técnicos conocidos sirven en los dos paneles para autocompletar y filtrar
-                'tecnicos' => $this->tecnicosConocidos(),
+                // Las fichas de técnico sirven en los dos paneles para filtrar
+                'tecnicos' => $this->tecnicosParaFiltro(),
             ]
         );
     }
@@ -119,7 +136,11 @@ class ServicioTecnicoController extends Controller
         return Inertia::render(
             Auth::user()->rol === 'admin' ? 'Admin/Servicios/Create' : 'Vendedor/Servicios/Create',
             [
-                'tecnicos' => $this->tecnicosConocidos(),
+                'tecnicos' => $this->tecnicosParaElegir(),
+                // De qué es el equipo: decide qué técnicos se pueden elegir
+                'marcas'   => collect(ServicioTecnico::MARCAS)
+                    ->map(fn ($label, $value) => ['value' => $value, 'label' => $label])
+                    ->values(),
                 // Los puntos que se revisan al recibir un equipo; en el mostrador se pueden agregar más
                 'revision' => RecepcionDeEquipo::PUNTOS,
                 // Las piezas que el taller tiene a mano. Al vendedor le viaja el precio de venta
@@ -147,13 +168,32 @@ class ServicioTecnicoController extends Controller
             // El costo solo lo carga el administrador: al vendedor se le ignora aunque lo mande
             'precio_costo'      => 'nullable|numeric|min:0',
             'precio_venta'      => 'required|numeric|min:0',
-            'tecnico'           => 'required|string|max:120',
+            // El técnico sale de su ficha, no de un nombre escrito: de ahí salen su porcentaje
+            // y la regla de qué equipos puede recibir.
+            'tecnico_id'        => 'required|integer|exists:tecnicos,id',
+            'marca'             => ['required', \Illuminate\Validation\Rule::in(array_keys(ServicioTecnico::MARCAS))],
             'fecha'             => 'nullable|date',
+        ], [
+            'tecnico_id.required' => 'Elige quién va a reparar el equipo.',
+            'tecnico_id.exists'   => 'Ese técnico no existe.',
+            'marca.required'      => 'Indica de qué es el equipo.',
+            'marca.in'            => 'Indica de qué es el equipo.',
         ]);
+
+        $tecnico = Tecnico::activos()->findOrFail($data['tecnico_id']);
+
+        // La regla del taller, aplicada en el servidor y no solo en el desplegable: un equipo
+        // Android no se le asigna al técnico de Apple ni mandando el formulario a mano.
+        if (! $tecnico->atiende($data['marca'])) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'tecnico_id' => $tecnico->nombre . ' atiende ' . mb_strtolower($tecnico->especialidad_texto)
+                    . ': un equipo ' . (ServicioTecnico::MARCAS[$data['marca']] ?? $data['marca']) . ' va a otro técnico.',
+            ]);
+        }
 
         $esAdmin = ! SinCostos::aplica(Auth::user());
 
-        return DB::transaction(function () use ($data, $esAdmin) {
+        return DB::transaction(function () use ($data, $esAdmin, $tecnico) {
 
             // Acá adentro, para que el bloqueo de cada pieza valga hasta que el servicio esté guardado.
             $montos = $this->montosDelServicio($data, $esAdmin);
@@ -170,7 +210,7 @@ class ServicioTecnicoController extends Controller
 
             $servicio = null;
 
-            GeneradorCodigos::crearServicioTecnicoConCodigo(function (string $codigo) use ($cliente, $data, $montos, &$servicio) {
+            GeneradorCodigos::crearServicioTecnicoConCodigo(function (string $codigo) use ($cliente, $data, $montos, $tecnico, &$servicio) {
                 $servicio = ServicioTecnico::create([
                     'codigo_nota'       => $codigo,
                     'cliente_id'        => $cliente->id,
@@ -186,7 +226,11 @@ class ServicioTecnicoController extends Controller
                     'costo_pendiente'   => $montos['pendiente'],
                     'costo_cargado_por' => $montos['pendiente'] ? null : auth()->id(),
                     'costo_cargado_en'  => $montos['pendiente'] ? null : now(),
-                    'tecnico'           => $data['tecnico'],
+                    // El nombre queda copiado en la nota: corregir la ficha no reescribe lo ya emitido
+                    'tecnico'             => $tecnico->nombre,
+                    'tecnico_id'          => $tecnico->id,
+                    'marca'               => $data['marca'],
+                    'comision_porcentaje' => $tecnico->comision,
                     'fecha'             => $data['fecha'] ?? now('America/La_Paz'),
                     'user_id'           => auth()->id(),
                 ]);
@@ -531,7 +575,7 @@ class ServicioTecnicoController extends Controller
         $request->validate([
             'fecha_inicio' => 'nullable|date',
             'fecha_fin' => 'nullable|date',
-            'tecnico' => 'nullable|string|max:120',
+            'tecnico_id' => 'nullable|integer|exists:tecnicos,id',
         ]);
 
         $query = ServicioTecnico::with('vendedor')->orderByDesc('fecha')->orderByDesc('id');
@@ -548,8 +592,8 @@ class ServicioTecnicoController extends Controller
             $query->whereBetween('fecha', [$request->fecha_inicio, $request->fecha_fin]);
         }
 
-        if ($request->filled('tecnico')) {
-            $query->where('tecnico', $request->tecnico);
+        if ($request->filled('tecnico_id')) {
+            $query->where('tecnico_id', $request->tecnico_id);
         }
 
         $filas = $this->normalizarServiciosParaExport($query->get());
@@ -570,8 +614,10 @@ class ServicioTecnicoController extends Controller
                 : 'Todas las fechas',
         ];
 
-        if ($request->filled('tecnico')) {
-            $partes[] = 'Técnico: ' . $request->tecnico;
+        if ($request->filled('tecnico_id')) {
+            if ($nombre = Tecnico::whereKey($request->tecnico_id)->value('nombre')) {
+                $partes[] = 'Técnico: ' . $nombre;
+            }
         }
 
         if (Auth::user()->rol === 'admin' && $request->filled('vendedor_id')) {

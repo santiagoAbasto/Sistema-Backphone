@@ -79,10 +79,23 @@ class PanelVendedorTest extends TestCase
             'detalle_servicio' => json_encode([['descripcion' => 'Batería', 'costo' => 100, 'precio' => 250]]),
             'precio_costo'     => 100,
             'precio_venta'     => 250,
-            'tecnico'          => 'AXEL',
             'fecha'            => now()->toDateString(),
             'user_id'          => $user->id,
-        ], $datos));
+        ], $this->conTecnico($datos)));
+    }
+
+    /** El nombre del técnico se guarda igual que en producción: copiado de su ficha. */
+    private function conTecnico(array $datos): array
+    {
+        $ficha = $this->tecnicoDePrueba($datos['tecnico'] ?? 'AXEL');
+        unset($datos['tecnico']);
+
+        return $datos + [
+            'tecnico'             => $ficha->nombre,
+            'tecnico_id'          => $ficha->id,
+            'marca'               => 'apple',
+            'comision_porcentaje' => $ficha->comision,
+        ];
     }
 
     private function assertEsPdf(\Illuminate\Testing\TestResponse $r, string $que): void
@@ -564,7 +577,7 @@ class PanelVendedorTest extends TestCase
         $this->assertEsPdf($r, 'mis ventas');
     }
 
-    public function test_el_vendedor_recibe_los_tecnicos_conocidos(): void
+    public function test_el_vendedor_recibe_las_fichas_de_tecnico_para_filtrar(): void
     {
         $yo = $this->vendedor();
         $this->servicio($yo, ['tecnico' => 'AXEL']);
@@ -575,7 +588,9 @@ class PanelVendedorTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Vendedor/Servicios/Index')
-                ->where('tecnicos', ['AXEL', 'EDSON']));
+                ->has('tecnicos', 2)
+                ->where('tecnicos.0.nombre', 'AXEL')
+                ->where('tecnicos.1.nombre', 'EDSON'));
     }
 
     public function test_el_resumen_de_servicios_sale_sin_pasarle_fechas(): void

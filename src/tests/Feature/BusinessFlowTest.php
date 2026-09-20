@@ -22,13 +22,16 @@ class BusinessFlowTest extends TestCase
             'rol' => 'admin',
         ]);
 
+        $edson = $this->tecnicoDePrueba('Edson');
+
         $response = $this
             ->actingAs($admin)
             ->post(route('admin.servicios.store'), [
                 'cliente' => 'Cliente Demo',
                 'telefono' => '70000000',
                 'equipo' => 'iPhone 13',
-                'tecnico' => 'Edson',
+                'tecnico_id' => $edson->id,
+                'marca' => 'apple',
                 'fecha' => '2026-04-02',
                 'detalle_servicio' => json_encode([
                     ['descripcion' => 'Pantalla', 'costo' => 200, 'precio' => 350],
@@ -44,7 +47,11 @@ class BusinessFlowTest extends TestCase
         $this->assertDatabaseHas('servicio_tecnicos', [
             'cliente' => 'Cliente Demo',
             'equipo' => 'iPhone 13',
+            // El nombre queda copiado de la ficha, y el porcentaje con el que se lo va a liquidar
             'tecnico' => 'Edson',
+            'tecnico_id' => $edson->id,
+            'marca' => 'apple',
+            'comision_porcentaje' => 60,
             'precio_costo' => 300,
             'precio_venta' => 530,
             'user_id' => $admin->id,

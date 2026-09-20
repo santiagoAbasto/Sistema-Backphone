@@ -27,6 +27,7 @@ class Permisos
         'ventas'       => ['Ventas',               'Ventas y operación',  ['admin.ventas']],
         'reservas'     => ['Reservas',             'Ventas y operación',  ['admin.reservas']],
         'servicios'    => ['Servicio técnico',     'Ventas y operación',  ['admin.servicios']],
+        'tecnicos'     => ['Técnicos y comisiones', 'Ventas y operación',  ['admin.tecnicos']],
         'cotizaciones' => ['Cotizaciones',         'Ventas y operación',  ['admin.cotizaciones']],
         'egresos'      => ['Egresos',              'Ventas y operación',  ['admin.egresos']],
         'reportes'     => ['Reportes',             'Ventas y operación',  ['admin.reportes', 'admin.automation']],
