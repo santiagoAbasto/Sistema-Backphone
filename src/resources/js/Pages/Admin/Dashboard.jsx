@@ -1,6 +1,6 @@
 import AdminLayout, { MARCA, FUENTE_MARCA } from '@/Layouts/AdminLayout';
 import { BarraComposicion, Metrica, Sparkline, TituloSeccion } from '@/Components/Panel/Metricas';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import dayjs from 'dayjs';
@@ -11,10 +11,12 @@ import axios from 'axios';
 import TrendChart from '@/Components/Admin/charts/TrendChart';
 import AllocationDonut from '@/Components/Admin/charts/AllocationDonut';
 import IosNotification from '@/Components/IosNotification';
+import { puede } from '@/Layouts/PanelShell';
+import { IconoPieza } from '@/Components/Admin/piezas';
 import {
   ArrowRight, BadgePercent, Bell, BellOff, Boxes, CalendarRange, ChartLine, Check, CheckCheck, ChevronDown,
   CircleDollarSign, DollarSign, Hammer, Laptop, Minus, Package, PencilLine, PiggyBank, Receipt, Repeat, ShoppingCart,
-  Smartphone, TrendingDown, TrendingUp, Wallet,
+  Smartphone, Tablet, TrendingDown, TrendingUp, Wallet,
 } from 'lucide-react';
 
 dayjs.locale('es');
@@ -113,11 +115,18 @@ function AgregarProducto() {
     return () => document.removeEventListener('mousedown', close);
   }, []);
 
+  // La lista completa del inventario, y solo lo que el rol puede abrir de verdad:
+  // un atajo que lleva a una pantalla que el servidor va a rechazar no es un atajo.
+  const { auth } = usePage().props;
   const opciones = [
-    { r: 'admin.celulares.create', label: 'Celular', icon: Smartphone },
-    { r: 'admin.computadoras.create', label: 'Computadora', icon: Laptop },
-    { r: 'admin.productos-generales.create', label: 'Producto general', icon: Package },
-  ];
+    { r: 'admin.celulares.create', label: 'Celular', icon: Smartphone, modulo: 'inventario' },
+    { r: 'admin.computadoras.create', label: 'Computadora', icon: Laptop, modulo: 'inventario' },
+    { r: 'admin.productos-apple.create', label: 'Equipo de marca', icon: Tablet, modulo: 'inventario' },
+    { r: 'admin.productos-generales.create', label: 'Accesorio o general', icon: Package, modulo: 'inventario' },
+    { r: 'admin.piezas.create', label: 'Pieza o repuesto', icon: IconoPieza, modulo: 'piezas' },
+  ].filter((o) => puede(auth?.permisos, o.modulo));
+
+  if (opciones.length === 0) return null;
 
   return (
     <div ref={ref} className="relative">
@@ -264,23 +273,28 @@ export default function Dashboard({
 
       <div className="bp-reset mx-auto max-w-[1400px] space-y-6">
         {/* ================= PORTADA ================= */}
+        {/* La portada no lleva `overflow-hidden`: recortaba el menú de «Agregar producto» justo
+            en su borde. Lo que hay que recortar es la decoración, no lo que se despliega. */}
         <motion.section
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: EASE }}
-          className="relative z-10 overflow-hidden rounded-[20px] p-6 lg:p-8"
+          className="relative z-10 rounded-[20px] p-6 lg:p-8"
           style={{ background: 'linear-gradient(135deg, #0A0A0B 0%, #121214 46%, #1D1D21 100%)' }}
         >
-          {/* Retícula técnica: da profundidad sin competir con la cifra */}
-          <span aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.06]"
-            style={{
-              backgroundImage: 'linear-gradient(to right, #fff 1px, transparent 1px), linear-gradient(to bottom, #fff 1px, transparent 1px)',
-              backgroundSize: '48px 48px',
-              maskImage: 'radial-gradient(120% 90% at 15% 20%, #000 35%, transparent 100%)',
-              WebkitMaskImage: 'radial-gradient(120% 90% at 15% 20%, #000 35%, transparent 100%)',
-            }} />
-          <span aria-hidden="true" className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full blur-3xl"
-            style={{ background: 'rgba(196, 154, 124, 0.16)' }} />
+          {/* La decoración vive en su propia caja recortada, con el mismo radio que la portada */}
+          <span aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-[20px]">
+            {/* Retícula técnica: da profundidad sin competir con la cifra */}
+            <span className="absolute inset-0 opacity-[0.06]"
+              style={{
+                backgroundImage: 'linear-gradient(to right, #fff 1px, transparent 1px), linear-gradient(to bottom, #fff 1px, transparent 1px)',
+                backgroundSize: '48px 48px',
+                maskImage: 'radial-gradient(120% 90% at 15% 20%, #000 35%, transparent 100%)',
+                WebkitMaskImage: 'radial-gradient(120% 90% at 15% 20%, #000 35%, transparent 100%)',
+              }} />
+            <span className="absolute -right-24 -top-28 h-80 w-80 rounded-full blur-3xl"
+              style={{ background: 'rgba(196, 154, 124, 0.16)' }} />
+          </span>
 
           <div className="relative flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between">
             <div className="min-w-0">
