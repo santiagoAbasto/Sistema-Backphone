@@ -281,6 +281,17 @@ class TecnicosTest extends TestCase
         $this->assertNull($tecnico->fresh());
     }
 
+    public function test_la_ficha_no_se_guarda_sin_decir_que_equipos_atiende(): void
+    {
+        // «Cualquier equipo» ya no viene marcado solo: elegirlo tiene que ser a propósito, porque
+        // es la opción que apaga la regla que separa Android de Apple.
+        $this->actingAs($this->admin())
+            ->post(route('admin.tecnicos.store'), ['nombre' => 'Sin definir', 'comision' => 60])
+            ->assertSessionHasErrors('especialidad');
+
+        $this->assertSame(0, Tecnico::count());
+    }
+
     public function test_la_comision_no_puede_pasar_de_cien(): void
     {
         $this->actingAs($this->admin())

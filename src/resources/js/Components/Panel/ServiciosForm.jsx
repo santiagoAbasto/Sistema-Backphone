@@ -187,17 +187,27 @@ export default function ServiciosForm({ tecnicos = [], piezas = [], revision = [
   const disponibles = data.marca
     ? tecnicos.filter((t) => data.marca === 'otro' || t.especialidad === 'ambas' || t.especialidad === data.marca)
     : tecnicos;
+  // Un técnico marcado «cualquier equipo» aparece en todas las marcas. Eso es válido, pero si no
+  // se dice, parece que la regla no funcionó: acá se avisa en su propia ficha.
+  const marcaEspecifica = Boolean(data.marca) && data.marca !== 'otro';
   const tecnicoElegido = tecnicos.find((t) => String(t.id) === String(data.tecnico_id)) ?? null;
   const fueraDeLista = data.marca ? tecnicos.filter((t) => !disponibles.includes(t)) : [];
   const marcaTexto = marcas.find((m) => m.value === data.marca)?.label ?? data.marca;
 
+  const atiende = (t, marca) => marca === 'otro' || t.especialidad === 'ambas' || t.especialidad === marca;
+
   const elegirMarca = (marca) => {
     setData((d) => {
-      const sirve = tecnicos.find((t) => String(t.id) === String(d.tecnico_id)
-        && (marca === 'otro' || t.especialidad === 'ambas' || t.especialidad === marca));
-      // Si el que estaba elegido no atiende esta marca, se suelta: es más honesto que dejarlo
+      const puestoSirve = tecnicos.some((t) => String(t.id) === String(d.tecnico_id) && atiende(t, marca));
+
+      // El que estaba elegido se suelta si no atiende esta marca: es más honesto que dejarlo
       // puesto y que el servidor lo rechace recién al guardar.
-      return { ...d, marca, tecnico_id: sirve ? d.tecnico_id : '' };
+      if (puestoSirve) return { ...d, marca };
+
+      // Y si para esta marca hay un solo técnico, se elige solo: es lo que va a pasar casi
+      // siempre, y ahorra el clic de confirmar lo único que se podía elegir.
+      const unico = tecnicos.filter((t) => atiende(t, marca));
+      return { ...d, marca, tecnico_id: unico.length === 1 ? unico[0].id : '' };
     });
     quitarError('marca');
     quitarError('tecnico_id');
@@ -389,6 +399,11 @@ export default function ServiciosForm({ tecnicos = [], piezas = [], revision = [
                                 : 'border-gris-200 bg-white text-gris-700 hover:border-gris-300 hover:text-gris-900'}`}>
                             <Wrench className="h-4 w-4 shrink-0" />
                             <span className="truncate">{t.nombre}</span>
+                            {marcaEspecifica && t.especialidad === 'ambas' && (
+                              <span className={`shrink-0 text-[11px] font-medium ${elegido ? 'text-white/60' : 'text-gris-400'}`}>
+                                · atiende todo
+                              </span>
+                            )}
                           </button>
                         );
                       })}

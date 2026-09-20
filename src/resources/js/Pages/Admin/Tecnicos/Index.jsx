@@ -19,9 +19,21 @@ const TONO_ESPECIALIDAD = { apple: 'navy', android: 'emerald', ambas: 'bronce' }
 const fechaCorta = (iso) => new Intl.DateTimeFormat('es-BO', { day: 'numeric', month: 'long' }).format(new Date(`${iso}T12:00:00`));
 const fechaHora = (iso) => (iso ? new Intl.DateTimeFormat('es-BO', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso)) : '');
 
-const vacio = { nombre: '', especialidad: 'ambas', comision: 60, telefono: '', notas: '', activo: true };
+// Sin especialidad por defecto: «cualquier equipo» venía marcado solo y apagaba en silencio la
+// regla que separa Android de Apple. Ahora hay que elegir a propósito.
+const vacio = { nombre: '', especialidad: '', comision: 60, telefono: '', notas: '', activo: true };
+
+const AYUDA_ESPECIALIDAD = {
+  '': 'De esto depende qué equipos se le pueden asignar. Elige una.',
+  apple: 'Solo recibe iPhone y equipos Apple. Un Android no se le puede asignar ni a mano.',
+  android: 'Solo recibe Android. Un iPhone no se le puede asignar ni a mano.',
+  ambas: 'Recibe cualquier equipo. Ojo: con esto la marca deja de separar quién lo atiende.',
+};
 
 export default function Index({ tecnicos = [], comisiones = [], semana = {}, sinTecnico = 0, especialidades = [] }) {
+  // Si conviven un técnico «cualquier equipo» y uno con especialidad, casi siempre es que al
+  // primero le falta configurarse: aparece en todas las marcas y tapa al que corresponde.
+  const hayEspecialistas = tecnicos.some((t) => t.activo && t.especialidad !== 'ambas');
   useAutoRefresh(['tecnicos', 'comisiones', 'sinTecnico']);
   const [toast] = useToast();
   const [ficha, setFicha] = useState(null);
@@ -133,6 +145,9 @@ export default function Index({ tecnicos = [], comisiones = [], semana = {}, sin
                     </p>
                     <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-gris-500">
                       <Badge tone={TONO_ESPECIALIDAD[t.especialidad] ?? 'slate'}>{t.especialidadTexto}</Badge>
+                      {t.activo && t.especialidad === 'ambas' && hayEspecialistas && (
+                        <span className="text-amber-700">aparece también en Android y en Apple</span>
+                      )}
                       <span>Se lleva el {t.comision} %</span>
                       <span>· {t.servicios} {t.servicios === 1 ? 'servicio' : 'servicios'}</span>
                       {t.telefono && <span>· {t.telefono}</span>}
@@ -266,7 +281,7 @@ function ModalFicha({ ficha, especialidades, onCerrar }) {
   const nuevo = !ficha.id;
   const { data, setData, post, patch, processing, errors } = useForm({
     nombre: ficha.nombre ?? '',
-    especialidad: ficha.especialidad ?? 'ambas',
+    especialidad: ficha.especialidad ?? '',
     comision: String(ficha.comision ?? 60),
     telefono: ficha.telefono ?? '',
     notas: ficha.notas ?? '',
@@ -301,7 +316,7 @@ function ModalFicha({ ficha, especialidades, onCerrar }) {
         </Field>
 
         <Field label="¿Qué equipos atiende?" error={errors.especialidad}
-          hint="Es la regla que impide que un Android termine en manos del técnico de Apple.">
+          hint={AYUDA_ESPECIALIDAD[data.especialidad] ?? AYUDA_ESPECIALIDAD['']}>
           <Segmented options={especialidades.map((e) => ({ value: e.value, label: e.label }))}
             value={data.especialidad} cols="grid-cols-1 sm:grid-cols-3" ariaLabel="Especialidad"
             onChange={(v) => setData('especialidad', v)} />
