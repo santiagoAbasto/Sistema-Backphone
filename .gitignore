@@ -44,6 +44,8 @@ coverage/
 
 # Herramientas del asistente y memoria local del desarrollador
 /.claude/
+/.agents/
+/skills-lock.json
 /MEMORY.md
 /memoria/
 
