@@ -257,6 +257,14 @@ td:last-child {
     </div>
     @endif
 
+    @if (! empty($negocio['servicio_clausula']))
+    <div class="divider"></div>
+    <div class="notes">
+        <div class="section-title">Condiciones</div>
+        {!! nl2br(e($negocio['servicio_clausula'])) !!}
+    </div>
+    @endif
+
     <div class="divider"></div>
 
     <!-- FOOTER -->

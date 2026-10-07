@@ -28,6 +28,7 @@ class Liquidacion extends Model
         'porcentaje',
         'monto',
         'pagada_por',
+        'egreso_id',
     ];
 
     protected $casts = [
@@ -44,6 +45,12 @@ class Liquidacion extends Model
     public function tecnico(): BelongsTo
     {
         return $this->belongsTo(Tecnico::class);
+    }
+
+    /** El egreso con el que salió de la caja. */
+    public function egreso(): BelongsTo
+    {
+        return $this->belongsTo(Egreso::class);
     }
 
     public function quienPago(): BelongsTo

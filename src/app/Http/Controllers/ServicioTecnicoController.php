@@ -6,6 +6,7 @@ use App\Models\MovimientoPieza;
 use App\Models\Pieza;
 use App\Models\ServicioTecnico;
 use App\Models\Tecnico;
+use App\Models\Traspaso;
 use App\Services\StockDePiezas;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -43,16 +44,53 @@ class ServicioTecnicoController extends Controller
             ->all();
     }
 
+    /**
+     * Lo que se puede consumir en una reparación: piezas y cualquier producto disponible.
+     *
+     * Sale con el mismo formato que tenían las piezas para que el formulario no distinga: lo que
+     * cambia es que ahora un cargador o una pantalla cargada como accesorio también se puede usar
+     * sin tener que inventar una venta.
+     */
+    private function inventarioParaReparar()
+    {
+        $piezas = Pieza::disponibles()->orderBy('nombre')->get()
+            ->map(fn (Pieza $p) => [
+                'id' => $p->id, 'tipo' => 'pieza', 'nombre' => $p->nombre,
+                'categoria' => $p->categoria, 'compatibilidad' => $p->compatibilidad,
+                'cantidad' => $p->cantidad, 'precio_costo' => $p->precio_costo, 'precio_venta' => $p->precio_venta,
+            ]);
+
+        foreach (Traspaso::TIPOS as $tipo => $config) {
+            if ($tipo === 'pieza') {
+                continue;
+            }
+
+            $piezas = $piezas->concat(
+                $config['modelo']::where('estado', 'disponible')->get()
+                    ->map(fn ($p) => [
+                        'id' => $p->id, 'tipo' => $tipo,
+                        'nombre' => $p->nombre ?? $p->modelo,
+                        'categoria' => $config['label'],
+                        'compatibilidad' => implode(' · ', array_filter([$p->capacidad ?? null, $p->color ?? null, $p->codigo ?? null, $p->imei_1 ?? null])) ?: null,
+                        'cantidad' => 1, 'precio_costo' => $p->precio_costo, 'precio_venta' => $p->precio_venta,
+                    ])
+            );
+        }
+
+        return $piezas->values();
+    }
+
     /** Los que pueden recibir un equipo hoy, para el formulario. */
     private function tecnicosParaElegir()
     {
         return Tecnico::activos()
             ->orderBy('nombre')
-            ->get(['id', 'nombre', 'especialidad', 'comision'])
+            ->get()
             ->map(fn (Tecnico $t) => [
                 'id'           => $t->id,
-                'nombre'       => $t->nombre,
+                'nombre'       => $t->quien_es,
                 'especialidad' => $t->especialidad,
+                'externo'      => $t->esExterno(),
             ])->all();
     }
 
@@ -143,13 +181,10 @@ class ServicioTecnicoController extends Controller
                     ->values(),
                 // Los puntos que se revisan al recibir un equipo; en el mostrador se pueden agregar más
                 'revision' => RecepcionDeEquipo::PUNTOS,
-                // Las piezas que el taller tiene a mano. Al vendedor le viaja el precio de venta
-                // y el saldo, nunca el costo: eso lo resuelve el servidor al guardar.
-                'piezas'   => SinCostos::paraUsuario(
-                    Pieza::disponibles()->orderBy('nombre')
-                        ->get(['id', 'nombre', 'codigo', 'categoria', 'compatibilidad', 'cantidad', 'precio_costo', 'precio_venta']),
-                    Auth::user()
-                ),
+                // Lo que el taller tiene a mano para meter en una reparación. Antes solo eran
+                // piezas, y para usar un cargador del stock había que registrar una venta falsa.
+                // Al vendedor le viaja el precio de venta y el saldo, nunca el costo.
+                'piezas'   => SinCostos::paraUsuario($this->inventarioParaReparar(), Auth::user()),
             ]
         );
     }
@@ -198,6 +233,12 @@ class ServicioTecnicoController extends Controller
             // Acá adentro, para que el bloqueo de cada pieza valga hasta que el servicio esté guardado.
             $montos = $this->montosDelServicio($data, $esAdmin);
 
+            // Si se lo lleva otro taller, lo que nos va a cobrar no se sabe todavía: el servicio
+            // queda esperando ese costo igual que uno que registró el vendedor.
+            if ($tecnico->esExterno()) {
+                $montos['pendiente'] = true;
+            }
+
             $cliente = Cliente::firstOrCreate(
                 [
                     'user_id' => auth()->id(),
@@ -230,7 +271,8 @@ class ServicioTecnicoController extends Controller
                     'tecnico'             => $tecnico->nombre,
                     'tecnico_id'          => $tecnico->id,
                     'marca'               => $data['marca'],
-                    'comision_porcentaje' => $tecnico->comision,
+                    // Un taller externo no cobra comisión: nos factura un costo, y recién ahí se sabe
+                    'comision_porcentaje' => $tecnico->esExterno() ? 0 : $tecnico->comision,
                     'fecha'             => $data['fecha'] ?? now('America/La_Paz'),
                     'user_id'           => auth()->id(),
                 ]);
@@ -239,14 +281,22 @@ class ServicioTecnicoController extends Controller
             // Las piezas que se usaron salen del inventario recién ahora, con el servicio ya numerado:
             // así el movimiento queda apuntando a la nota en la que se gastaron.
             foreach ($montos['piezas'] as $uso) {
-                StockDePiezas::descontar(
-                    $uso['pieza'],
-                    $uso['cantidad'],
-                    MovimientoPieza::SERVICIO,
-                    $servicio,
-                    'Servicio ' . $servicio->codigo_nota . ' · ' . $servicio->equipo,
-                    'detalle_servicio',
-                );
+                if ($uso['tipo'] === 'pieza') {
+                    StockDePiezas::descontar(
+                        $uso['producto'],
+                        $uso['cantidad'],
+                        MovimientoPieza::SERVICIO,
+                        $servicio,
+                        'Servicio ' . $servicio->codigo_nota . ' · ' . $servicio->equipo,
+                        'detalle_servicio',
+                    );
+
+                    continue;
+                }
+
+                // No se vendió: se usó en una reparación. Sale del stock con su propio estado para
+                // que no se mezcle con lo vendido en ningún listado ni en ningún reporte.
+                $uso['producto']->forceFill(['estado' => 'servicio'])->save();
             }
 
             // Lo que registra el vendedor llega al administrador en el momento: tiene que cargar el costo
@@ -287,7 +337,7 @@ class ServicioTecnicoController extends Controller
 
                 // Lo que salió del inventario ya vino con su costo real: no se vuelve a preguntar ni
                 // se deja pisar, porque ese número es el que cuadra con el movimiento de la pieza.
-                if (! empty($trabajos[$i]['pieza_id'])) {
+                if (! empty($trabajos[$i]['pieza_id']) || ! empty($trabajos[$i]['producto_id'])) {
                     continue;
                 }
 
@@ -368,12 +418,12 @@ class ServicioTecnicoController extends Controller
         $usos = [];
 
         foreach (array_values($items) as $item) {
-            $pieza = $this->piezaDelTrabajo($item, $errores);
-            $cantidad = $pieza ? max(1, (int) ($item['cantidad'] ?? 1)) : 1;
+            $tomado = $this->productoDelTrabajo($item, $errores);
+            $cantidad = $tomado && $tomado['tipo'] === 'pieza' ? max(1, (int) ($item['cantidad'] ?? 1)) : 1;
 
             $descripcion = trim(strip_tags((string) ($item['descripcion'] ?? '')));
-            if ($descripcion === '' && $pieza) {
-                $descripcion = $pieza->etiqueta();
+            if ($descripcion === '' && $tomado) {
+                $descripcion = $tomado['etiqueta'];
             }
 
             if ($descripcion === '') {
@@ -388,15 +438,17 @@ class ServicioTecnicoController extends Controller
 
             $trabajo = ['descripcion' => $descripcion, 'precio' => round((float) $precio, 2)];
 
-            if ($pieza) {
-                // Queda anotado en la nota de qué pieza salió y cuántas se usaron: es lo que después
-                // explica por qué bajó el stock, y lo que impide que el costo se cargue dos veces.
-                $trabajo['pieza_id'] = $pieza->id;
+            if ($tomado) {
+                // Queda anotado de qué salió y cuánto: es lo que después explica por qué bajó el
+                // stock, y lo que impide que el costo se cargue dos veces.
+                $trabajo['tipo'] = $tomado['tipo'];
+                $trabajo['producto_id'] = $tomado['producto']->getKey();
                 $trabajo['cantidad'] = $cantidad;
-                $trabajo['costo'] = round((float) $pieza->precio_costo * $cantidad, 2);
+                $trabajo['costo'] = round((float) $tomado['producto']->precio_costo * $cantidad, 2);
 
-                $usos[$pieza->id] ??= ['pieza' => $pieza, 'cantidad' => 0];
-                $usos[$pieza->id]['cantidad'] += $cantidad;
+                $clave = $tomado['tipo'] . ':' . $tomado['producto']->getKey();
+                $usos[$clave] ??= ['tipo' => $tomado['tipo'], 'producto' => $tomado['producto'], 'cantidad' => 0];
+                $usos[$clave]['cantidad'] += $cantidad;
             } else {
                 $costo = $item['costo'] ?? null;
                 if ($esAdmin && $costo !== null && $costo !== '') {
@@ -414,9 +466,9 @@ class ServicioTecnicoController extends Controller
         // El saldo se comprueba sobre el total pedido, no línea por línea: dos renglones de la misma
         // pantalla suman, y si entre los dos se pasan del stock hay que decirlo antes de guardar nada.
         foreach ($usos as $uso) {
-            if ($uso['pieza']->cantidad < $uso['cantidad']) {
-                $errores['detalle_servicio'] = 'De «' . $uso['pieza']->nombre . '» quedan '
-                    . $uso['pieza']->cantidad . ' y el servicio está usando ' . $uso['cantidad'] . '.';
+            if ($uso['tipo'] === 'pieza' && $uso['producto']->cantidad < $uso['cantidad']) {
+                $errores['detalle_servicio'] = 'De «' . $uso['producto']->nombre . '» quedan '
+                    . $uso['producto']->cantidad . ' y el servicio está usando ' . $uso['cantidad'] . '.';
             }
         }
 
@@ -440,26 +492,41 @@ class ServicioTecnicoController extends Controller
     }
 
     /**
-     * La pieza de un trabajo, bloqueada para que nadie más se lleve esas unidades mientras tanto.
-     * Devuelve null si el trabajo no sale del inventario.
+     * De dónde sale un trabajo del inventario, bloqueado para que nadie más se lo lleve.
+     *
+     * Acepta cualquier tipo del inventario, no solo piezas: un cargador o una pantalla cargada como
+     * accesorio se usan en la reparación sin tener que inventar una venta. Devuelve null si el
+     * trabajo se escribió a mano.
      */
-    private function piezaDelTrabajo(mixed $item, array &$errores): ?Pieza
+    private function productoDelTrabajo(mixed $item, array &$errores): ?array
     {
-        $id = is_array($item) ? (int) ($item['pieza_id'] ?? 0) : 0;
-
-        if ($id <= 0) {
+        if (! is_array($item)) {
             return null;
         }
 
-        $pieza = StockDePiezas::bloquear($id);
+        // `pieza_id` es como se guardaba antes: se sigue aceptando para no romper lo ya registrado.
+        $tipo = (string) ($item['tipo'] ?? (isset($item['pieza_id']) ? 'pieza' : ''));
+        $id = (int) ($item['producto_id'] ?? $item['pieza_id'] ?? 0);
 
-        if (! $pieza || ! $pieza->activa) {
-            $errores['detalle_servicio'] = 'Una de las piezas del servicio ya no está en el inventario.';
+        if ($id <= 0 || ! isset(Traspaso::TIPOS[$tipo])) {
+            return null;
+        }
+
+        $producto = $tipo === 'pieza'
+            ? StockDePiezas::bloquear($id)
+            : Traspaso::TIPOS[$tipo]['modelo']::whereKey($id)->where('estado', 'disponible')->lockForUpdate()->first();
+
+        if (! $producto || ($tipo === 'pieza' && ! $producto->activa)) {
+            $errores['detalle_servicio'] = 'Algo de lo que usa el servicio ya no está disponible en el inventario.';
 
             return null;
         }
 
-        return $pieza;
+        $etiqueta = $tipo === 'pieza'
+            ? $producto->etiqueta()
+            : trim(($producto->nombre ?? $producto->modelo) . ' ' . ($producto->capacidad ?? ''));
+
+        return ['tipo' => $tipo, 'producto' => $producto, 'etiqueta' => $etiqueta];
     }
 
     /** Servicios listos para el panel del vendedor: sin el costo del servicio ni el de cada trabajo. */

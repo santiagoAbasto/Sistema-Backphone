@@ -157,7 +157,7 @@ function ModalCosto({ servicio, onCerrar }) {
         {guardados ? (
           <ul className="space-y-2">
             {guardados.map((t, i) => {
-              const delInventario = Boolean(t.pieza_id);
+              const delInventario = Boolean(t.producto_id || t.pieza_id);
               const primeroEditable = guardados.findIndex((g) => !g.pieza_id) === i;
               return (
                 <li key={i} className={`grid grid-cols-[minmax(0,1fr)_140px] items-center gap-3 rounded-xl border px-3.5 py-2.5 ${delInventario ? 'border-[rgb(var(--acento-rgb)_/_0.3)] bg-[rgb(var(--acento-rgb)_/_0.04)]' : 'border-gris-200'}`}>

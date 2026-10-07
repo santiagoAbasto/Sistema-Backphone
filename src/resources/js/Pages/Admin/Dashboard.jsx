@@ -11,6 +11,7 @@ import axios from 'axios';
 import TrendChart from '@/Components/Admin/charts/TrendChart';
 import AllocationDonut from '@/Components/Admin/charts/AllocationDonut';
 import IosNotification from '@/Components/IosNotification';
+import { useAutoRefresh } from '@/Hooks/useAutoRefresh';
 import { puede } from '@/Layouts/PanelShell';
 import { IconoPieza } from '@/Components/Admin/piezas';
 import {
@@ -44,6 +45,9 @@ const fmtBs = (n) =>
 
 // Montos negativos: se muestran como inversión, igual que antes
 const fmtResultado = (n) => (safeNum(n) < 0 ? `Se invirtió ${fmtBs(Math.abs(safeNum(n)))}` : fmtBs(n));
+
+// La caja en rojo no es una inversión: es plata que salió y no entró.
+const fmtCaja = (n) => (safeNum(n) < 0 ? `−${fmtBs(Math.abs(safeNum(n)))}` : fmtBs(n));
 
 const notificationTarget = (n) => {
   if (n?.type === 'report' && n?.report_id) return route('admin.automation.show', n.report_id);
@@ -167,6 +171,9 @@ export default function Dashboard({
   distribucion_economica = [],
   serie = { granularidad: 'dia', puntos: [] },
 }) {
+  // Un egreso o una venta cargados desde otra pantalla tienen que verse acá sin recargar
+  useAutoRefresh(['resumen', 'resumen_total', 'serie', 'distribucion_economica']);
+
   const hoyStr = dayjs().format('YYYY-MM-DD');
 
   const [fechaInicio, setFechaInicio] = useState(filtros.fecha_inicio || hoyStr);
@@ -256,6 +263,8 @@ export default function Dashboard({
   // De qué está hecho lo cobrado: lo que queda, lo que se invirtió y lo que se resignó.
   const inversion = safeNum(resumen_total?.total_costo) + safeNum(resumen_total?.total_permuta);
   const descuentos = safeNum(resumen_total?.total_descuento);
+  const egresos = safeNum(resumen_total?.egresos_total);
+  const efectivo = safeNum(resumen_total?.efectivo_en_caja);
   const composicion = [
     { etiqueta: 'Ganancia', valor: Math.max(ganancia, 0), color: 'var(--ok-fuerte)' },
     { etiqueta: 'Inversión', valor: inversion, color: 'var(--acento)' },
@@ -428,6 +437,25 @@ export default function Dashboard({
                     hint={descuentos > 0 ? 'Lo que se resignó para cerrar' : 'No se descontó nada'}
                     icono={BadgePercent}
                     tono={descuentos > 0 ? 'aviso' : 'neutro'}
+                  />
+                </motion.div>
+                <motion.div variants={rise}>
+                  <Metrica
+                    etiqueta="Egresos"
+                    valor={fmtBs(egresos)}
+                    hint={egresos > 0 ? 'Lo que salió en el período' : 'No se registró ningún gasto'}
+                    icono={Wallet}
+                    tono={egresos > 0 ? 'negativo' : 'neutro'}
+                    serie={serieDe('egresos')}
+                  />
+                </motion.div>
+                <motion.div variants={rise}>
+                  <Metrica
+                    etiqueta="Efectivo en caja"
+                    valor={fmtCaja(efectivo)}
+                    hint={efectivo < 0 ? 'Salió más de lo que entró en efectivo' : 'Ventas en efectivo y servicios, menos egresos'}
+                    icono={CircleDollarSign}
+                    tono={efectivo < 0 ? 'negativo' : 'acento'}
                   />
                 </motion.div>
               </motion.div>

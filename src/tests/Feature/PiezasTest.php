@@ -229,7 +229,8 @@ class PiezasTest extends TestCase
         $this->assertSame(1050.0, (float) $servicio->precio_venta);
 
         $trabajos = $servicio->trabajos();
-        $this->assertSame($pieza->id, $trabajos[0]['pieza_id']);
+        $this->assertSame($pieza->id, $trabajos[0]['producto_id']);
+        $this->assertSame('pieza', $trabajos[0]['tipo']);
         $this->assertSame(360.0, (float) $trabajos[0]['costo']);
 
         $this->assertSame(4, $pieza->refresh()->cantidad);

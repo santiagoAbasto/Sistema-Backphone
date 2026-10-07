@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Egreso;
 use App\Models\Liquidacion;
 use App\Models\ServicioTecnico;
 use App\Models\Tecnico;
@@ -116,6 +117,16 @@ class TecnicoController extends Controller
             return back()->with('error', 'Faltan cargar costos de esa semana: sin eso no se sabe cuánto le toca.');
         }
 
+        // Pagarle es plata que sale de la caja: queda como egreso para que el Resumen lo descuente.
+        $egreso = Egreso::create([
+            'sucursal_id'      => $tecnico->sucursal_id ?? \App\Support\SucursalActiva::paraGuardar(),
+            'concepto'         => ($tecnico->esExterno() ? 'Taller ' : 'Comisión ') . $tecnico->quien_es
+                . ' · semana del ' . $inicio->format('d/m') . ' al ' . $fin->format('d/m'),
+            'precio_invertido' => $resumen['comision'],
+            'tipo_gasto'       => 'sueldos',
+            'user_id'          => $request->user()->id,
+        ]);
+
         Liquidacion::updateOrCreate(
             ['tecnico_id' => $tecnico->id, 'semana_inicio' => $inicio->toDateString()],
             [
@@ -128,10 +139,11 @@ class TecnicoController extends Controller
                 'porcentaje'    => $tecnico->comision,
                 'monto'         => $resumen['comision'],
                 'pagada_por'    => $request->user()->id,
+                'egreso_id'     => $egreso->id,
             ]
         );
 
-        return back()->with('success', "Semana pagada a {$tecnico->nombre}: Bs " . number_format($resumen['comision'], 2) . '.');
+        return back()->with('success', "Pagado a {$tecnico->quien_es}: Bs " . number_format($resumen['comision'], 2) . '. Salió de la caja como egreso.');
     }
 
     // ─── Apoyo ───────────────────────────────────────────────────────────────
@@ -157,6 +169,8 @@ class TecnicoController extends Controller
             ->map(fn (Tecnico $t) => [
                 'id'                => $t->id,
                 'nombre'            => $t->nombre,
+                'empresa'           => $t->empresa,
+                'externo'           => $t->esExterno(),
                 'especialidad'      => $t->especialidad,
                 'especialidadTexto' => $t->especialidad_texto,
                 'comision'          => $t->comision,
@@ -199,11 +213,16 @@ class TecnicoController extends Controller
                 $cobrado   = round((float) $conCosto->sum('precio_venta'), 2);
                 $repuestos = round((float) $conCosto->sum(fn ($s) => $s->costoParaReportes()), 2);
                 $ganancia  = round((float) $conCosto->sum(fn ($s) => max(0.0, $s->gananciaParaReportes())), 2);
-                $comision  = round((float) $conCosto->sum(fn ($s) => $s->comisionDelTecnico() ?? 0), 2);
+                // A un taller externo no se le paga comisión sino su factura, que es el costo que
+                // nos pasó. La tienda se queda con toda la diferencia.
+                $comision  = $tecnico->esExterno()
+                    ? $repuestos
+                    : round((float) $conCosto->sum(fn ($s) => $s->comisionDelTecnico() ?? 0), 2);
 
                 return [
                     'tecnico_id'   => $tecnico->id,
-                    'nombre'       => $tecnico->nombre,
+                    'nombre'       => $tecnico->quien_es,
+                    'externo'      => $tecnico->esExterno(),
                     'especialidad' => $tecnico->especialidad,
                     'porcentaje'   => $tecnico->comision,
                     'activo'       => $tecnico->activo,
@@ -213,7 +232,7 @@ class TecnicoController extends Controller
                     'repuestos'    => $repuestos,
                     'ganancia'     => $ganancia,
                     'comision'     => $comision,
-                    'tienda'       => round($ganancia - $comision, 2),
+                    'tienda'       => $tecnico->esExterno() ? $ganancia : round($ganancia - $comision, 2),
                     'notas'        => $conCosto->sortBy('id')->map(fn ($s) => [
                         'codigo'   => $s->codigo_nota,
                         'equipo'   => $s->equipo,
@@ -235,12 +254,21 @@ class TecnicoController extends Controller
             'nombre'       => 'required|string|max:120',
             'especialidad' => ['required', Rule::in(array_keys(Tecnico::ESPECIALIDADES))],
             'comision'     => 'required|integer|min:0|max:100',
+            'externo'      => 'nullable|boolean',
+            'empresa'      => 'nullable|string|max:120',
             'telefono'     => 'nullable|string|max:40',
             'notas'        => 'nullable|string|max:2000',
             'activo'       => 'nullable|boolean',
         ], self::MENSAJES);
 
         $datos['activo'] = $request->boolean('activo', true);
+        $datos['externo'] = $request->boolean('externo');
+        $datos['empresa'] = trim((string) ($datos['empresa'] ?? '')) ?: null;
+        // Otro taller no cobra comisión: nos factura un costo. Dejarle un porcentaje confundiría
+        // la cuenta de la semana.
+        if ($datos['externo']) {
+            $datos['comision'] = 0;
+        }
         $datos['telefono'] = trim((string) ($datos['telefono'] ?? '')) ?: null;
         $datos['notas'] = trim((string) ($datos['notas'] ?? '')) ?: null;
 

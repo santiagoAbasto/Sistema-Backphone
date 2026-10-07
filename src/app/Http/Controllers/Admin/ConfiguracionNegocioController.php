@@ -39,6 +39,7 @@ class ConfiguracionNegocioController extends Controller
             'negocio_pais'      => ['nullable', 'string', 'max:100'],
             'negocio_horario'   => ['nullable', 'string', 'max:160'],
             'moneda_simbolo'    => ['required', 'string', 'max:6'],
+            'servicio_clausula' => ['nullable', 'string', 'max:2000'],
         ], [
             'negocio_nombre.required' => 'El negocio necesita un nombre: es el que sale en cada comprobante.',
             'moneda_simbolo.required' => 'Indica con qué símbolo se muestran los montos (por ejemplo, Bs).',

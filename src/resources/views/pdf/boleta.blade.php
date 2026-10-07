@@ -194,6 +194,7 @@
   <div class="info">
     <p><strong>Cliente:</strong> {{ $venta->nombre_cliente }}</p>
     <p><strong>Teléfono:</strong> {{ $venta->telefono_cliente ?? '-' }}</p>
+    @if ($venta->documento_cliente)<p><strong>Carnet de identidad:</strong> {{ $venta->documento_cliente }}</p>@endif
     <p><strong>Método de pago:</strong> {{ ucfirst($venta->metodo_pago) }}</p>
     @if ($venta->metodo_pago === 'tarjeta')
     <p><strong>Tarjeta:</strong> {{ $venta->inicio_tarjeta ?? '••••' }} •••• •••• {{ $venta->fin_tarjeta ?? '••••' }}</p>
@@ -565,6 +566,13 @@
       </td>
     </tr>
   </table>
+
+
+  <div style="margin-top:18px;text-align:center;font-size:9.5px;color:#475569;line-height:1.5;">
+    @if($negocio['direccion']){{ $negocio['direccion'] }}<br>@endif
+    @if($negocio['telefono'])<strong>{{ $negocio['telefono'] }}</strong>@endif
+    @if($negocio['whatsapp'] ?? null) · WhatsApp {{ $negocio['whatsapp'] }}@endif
+  </div>
 
 </body>
 

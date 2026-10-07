@@ -1,8 +1,8 @@
 import { useForm } from '@inertiajs/react';
 import { route } from 'ziggy-js';
-import { Building2, Check, MapPin, Phone } from 'lucide-react';
+import { Building2, Check, FileText, MapPin, Phone } from 'lucide-react';
 import AdminLayout from '@/Layouts/AdminLayout';
-import { Button, Card, Field, Input, PageHeader, Toast, useToast } from '@/Components/Admin/ui';
+import { Button, Card, Field, Input, PageHeader, Textarea, Toast, useToast } from '@/Components/Admin/ui';
 
 /**
  * Ajustes → Datos del negocio.
@@ -45,6 +45,21 @@ const BLOQUES = [
             { name: 'negocio_ciudad',    label: 'Ciudad',    max: 100 },
             { name: 'negocio_pais',      label: 'País',      max: 100 },
             { name: 'negocio_horario',   label: 'Horario de atención', max: 160, ayuda: 'Por ejemplo: lunes a sábado, de 9:00 a 19:00.' },
+        ],
+    },
+    {
+        clave: 'servicio',
+        titulo: 'Condiciones del servicio técnico',
+        subtitulo: 'Lo que el cliente acepta al dejar su equipo. Va impreso al pie de la nota, arriba de las firmas.',
+        icono: FileText,
+        campos: [
+            {
+                name: 'servicio_clausula',
+                label: 'Cláusula',
+                max: 2000,
+                largo: true,
+                ayuda: 'Por ejemplo: plazo para retirar el equipo, garantía de la reparación, qué pasa si no se retira.',
+            },
         ],
     },
 ];
@@ -123,14 +138,25 @@ export default function Negocio({ valores }) {
                                             value={data[campo.name] ?? ''}
                                             max={campo.max}
                                             error={errors[campo.name]}
+                                            className={campo.largo ? 'sm:col-span-2' : undefined}
                                         >
-                                            <Input
-                                                type={campo.type ?? 'text'}
-                                                value={data[campo.name] ?? ''}
-                                                maxLength={campo.max}
-                                                onChange={(e) => setData(campo.name, e.target.value)}
-                                                aria-invalid={errors[campo.name] ? 'true' : undefined}
-                                            />
+                                            {campo.largo ? (
+                                                <Textarea
+                                                    rows={5}
+                                                    value={data[campo.name] ?? ''}
+                                                    maxLength={campo.max}
+                                                    onChange={(e) => setData(campo.name, e.target.value)}
+                                                    aria-invalid={errors[campo.name] ? 'true' : undefined}
+                                                />
+                                            ) : (
+                                                <Input
+                                                    type={campo.type ?? 'text'}
+                                                    value={data[campo.name] ?? ''}
+                                                    maxLength={campo.max}
+                                                    onChange={(e) => setData(campo.name, e.target.value)}
+                                                    aria-invalid={errors[campo.name] ? 'true' : undefined}
+                                                />
+                                            )}
                                         </Field>
                                     ))}
                                 </div>

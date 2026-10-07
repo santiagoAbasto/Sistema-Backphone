@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { notifyRecordsUpdated, useAutoRefresh } from '@/Hooks/useAutoRefresh';
 import {
-  Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, Segmented, Textarea, Toast,
+  Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, Segmented, Switch, Textarea, Toast,
   bsFmt, buttonCls, useToast,
 } from '@/Components/Admin/ui';
 
@@ -21,7 +21,7 @@ const fechaHora = (iso) => (iso ? new Intl.DateTimeFormat('es-BO', { dateStyle: 
 
 // Sin especialidad por defecto: «cualquier equipo» venía marcado solo y apagaba en silencio la
 // regla que separa Android de Apple. Ahora hay que elegir a propósito.
-const vacio = { nombre: '', especialidad: '', comision: 60, telefono: '', notas: '', activo: true };
+const vacio = { nombre: '', especialidad: '', comision: 60, telefono: '', notas: '', activo: true, externo: false, empresa: '' };
 
 const AYUDA_ESPECIALIDAD = {
   '': 'De esto depende qué equipos se le pueden asignar. Elige una.',
@@ -139,8 +139,10 @@ export default function Index({ tecnicos = [], comisiones = [], semana = {}, sin
               {tecnicos.map((t) => (
                 <li key={t.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                   <div className="min-w-0">
-                    <p className="flex items-center gap-2 font-semibold text-gris-900">
+                    <p className="flex flex-wrap items-center gap-2 font-semibold text-gris-900">
                       {t.nombre}
+                      {t.empresa && <span className="text-[13px] font-normal text-gris-500">· {t.empresa}</span>}
+                      {t.externo && <Badge tone="amber">Otro taller</Badge>}
                       {!t.activo && <Badge tone="slate">Archivado</Badge>}
                     </p>
                     <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-gris-500">
@@ -148,7 +150,7 @@ export default function Index({ tecnicos = [], comisiones = [], semana = {}, sin
                       {t.activo && t.especialidad === 'ambas' && hayEspecialistas && (
                         <span className="text-amber-700">aparece también en Android y en Apple</span>
                       )}
-                      <span>Se lleva el {t.comision} %</span>
+                      <span>{t.externo ? 'Nos factura su costo' : `Se lleva el ${t.comision} %`}</span>
                       <span>· {t.servicios} {t.servicios === 1 ? 'servicio' : 'servicios'}</span>
                       {t.telefono && <span>· {t.telefono}</span>}
                     </p>
@@ -190,13 +192,16 @@ function TarjetaComision({ c, abierto, onAbrir, onLiquidar }) {
             <Wrench className="h-4 w-4 text-[color:var(--acento)]" /> {c.nombre}
           </p>
           <p className="mt-1 text-xs text-gris-500">
-            Se lleva el {c.porcentaje} % de la ganancia
+            {c.externo ? 'Nos factura lo que cobra por cada reparación' : `Se lleva el ${c.porcentaje} % de la ganancia`}
             {!c.activo && <span className="text-amber-700"> · archivado</span>}
           </p>
         </div>
-        <Badge tone={TONO_ESPECIALIDAD[c.especialidad] ?? 'slate'}>
-          {c.especialidad === 'apple' ? 'Apple' : c.especialidad === 'android' ? 'Android' : 'Cualquier equipo'}
-        </Badge>
+        <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+          {c.externo && <Badge tone="amber">Otro taller</Badge>}
+          <Badge tone={TONO_ESPECIALIDAD[c.especialidad] ?? 'slate'}>
+            {c.especialidad === 'apple' ? 'Apple' : c.especialidad === 'android' ? 'Android' : 'Cualquier equipo'}
+          </Badge>
+        </div>
       </div>
 
       <div className="space-y-4 p-5">
@@ -210,7 +215,7 @@ function TarjetaComision({ c, abierto, onAbrir, onLiquidar }) {
                 <dd className="font-semibold tabular-nums text-gris-900">{bsFmt(c.cobrado)}</dd>
               </div>
               <div className="flex justify-between gap-3">
-                <dt className="text-gris-500">Repuestos que puso la tienda</dt>
+                <dt className="text-gris-500">{c.externo ? 'Lo que nos facturó' : 'Repuestos que puso la tienda'}</dt>
                 <dd className="font-semibold tabular-nums text-rose-600">−{bsFmt(c.repuestos)}</dd>
               </div>
               <div className="flex justify-between gap-3 border-t border-gris-100 pt-1.5">
@@ -220,7 +225,9 @@ function TarjetaComision({ c, abierto, onAbrir, onLiquidar }) {
             </dl>
 
             <div className="rounded-xl bg-carbon-900 px-4 py-3.5 text-white">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/60">Le toca a {c.nombre}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/60">
+                {c.externo ? 'Le debemos a' : 'Le toca a'} {c.nombre}
+              </p>
               <p className="mt-1 cifra text-[28px] font-bold leading-none tracking-tight">{bsFmt(c.comision)}</p>
               <p className="mt-1.5 text-xs text-white/60">Quedan {bsFmt(c.tienda)} en la tienda</p>
             </div>
@@ -238,12 +245,12 @@ function TarjetaComision({ c, abierto, onAbrir, onLiquidar }) {
             {c.pagada ? (
               <p className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-[13px] font-semibold text-emerald-800">
                 <Check className="h-4 w-4 shrink-0" />
-                Pagada {bsFmt(c.pagada.monto)}{c.pagada.quien ? ` por ${c.pagada.quien}` : ''} · {fechaHora(c.pagada.fecha)}
+                Pagado {bsFmt(c.pagada.monto)}{c.pagada.quien ? ` por ${c.pagada.quien}` : ''} · {fechaHora(c.pagada.fecha)}
               </p>
             ) : (
               <button type="button" onClick={onLiquidar} disabled={c.pendientes > 0 || c.servicios === 0}
                 className={buttonCls('primary', 'h-11 w-full')}>
-                Marcar la semana como pagada
+                Pagar la semana · sale de la caja
               </button>
             )}
 
@@ -286,6 +293,8 @@ function ModalFicha({ ficha, especialidades, onCerrar }) {
     telefono: ficha.telefono ?? '',
     notas: ficha.notas ?? '',
     activo: ficha.activo ?? true,
+    externo: ficha.externo ?? false,
+    empresa: ficha.empresa ?? '',
   });
 
   const guardar = () => {
@@ -322,6 +331,26 @@ function ModalFicha({ ficha, especialidades, onCerrar }) {
             onChange={(v) => setData('especialidad', v)} />
         </Field>
 
+        <div className="flex items-start justify-between gap-4 rounded-xl border border-gris-200 px-4 py-3">
+          <div>
+            <p className="text-[13px] font-semibold text-gris-900">Es otro taller</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-gris-500">
+              Se lleva el equipo y después nos factura. No cobra comisión, y el costo del servicio
+              queda pendiente hasta que pasen la cuenta.
+            </p>
+          </div>
+          <Switch checked={data.externo} onChange={(v) => setData('externo', v)} label="Es otro taller" />
+        </div>
+
+        {data.externo && (
+          <Field label="Empresa o taller" error={errors.empresa}
+            hint="El nombre de arriba es el responsable con quien se habla.">
+            <Input value={data.empresa} maxLength={120} placeholder="Ej.: TecnoFix"
+              onChange={(e) => setData('empresa', e.target.value)} />
+          </Field>
+        )}
+
+        {!data.externo && (
         <Field label="Comisión del técnico" error={errors.comision}
           hint={`De cada Bs 100 de ganancia, se lleva Bs ${porcentaje} y quedan Bs ${100 - porcentaje} en la tienda.`}>
           <div className="relative">
@@ -331,6 +360,7 @@ function ModalFicha({ ficha, especialidades, onCerrar }) {
             <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-gris-400">%</span>
           </div>
         </Field>
+        )}
 
         <Field label="Teléfono (opcional)" error={errors.telefono}>
           <Input value={data.telefono} maxLength={40} placeholder="Ej.: 70000000"

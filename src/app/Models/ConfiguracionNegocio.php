@@ -32,6 +32,8 @@ class ConfiguracionNegocio extends Model
         'negocio_pais'      => null,
         'negocio_horario'   => null,
         'moneda_simbolo'    => 'Bs',
+        // Las condiciones que firma el cliente al dejar el equipo. Van impresas en la nota.
+        'servicio_clausula' => null,
     ];
 
     /** Qué grupo le toca a cada clave en el formulario del panel. */
@@ -39,6 +41,7 @@ class ConfiguracionNegocio extends Model
         'identidad' => ['negocio_nombre', 'negocio_eslogan', 'negocio_nit', 'moneda_simbolo'],
         'contacto'  => ['negocio_telefono', 'negocio_whatsapp', 'negocio_email'],
         'ubicacion' => ['negocio_direccion', 'negocio_ciudad', 'negocio_pais', 'negocio_horario'],
+        'servicio'  => ['servicio_clausula'],
     ];
 
     public const NOMBRE_POR_DEFECTO = 'Blackphone';
@@ -121,6 +124,9 @@ class ConfiguracionNegocio extends Model
             'telefono'  => $telefono ?: null,
             'direccion' => $direccion ?: null,
             'email'     => static::get('negocio_email'),
+            'whatsapp'  => static::get('negocio_whatsapp'),
+            // Las condiciones que firma el cliente al dejar su equipo
+            'servicio_clausula' => static::get('servicio_clausula'),
         ];
     }
 

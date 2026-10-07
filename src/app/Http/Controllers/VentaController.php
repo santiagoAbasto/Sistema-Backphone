@@ -724,6 +724,8 @@ class VentaController extends Controller
         $request->validate([
             'nombre_cliente' => 'required|string',
             'telefono_cliente' => 'nullable|string',
+            // El carnet va impreso en la nota: es lo que identifica al comprador de un celular
+            'documento_cliente' => 'nullable|string|max:40',
             'tipo_venta' => 'required|in:producto,servicio_tecnico',
             'es_permuta' => 'boolean',
             'tipo_permuta' => 'nullable|in:celular,computadora,producto_general',
@@ -877,6 +879,7 @@ class VentaController extends Controller
 
                     'nombre_cliente' => $request->nombre_cliente,
                     'telefono_cliente' => $request->telefono_cliente,
+                    'documento_cliente' => $request->documento_cliente,
                     'tipo_venta' => $request->tipo_venta,
                     'es_permuta' => $request->es_permuta,
                     'tipo_permuta' => $request->tipo_permuta,
@@ -988,7 +991,7 @@ class VentaController extends Controller
                         'nombre' => Str::title(trim($venta->nombre_cliente)),
                         'telefono' => $venta->telefono_cliente,
                         'correo' => null,
-                        'documento' => null,
+                        'documento' => $venta->documento_cliente,
                     ]);
                 }
             }

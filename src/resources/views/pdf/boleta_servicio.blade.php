@@ -286,6 +286,14 @@
     Total a pagar por el cliente: Bs {{ number_format($servicio->precio_venta, 2) }}
   </div>
 
+  {{-- Lo que el cliente acepta al dejar el equipo. Se edita en Ajustes → Datos del negocio. --}}
+  @if (! empty($negocio['servicio_clausula']))
+  <div class="section-title">Condiciones del Servicio</div>
+  <div class="info" style="font-size:9.5px;line-height:1.5;text-align:justify;">
+    {!! nl2br(e($negocio['servicio_clausula'])) !!}
+  </div>
+  @endif
+
   <!-- FIRMAS -->
   <table class="firmas">
     <tr>

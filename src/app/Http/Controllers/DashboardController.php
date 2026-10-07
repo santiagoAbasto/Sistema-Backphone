@@ -219,6 +219,20 @@ class DashboardController extends Controller
 
         $totalEgresos = $egresosCollection->sum('precio_invertido');
 
+        /* =========================
+         * 💵 EFECTIVO EN CAJA
+         * =========================
+         * Lo que de verdad quedó en el cajón: lo cobrado en efectivo menos lo que se pagó.
+         * La permuta y el abono de una reserva no son plata que entró hoy, así que se descuentan.
+         * Los servicios se cuentan enteros: el taller cobra en efectivo (los que salieron de una
+         * venta ya vienen contados en esa venta, por eso se los deja afuera acá).
+         */
+        $efectivoVentas = $ventas->where('metodo_pago', 'efectivo')->sum(
+            fn ($v) => (float) $v->subtotal - (float) $v->valor_permuta - (float) $v->monto_reserva_aplicado
+        );
+        $efectivoServicios = $serviciosTecnicos->whereNull('venta_id')->sum('precio_venta');
+        $efectivoEnCaja = round($efectivoVentas + $efectivoServicios - $totalEgresos, 2);
+
         /* =====================================================
  * 📈 HISTÓRICO PARA SVG (DÍA / MES / AÑO) ✅ POST-EGRESOS
  * - Inversión = costo + permuta (SOLO productos)
@@ -518,6 +532,7 @@ class DashboardController extends Controller
                 'total_inversion' => $items->sum('capital') + $items->sum('permuta'),
                 'ganancia_neta' => $gananciaNeta,
                 'egresos_total' => $totalEgresos,
+                'efectivo_en_caja' => $efectivoEnCaja,
                 'utilidad_disponible' => $utilidadDisponible,
                 'ganancia_productos' => $ganancias['celulares'] + $ganancias['computadoras'] + $ganancias['producto_apple'],
                 'ganancia_productos_generales' => $ganancias['generales'] + $ganancias['piezas'],

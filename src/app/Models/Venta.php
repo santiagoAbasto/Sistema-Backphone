@@ -24,6 +24,7 @@ class Venta extends Model
         'sucursal_id',
         'nombre_cliente',
         'telefono_cliente',
+        'documento_cliente',
         'fecha',
         'codigo_nota',
         'reserva_id',

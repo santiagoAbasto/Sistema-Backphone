@@ -36,6 +36,8 @@ class Tecnico extends Model
         'sucursal_id',
         'nombre',
         'especialidad',
+        'externo',
+        'empresa',
         'comision',
         'telefono',
         'notas',
@@ -44,11 +46,13 @@ class Tecnico extends Model
 
     protected $casts = [
         'comision' => 'integer',
+        'externo'  => 'boolean',
         'activo'   => 'boolean',
     ];
 
     protected $attributes = [
         'especialidad' => self::AMBAS,
+        'externo'      => false,
         'comision'     => 60,
         'activo'       => true,
     ];
@@ -91,6 +95,23 @@ class Tecnico extends Model
         }
 
         return $this->especialidad === self::AMBAS || $this->especialidad === $marca;
+    }
+
+    /**
+     * Otro taller al que se le manda el equipo.
+     *
+     * No cobra comisión: nos factura un costo, y ese costo no se sabe hasta que el equipo vuelve.
+     * Por eso un servicio suyo queda siempre con el costo pendiente.
+     */
+    public function esExterno(): bool
+    {
+        return (bool) $this->externo;
+    }
+
+    /** Cómo se lo nombra: «Marcelo» o «Juan · TecnoFix». */
+    public function getQuienEsAttribute(): string
+    {
+        return $this->empresa ? $this->nombre . ' · ' . $this->empresa : $this->nombre;
     }
 
     public function getEspecialidadTextoAttribute(): string

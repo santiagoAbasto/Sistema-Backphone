@@ -36,10 +36,10 @@ export function Card({ title, subtitle, actions, children, className = '' }) {
     );
 }
 
-export function Field({ label, hint, value, max, error, children }) {
+export function Field({ label, hint, value, max, error, children, className = '' }) {
     const len = typeof value === 'string' ? value.length : null;
     return (
-        <div className="flex flex-col gap-1.5">
+        <div className={`flex flex-col gap-1.5 ${className}`}>
             <div className="flex items-baseline justify-between gap-2">
                 <label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-gris-600">{label}</label>
                 {max && len !== null && (

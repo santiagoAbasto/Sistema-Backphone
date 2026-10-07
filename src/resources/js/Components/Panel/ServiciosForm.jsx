@@ -30,6 +30,9 @@ const normalizar = (v) => String(v ?? '').toLowerCase().normalize('NFD').replace
  *
  * Es un buscador y no un desplegable porque un taller que despieza equipos junta cientos de
  * repuestos: en una lista larga no se encuentra nada, y con el nombre a medio escribir sí.
+ *
+ * Lista piezas y también lo que está disponible para vender: un cargador usado en una reparación
+ * sale del stock como reparación, sin tener que registrar una venta que nunca pasó.
  */
 function BuscadorPiezas({ piezas, onElegir, onCerrar }) {
   const [texto, setTexto] = useState('');
@@ -45,7 +48,7 @@ function BuscadorPiezas({ piezas, onElegir, onCerrar }) {
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gris-400" />
           <input autoFocus value={texto} onChange={(e) => setTexto(e.target.value)} aria-label="Buscar una pieza del inventario"
-            placeholder="Pantalla, batería, pin de carga, iPhone 11…" className={`${inputCls} h-10 pl-9`} />
+            placeholder="Pantalla, batería, cargador, iPhone 11…" className={`${inputCls} h-10 pl-9`} />
         </div>
         <button type="button" onClick={onCerrar} aria-label="Cerrar el buscador de piezas"
           className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-gris-400 transition-colors hover:bg-white hover:text-gris-700">
@@ -56,8 +59,8 @@ function BuscadorPiezas({ piezas, onElegir, onCerrar }) {
       {resultados.length === 0 ? (
         <p className="px-1 py-3 text-[13px] text-gris-500">
           {piezas.length === 0
-            ? 'Todavía no hay piezas cargadas en el inventario. Podés escribir el trabajo a mano igual.'
-            : 'Ninguna pieza coincide. Probá con parte del nombre o con el equipo compatible.'}
+            ? 'No hay nada en el inventario para usar. Podés escribir el trabajo a mano igual.'
+            : 'Nada coincide. Probá con parte del nombre o con el equipo compatible.'}
         </p>
       ) : (
         <ul className="mt-2 max-h-64 overflow-y-auto rounded-lg border border-gris-200 bg-white">
@@ -68,7 +71,7 @@ function BuscadorPiezas({ piezas, onElegir, onCerrar }) {
                 <span className="min-w-0">
                   <span className="block truncate text-[13px] font-semibold text-gris-900">{p.nombre}</span>
                   <span className="block truncate text-xs text-gris-500">
-                    {[p.compatibilidad || p.categoria, `quedan ${p.cantidad}`].filter(Boolean).join(' · ')}
+                    {[p.compatibilidad || p.categoria, p.cantidad > 1 ? `quedan ${p.cantidad}` : null].filter(Boolean).join(' · ')}
                   </span>
                 </span>
                 <span className="shrink-0 text-[13px] font-bold tabular-nums text-gris-900">{bsFmt(p.precio_venta)}</span>
@@ -263,7 +266,8 @@ export default function ServiciosForm({ tecnicos = [], piezas = [], revision = [
       ? {
         descripcion: t.descripcion.trim(),
         precio: monto(t.precio),
-        pieza_id: t.pieza.id,
+        tipo: t.pieza.tipo ?? 'pieza',
+        producto_id: t.pieza.id,
         cantidad: Math.max(1, Number(t.cantidad) || 1),
       }
       : {
@@ -449,7 +453,8 @@ export default function ServiciosForm({ tecnicos = [], piezas = [], revision = [
                           <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[color:var(--acento)]">
                             <IconoPieza className="h-3.5 w-3.5" /> Del inventario
                           </span>
-                          <div className="flex items-center gap-2">
+                          {/* Las unidades solo se eligen cuando hay saldo: un celular del stock es uno */}
+                          <div className={`flex items-center gap-2 ${t.pieza.cantidad > 1 ? '' : 'hidden'}`}>
                             <label htmlFor={`unidades-${t.id}`} className="text-[11px] font-semibold text-gris-500">Unidades</label>
                             <input id={`unidades-${t.id}`} type="number" min={1} step={1} inputMode="numeric" value={t.cantidad}
                               onChange={(e) => cambiarTrabajo(t.id, 'cantidad', e.target.value)}
@@ -503,7 +508,7 @@ export default function ServiciosForm({ tecnicos = [], piezas = [], revision = [
                   </button>
                   <button type="button" onClick={() => setBuscandoPieza(true)}
                     className="flex h-11 items-center justify-center gap-2 rounded-xl border border-[rgb(var(--acento-rgb)_/_0.4)] bg-[rgb(var(--acento-rgb)_/_0.06)] text-sm font-semibold text-[color:var(--acento)] transition-colors hover:bg-[rgb(var(--acento-rgb)_/_0.12)]">
-                    <IconoPieza className="h-4 w-4" /> Usar una pieza del inventario
+                    <IconoPieza className="h-4 w-4" /> Usar algo del inventario
                   </button>
                 </div>
               )}

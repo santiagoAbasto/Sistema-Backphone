@@ -44,6 +44,7 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
   const { data, setData } = useForm({
     nombre_cliente: '',
     telefono_cliente: '',
+    documento_cliente: '',
     tipo_venta: 'producto',
     metodo_pago: 'efectivo',
     descuento: 0,
@@ -416,6 +417,7 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
                             onClick={() => {
                               setData('nombre_cliente', c.nombre);
                               setData('telefono_cliente', c.telefono);
+                              setData('documento_cliente', c.documento ?? '');
                               setMostrarClientes(false);
                             }}>
                             <span className="block font-semibold text-gris-900">{c.nombre}</span>
@@ -430,6 +432,11 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
                 <Field label="Teléfono">
                   <Input value={data.telefono_cliente} placeholder="Ej.: 70000000" inputMode="tel"
                     onChange={(e) => setData('telefono_cliente', e.target.value)} />
+                </Field>
+
+                <Field label="Carnet de identidad" hint="Sale impreso en la nota. Conviene pedirlo al vender un celular.">
+                  <Input value={data.documento_cliente} placeholder="Ej.: 7654321 CB" maxLength={40}
+                    onChange={(e) => setData('documento_cliente', e.target.value)} />
                 </Field>
 
                 <div className="md:col-span-2">
