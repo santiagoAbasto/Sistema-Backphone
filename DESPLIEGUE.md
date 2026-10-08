@@ -1,7 +1,7 @@
 # Desplegar el demo de Blackphone
 
-Blackphone se publica en un subdominio de prueba **sin tocar el sitio que ya
-está en producción**. Los dos viven en el mismo VPS, pero separados: carpeta
+Blackphone se publica en su propio dominio, `blackphone.com.bo`, **sin tocar el
+sitio que ya está en producción**. Los dos viven en el mismo VPS, pero separados: carpeta
 distinta, repositorio distinto, base de datos distinta, claves distintas y
 volúmenes distintos.
 
@@ -17,7 +17,7 @@ que se toca, y se le agrega un bloque: no se modifica ninguno existente.
                        │
                  Caddy (80/443)          ← del proyecto real
                    │        │
-      appleboss.com.bo   demo.appleboss.com.bo
+      appleboss.com.bo     blackphone.com.bo
              │                    │
       app (real)          blackphone-demo-app
              │                    │
@@ -30,23 +30,28 @@ que se toca, y se le agrega un bloque: no se modifica ninguno existente.
 
 - Acceso SSH al VPS.
 - El proyecto real corriendo, con su red `appleboss-production_edge`.
-- Un registro DNS del subdominio apuntando al VPS.
+- El dominio `blackphone.com.bo` en Cloudflare, apuntando al VPS.
 
 ---
 
 ## 2. DNS en Cloudflare
 
-En la zona `appleboss.com.bo`, agregar:
+`blackphone.com.bo` es una zona propia en Cloudflare; la de `appleboss.com.bo`
+no se toca. En la zona `blackphone.com.bo`:
 
-| Tipo | Nombre | Contenido        | Proxy   |
-|------|--------|------------------|---------|
-| A    | `demo` | *(IP del VPS)*   | Proxied |
+| Tipo | Nombre | Contenido        | Proxy    |
+|------|--------|------------------|----------|
+| A    | `@`    | *(IP del VPS)*   | DNS only |
+| A    | `www`  | *(IP del VPS)*   | DNS only |
 
-No se toca ningún registro existente: se agrega uno.
+Cloudflare entrega dos *nameservers*; se cargan en NIC Bolivia (nic.bo) como
+servidores DNS del dominio. Hasta que la zona figure **Active** y
+`dig +short blackphone.com.bo` devuelva la IP del VPS, no se toca Caddy: si no,
+no puede emitir el certificado.
 
-Si al emitir el certificado Caddy no logra validar el dominio, poner **solo**
-este registro en **DNS only** (nube gris), esperar a que emita, comprobar que
-`https://` abre, y volver a dejarlo en **Proxied**.
+Con `https://` ya funcionando se puede pasar a **Proxied**, pero antes hay que
+poner **SSL/TLS → Full (strict)** en la zona. En *Flexible* Cloudflare le habla
+por HTTP a Caddy, Caddy redirige a HTTPS y el navegador queda en un bucle.
 
 ---
 
@@ -108,7 +113,7 @@ Tiene que decir `200`.
 
 ---
 
-## 4. Publicar el subdominio
+## 4. Publicar el dominio
 
 El bloque a agregar está en `docker/production/blackphone-demo.caddy`. Se pega
 al final del Caddyfile del proyecto real.
@@ -120,9 +125,14 @@ cd ~/apps/appleboss
 cp docker/production/Caddyfile docker/production/Caddyfile.bak
 ```
 
-Agregar el bloque y reiniciar únicamente Caddy:
+El Caddyfile entra al contenedor como archivo suelto
+(`Caddyfile:/etc/caddy/Caddyfile`). Editarlo con `sed -i` o con un editor que
+guarde en un archivo nuevo deja al contenedor mirando el viejo: hay que escribir
+encima con `cat nuevo > Caddyfile`, que conserva el mismo archivo. Después,
+validar y recién entonces reiniciar únicamente Caddy:
 
 ```bash
+docker compose -f docker-compose.production.yml exec caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 docker compose -f docker-compose.production.yml restart caddy
 docker compose -f docker-compose.production.yml logs --tail=50 caddy
 ```
@@ -134,8 +144,8 @@ docker compose -f docker-compose.production.yml logs --tail=50 caddy
 Comprobar desde afuera:
 
 ```bash
-curl -I https://demo.appleboss.com.bo
-curl -s -o /dev/null -w '%{http_code}\n' https://demo.appleboss.com.bo/up
+curl -I https://blackphone.com.bo
+curl -s -o /dev/null -w '%{http_code}\n' https://blackphone.com.bo/up
 ```
 
 ---
@@ -181,11 +191,11 @@ docker compose -f docker-compose.production.yml up -d --force-recreate blackphon
 
 ## 7. Si algo falla
 
-**El subdominio no abre.** Revisar que el registro A exista y apunte al VPS, y
+**El dominio no abre.** Revisar que el registro A exista y apunte al VPS, y
 que el bloque esté en el Caddyfile:
 
 ```bash
-curl -I https://demo.appleboss.com.bo
+curl -I https://blackphone.com.bo
 ```
 
 **502 Bad Gateway.** Caddy encontró el dominio pero no llega a la aplicación:
@@ -213,7 +223,7 @@ No pegar el contenido de `.env.production` en ningún lado.
 
 ## 8. Antes de mostrar el demo
 
-- [ ] `https://demo.appleboss.com.bo/up` responde `200`.
+- [ ] `https://blackphone.com.bo/up` responde `200`.
 - [ ] `https://appleboss.com.bo` sigue abriendo igual que antes.
 - [ ] `APP_DEBUG=false` y `APP_ENV=production`.
 - [ ] La contraseña del administrador no es la de ningún otro sistema.

@@ -1,19 +1,18 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Bloque del demo para el Caddy que ya corre en el servidor.
+# Bloque de Blackphone para el Caddy que ya corre en el servidor.
 #
 # Se pega tal cual al final del Caddyfile del proyecto que publica el sitio real
 # (docker/production/Caddyfile). No se toca ningún bloque existente: se agrega uno.
 #
-# `blackphone-demo-app` es el alias de red del contenedor del demo, declarado en
+# `blackphone-demo-app` es el alias de red del contenedor, declarado en
 # docker-compose.production.yml. Los dos stacks se ven porque comparten la red
 # `appleboss-production_edge`, y nada más que eso.
 # ─────────────────────────────────────────────────────────────────────────────
 
-demo.appleboss.com.bo {
+blackphone.com.bo {
     encode zstd gzip
 
-    # Un demo colgado del dominio real no puede terminar en Google: se llevaría
-    # posiciones del sitio que sí vende.
+    # Es un sistema interno detrás de un login: no hay nada que indexar.
     header {
         X-Robots-Tag "noindex, nofollow, noarchive"
     }
@@ -24,4 +23,8 @@ demo.appleboss.com.bo {
         output stdout
         format console
     }
+}
+
+www.blackphone.com.bo {
+    redir https://blackphone.com.bo{uri} permanent
 }
