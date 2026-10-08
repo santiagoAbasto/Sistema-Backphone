@@ -24,6 +24,12 @@ class LoginRequest extends FormRequest
      *  - Password mínimo de string, sin revelar longitud mínima al atacante.
      *  - max:255 en ambos campos para evitar payloads gigantes.
      */
+    /** 'lowercase' valida, no convierte: sin esto, «Axel@…» no entra aunque la cuenta exista. */
+    protected function prepareForValidation(): void
+    {
+        $this->merge(['email' => Str::lower(trim((string) $this->input('email')))]);
+    }
+
     public function rules(): array
     {
         return [

@@ -95,6 +95,8 @@ class UsuarioController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $this->normalizarCorreo($request);
+
         $data = $request->validate([
             'name'     => ['required', 'string', 'max:120'],
             'email'    => ['required', 'email:rfc', 'max:191', 'unique:users,email'],
@@ -127,6 +129,8 @@ class UsuarioController extends Controller
     public function update(Request $request, User $usuario): RedirectResponse
     {
         $esYo = $request->user()->id === $usuario->id;
+
+        $this->normalizarCorreo($request);
 
         $data = $request->validate([
             'name'     => ['required', 'string', 'max:120'],
@@ -279,5 +283,15 @@ class UsuarioController extends Controller
             'meta_mensual.min'     => 'La meta no puede ser negativa.',
             'meta_mensual.max'     => 'Esa meta es demasiado grande.',
         ];
+    }
+
+    /**
+     * El login compara el correo en minúsculas. Si se guardara tal como se escribió, una cuenta
+     * creada como «Maria@…» no podría entrar nunca. Va antes de validar para que `unique` también
+     * compare en minúsculas.
+     */
+    private function normalizarCorreo(Request $request): void
+    {
+        $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
     }
 }
