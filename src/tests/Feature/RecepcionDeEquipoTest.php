@@ -34,6 +34,7 @@ class RecepcionDeEquipoTest extends TestCase
             'equipo'           => 'iPhone 12 Pro',
             'tecnico_id'       => $this->tecnicoDePrueba('Taller')->id,
             'marca'            => 'apple',
+            'metodo_pago'      => 'efectivo',
             'fecha'            => '2026-09-19',
             'detalle_servicio' => json_encode([['descripcion' => 'Cambio de pantalla', 'costo' => 300, 'precio' => 700]]),
             'precio_venta'     => 700,

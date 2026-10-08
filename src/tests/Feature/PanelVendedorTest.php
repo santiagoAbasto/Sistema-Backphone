@@ -94,6 +94,7 @@ class PanelVendedorTest extends TestCase
             'tecnico'             => $ficha->nombre,
             'tecnico_id'          => $ficha->id,
             'marca'               => 'apple',
+            'metodo_pago'         => 'efectivo',
             'comision_porcentaje' => $ficha->comision,
         ];
     }

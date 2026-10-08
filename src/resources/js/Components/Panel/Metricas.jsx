@@ -106,6 +106,7 @@ export function Metrica({
     comparacion,
     destacada = false,
     className = '',
+    children,
 }) {
     const t = TONOS[tono] ?? TONOS.neutro;
 
@@ -172,6 +173,8 @@ export function Metrica({
                     {hint && <p className="text-[12px] leading-snug text-gris-500">{hint}</p>}
                 </div>
             )}
+
+            {children && <div className="mt-3">{children}</div>}
 
             {serie?.length > 1 && (
                 <div className="-mx-5 -mb-5 mt-4">

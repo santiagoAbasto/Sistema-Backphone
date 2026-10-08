@@ -36,6 +36,7 @@ class ServicioCostoPendienteTest extends TestCase
             'equipo'           => 'iPhone 13',
             'tecnico_id'       => $this->tecnicoDePrueba()->id,
             'marca'            => 'apple',
+            'metodo_pago'      => 'efectivo',
             'fecha'            => '2026-09-16',
             'detalle_servicio' => json_encode($trabajos),
             'precio_venta'     => 999,

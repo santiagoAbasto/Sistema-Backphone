@@ -965,6 +965,8 @@ class VentaController extends Controller
                             : $request->detalle_servicio,
                         'precio_costo' => $sinCosto ? 0 : ($request->precio_invertido ?? 0),
                         'precio_venta' => $request->precio_venta ?? 0,
+                        // Se cobró con la venta: la forma de pago es la de la venta
+                        'metodo_pago' => $venta->metodo_pago,
                         'costo_pendiente' => $sinCosto,
                         'costo_cargado_por' => $sinCosto ? null : auth()->id(),
                         'costo_cargado_en' => $sinCosto ? null : now(),

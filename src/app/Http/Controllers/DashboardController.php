@@ -9,7 +9,9 @@ use App\Models\Computadora;
 use App\Models\ProductoGeneral;
 use App\Models\ProductoApple;
 use App\Models\Egreso;
+use App\Models\Sucursal;
 use App\Models\User;
+use App\Support\SucursalActiva;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -200,7 +202,7 @@ class DashboardController extends Controller
         $egresosCollection = Egreso::whereBetween('created_at', [
             $fechaInicio . ' 00:00:00',
             $fechaFin    . ' 23:59:59',
-        ])->get(['created_at', 'precio_invertido', 'concepto']);
+        ])->get(['created_at', 'precio_invertido', 'concepto', 'sucursal_id']);
 
         // Por día (YYYY-MM-DD)
         $egresosPorDia = $egresosCollection
@@ -222,16 +224,35 @@ class DashboardController extends Controller
         /* =========================
          * 💵 EFECTIVO EN CAJA
          * =========================
-         * Lo que de verdad quedó en el cajón: lo cobrado en efectivo menos lo que se pagó.
-         * La permuta y el abono de una reserva no son plata que entró hoy, así que se descuentan.
-         * Los servicios se cuentan enteros: el taller cobra en efectivo (los que salieron de una
-         * venta ya vienen contados en esa venta, por eso se los deja afuera acá).
+         * Lo que de verdad quedó en el cajón de cada sucursal: lo cobrado en efectivo menos lo
+         * que se pagó. La permuta y el abono de una reserva no son plata que entró hoy, así que
+         * se descuentan. De los servicios entra solo lo cobrado en efectivo (los que salieron de
+         * una venta ya vienen contados en esa venta). Los egresos salen todos de la caja.
          */
-        $efectivoVentas = $ventas->where('metodo_pago', 'efectivo')->sum(
+        $efectivoVentas = $ventas->where('metodo_pago', 'efectivo')->groupBy('sucursal_id')->map->sum(
             fn ($v) => (float) $v->subtotal - (float) $v->valor_permuta - (float) $v->monto_reserva_aplicado
         );
-        $efectivoServicios = $serviciosTecnicos->whereNull('venta_id')->sum('precio_venta');
-        $efectivoEnCaja = round($efectivoVentas + $efectivoServicios - $totalEgresos, 2);
+        $efectivoServicios = $serviciosTecnicos->whereNull('venta_id')->where('metodo_pago', 'efectivo')
+            ->groupBy('sucursal_id')->map->sum('precio_venta');
+        $egresosDeCaja = $egresosCollection->groupBy('sucursal_id')->map->sum('precio_invertido');
+
+        $efectivoDe = fn ($sucursalId) => round(
+            ($efectivoVentas[$sucursalId] ?? 0) + ($efectivoServicios[$sucursalId] ?? 0) - ($egresosDeCaja[$sucursalId] ?? 0),
+            2
+        );
+
+        // Mirando «Todas», una fila por sucursal (también las que no movieron nada: un cero dice
+        // algo). Mirando una sola, solo esa.
+        $sucursalActiva = SucursalActiva::id();
+        $efectivoPorSucursal = Sucursal::activas()
+            ->when($sucursalActiva, fn ($s) => $s->where('id', $sucursalActiva))
+            ->map(fn ($s) => ['sucursal' => $s->nombre, 'efectivo' => $efectivoDe($s->id)])
+            ->values();
+
+        $efectivoEnCaja = round(
+            $efectivoVentas->sum() + $efectivoServicios->sum() - $egresosDeCaja->sum(),
+            2
+        );
 
         /* =====================================================
  * 📈 HISTÓRICO PARA SVG (DÍA / MES / AÑO) ✅ POST-EGRESOS
@@ -533,6 +554,7 @@ class DashboardController extends Controller
                 'ganancia_neta' => $gananciaNeta,
                 'egresos_total' => $totalEgresos,
                 'efectivo_en_caja' => $efectivoEnCaja,
+                'efectivo_por_sucursal' => $efectivoPorSucursal,
                 'utilidad_disponible' => $utilidadDisponible,
                 'ganancia_productos' => $ganancias['celulares'] + $ganancias['computadoras'] + $ganancias['producto_apple'],
                 'ganancia_productos_generales' => $ganancias['generales'] + $ganancias['piezas'],

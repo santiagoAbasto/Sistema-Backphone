@@ -265,6 +265,7 @@ export default function Dashboard({
   const descuentos = safeNum(resumen_total?.total_descuento);
   const egresos = safeNum(resumen_total?.egresos_total);
   const efectivo = safeNum(resumen_total?.efectivo_en_caja);
+  const efectivoPorSucursal = resumen_total?.efectivo_por_sucursal ?? [];
   const composicion = [
     { etiqueta: 'Ganancia', valor: Math.max(ganancia, 0), color: 'var(--ok-fuerte)' },
     { etiqueta: 'Inversión', valor: inversion, color: 'var(--acento)' },
@@ -453,10 +454,24 @@ export default function Dashboard({
                   <Metrica
                     etiqueta="Efectivo en caja"
                     valor={fmtCaja(efectivo)}
-                    hint={efectivo < 0 ? 'Salió más de lo que entró en efectivo' : 'Ventas en efectivo y servicios, menos egresos'}
+                    hint={efectivo < 0 ? 'Salió más de lo que entró en efectivo' : 'Lo cobrado en efectivo, menos egresos'}
                     icono={CircleDollarSign}
                     tono={efectivo < 0 ? 'negativo' : 'acento'}
-                  />
+                  >
+                    {/* Mirando todas las sucursales: cuánto quedó en el cajón de cada una */}
+                    {efectivoPorSucursal.length > 1 && (
+                      <ul className="space-y-1 border-t border-gris-100 pt-2.5" aria-label="Efectivo por sucursal">
+                        {efectivoPorSucursal.map((s) => (
+                          <li key={s.sucursal} className="flex items-baseline justify-between gap-3 text-[12px]">
+                            <span className="truncate text-gris-500">{s.sucursal}</span>
+                            <span className={`shrink-0 font-semibold tabular-nums ${safeNum(s.efectivo) < 0 ? 'text-[color:var(--peligro-texto)]' : 'text-gris-900'}`}>
+                              {fmtCaja(s.efectivo)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </Metrica>
                 </motion.div>
               </motion.div>
             </div>

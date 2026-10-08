@@ -285,6 +285,7 @@
   <div class="total-final">
     Total a pagar por el cliente: Bs {{ number_format($servicio->precio_venta, 2) }}
   </div>
+  <div class="info" style="text-align:right;"><strong>Forma de pago:</strong> {{ $servicio->metodoPagoTexto() }}</div>
 
   {{-- Lo que el cliente acepta al dejar el equipo. Se edita en Ajustes → Datos del negocio. --}}
   @if (! empty($negocio['servicio_clausula']))

@@ -25,6 +25,14 @@ class ServicioTecnico extends Model
         self::MARCA_OTRO    => 'Otro equipo',
     ];
 
+    /** Cómo pagó el cliente. Solo lo cobrado en efectivo entra en «Efectivo en caja». */
+    public const METODOS_PAGO = [
+        'efectivo'      => 'Efectivo',
+        'qr'            => 'QR',
+        'transferencia' => 'Transferencia',
+        'tarjeta'       => 'Tarjeta',
+    ];
+
     /**
      * Campos asignables en masa
      */
@@ -39,6 +47,7 @@ class ServicioTecnico extends Model
         'recepcion',
         'precio_costo',
         'precio_venta',
+        'metodo_pago',
         'tecnico',
         'tecnico_id',
         'marca',
@@ -201,5 +210,11 @@ class ServicioTecnico extends Model
                 . 'Carga el costo para calcular la utilidad.',
             'servicio_tecnico_id' => $this->id,
         ]);
+    }
+
+    /** «QR» y no «Qr»: lo que sale impreso en la nota. */
+    public function metodoPagoTexto(): string
+    {
+        return self::METODOS_PAGO[$this->metodo_pago] ?? ucfirst((string) $this->metodo_pago);
     }
 }

@@ -32,6 +32,7 @@ class BusinessFlowTest extends TestCase
                 'equipo' => 'iPhone 13',
                 'tecnico_id' => $edson->id,
                 'marca' => 'apple',
+                'metodo_pago' => 'efectivo',
                 'fecha' => '2026-04-02',
                 'detalle_servicio' => json_encode([
                     ['descripcion' => 'Pantalla', 'costo' => 200, 'precio' => 350],

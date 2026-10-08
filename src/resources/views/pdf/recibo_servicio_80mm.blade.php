@@ -247,6 +247,7 @@ td:last-child {
     <div class="total-box right">
         <div class="total-label">TOTAL A PAGAR</div>
         <div class="total-amount">Bs {{ number_format($servicio->precio_venta, 2) }}</div>
+        <div class="total-label">Pago: {{ $servicio->metodoPagoTexto() }}</div>
     </div>
 
     <!-- NOTES -->

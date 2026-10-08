@@ -207,8 +207,13 @@ class ServicioTecnicoController extends Controller
             // y la regla de qué equipos puede recibir.
             'tecnico_id'        => 'required|integer|exists:tecnicos,id',
             'marca'             => ['required', \Illuminate\Validation\Rule::in(array_keys(ServicioTecnico::MARCAS))],
+            // Sin valor por defecto: si se diera por hecho «efectivo», el Resumen volvería a contar
+            // como efectivo lo que entró por QR o transferencia.
+            'metodo_pago'       => ['required', \Illuminate\Validation\Rule::in(array_keys(ServicioTecnico::METODOS_PAGO))],
             'fecha'             => 'nullable|date',
         ], [
+            'metodo_pago.required' => 'Indica cómo pagó el cliente.',
+            'metodo_pago.in'       => 'Indica cómo pagó el cliente.',
             'tecnico_id.required' => 'Elige quién va a reparar el equipo.',
             'tecnico_id.exists'   => 'Ese técnico no existe.',
             'marca.required'      => 'Indica de qué es el equipo.',
@@ -264,6 +269,7 @@ class ServicioTecnicoController extends Controller
                     'recepcion'         => RecepcionDeEquipo::normalizar($data['recepcion'] ?? null),
                     'precio_costo'      => $montos['costo'],
                     'precio_venta'      => $montos['venta'],
+                    'metodo_pago'       => $data['metodo_pago'],
                     'costo_pendiente'   => $montos['pendiente'],
                     'costo_cargado_por' => $montos['pendiente'] ? null : auth()->id(),
                     'costo_cargado_en'  => $montos['pendiente'] ? null : now(),

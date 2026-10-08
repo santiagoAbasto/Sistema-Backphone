@@ -72,6 +72,7 @@ class PiezasTest extends TestCase
             'equipo'           => 'iPhone 11',
             'tecnico_id'       => $this->tecnicoDePrueba('Taller')->id,
             'marca'            => 'apple',
+            'metodo_pago'      => 'efectivo',
             'fecha'            => '2026-09-19',
             'detalle_servicio' => json_encode($trabajos),
             'precio_venta'     => 0,

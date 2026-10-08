@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { route } from 'ziggy-js';
-import { ArrowLeft, Hammer, Plus, Search, Trash2, Wrench, X } from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight, Banknote, CreditCard, Hammer, Plus, QrCode, Search, Trash2, Wrench, X } from 'lucide-react';
 import PremiumNotice from '@/Components/PremiumNotice';
 import { notifyRecordsUpdated } from '@/Hooks/useAutoRefresh';
 import { Badge, Field, Input, Segmented, StepCard, Textarea, bsFmt, buttonCls, inputCls } from '@/Components/Admin/ui';
@@ -84,6 +84,14 @@ function BuscadorPiezas({ piezas, onElegir, onCerrar }) {
   );
 }
 
+// Cómo pagó el cliente. Solo lo cobrado en efectivo entra en «Efectivo en caja».
+const METODOS_PAGO = [
+  { value: 'efectivo', label: 'Efectivo', icon: Banknote },
+  { value: 'qr', label: 'QR', icon: QrCode },
+  { value: 'transferencia', label: 'Transferencia', icon: ArrowLeftRight },
+  { value: 'tarjeta', label: 'Tarjeta', icon: CreditCard },
+];
+
 function Linea({ label, valor }) {
   return (
     <div className="flex justify-between gap-3">
@@ -103,6 +111,9 @@ export default function ServiciosForm({ tecnicos = [], piezas = [], revision = [
     equipo: '',
     marca: '',
     tecnico_id: '',
+    // Sin valor por defecto, a propósito: si arrancara en efectivo, el que se olvida de cambiarlo
+    // infla la caja con lo que entró por QR o transferencia.
+    metodo_pago: '',
     fecha: dayjs().format('YYYY-MM-DD'), // fecha local (no UTC)
     notas_adicionales: '',
   });
@@ -238,6 +249,7 @@ export default function ServiciosForm({ tecnicos = [], piezas = [], revision = [
     if (!data.marca) e.marca = 'Indica de qué es el equipo.';
     if (!data.tecnico_id) e.tecnico_id = 'Elige quién va a reparar el equipo.';
     if (!data.fecha) e.fecha = 'Elige la fecha.';
+    if (!data.metodo_pago) e.metodo_pago = 'Indica cómo pagó el cliente.';
     trabajos.forEach((t) => {
       if (!t.descripcion.trim() && (t.costo !== '' || t.precio !== '')) e[`trabajo.${t.id}`] = 'Describe este trabajo.';
       else if (t.descripcion.trim() && t.precio === '') e[`trabajo.${t.id}`] = 'Escribe cuánto paga el cliente por este trabajo.';
@@ -282,6 +294,7 @@ export default function ServiciosForm({ tecnicos = [], piezas = [], revision = [
       equipo: data.equipo.trim(),
       marca: data.marca,
       tecnico_id: data.tecnico_id,
+      metodo_pago: data.metodo_pago,
       fecha: data.fecha,
       notas_adicionales: data.notas_adicionales.trim(),
       recepcion: payloadRecepcion(recepcion),
@@ -585,6 +598,11 @@ export default function ServiciosForm({ tecnicos = [], piezas = [], revision = [
                   <p className="mt-1 text-[28px] font-bold leading-none tracking-tight">{bsFmt(totalCobro)}</p>
                   <p className="mt-1.5 text-xs text-white/60">Es el total que aparece en la nota.</p>
                 </div>
+
+                <Field label="¿Cómo paga?" error={errores.metodo_pago}>
+                  <Segmented options={METODOS_PAGO} value={data.metodo_pago} ariaLabel="Forma de pago" cols="grid-cols-2"
+                    onChange={(v) => cambiar('metodo_pago', v)} />
+                </Field>
 
                 {!conMargen && (
                   <p className="rounded-xl bg-gris-50 px-4 py-3 text-xs leading-relaxed text-gris-600">

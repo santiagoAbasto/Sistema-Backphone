@@ -7,6 +7,7 @@ use App\Models\ConfiguracionNegocio;
 use App\Models\Egreso;
 use App\Models\ProductoGeneral;
 use App\Models\ServicioTecnico;
+use App\Models\Sucursal;
 use App\Models\Tecnico;
 use App\Models\User;
 use App\Models\Venta;
@@ -36,12 +37,20 @@ class TallerTest extends TestCase
         ]);
     }
 
-    private function servicio(User $quien, Tecnico $tecnico, array $trabajos): \Illuminate\Testing\TestResponse
+    private function servicio(User $quien, Tecnico $tecnico, array $trabajos, array $extra = []): \Illuminate\Testing\TestResponse
     {
-        return $this->actingAs($quien)->post(route('admin.servicios.store'), [
+        return $this->actingAs($quien)->post(route('admin.servicios.store'), array_merge([
             'cliente' => 'María Rojas', 'equipo' => 'iPhone 12',
-            'tecnico_id' => $tecnico->id, 'marca' => 'apple', 'fecha' => '2026-10-07',
+            'tecnico_id' => $tecnico->id, 'marca' => 'apple', 'metodo_pago' => 'efectivo', 'fecha' => '2026-10-07',
             'detalle_servicio' => json_encode($trabajos), 'precio_venta' => 0,
+        ], $extra));
+    }
+
+    /** Un servicio cobrado hoy, para que entre en el Resumen del mes. */
+    private function cobradoHoy(User $quien, Tecnico $tecnico, int $cobro, string $pago): \Illuminate\Testing\TestResponse
+    {
+        return $this->servicio($quien, $tecnico, [['descripcion' => 'Cambio de pantalla', 'costo' => 50, 'precio' => $cobro]], [
+            'metodo_pago' => $pago, 'fecha' => now('America/La_Paz')->toDateString(),
         ]);
     }
 
@@ -154,6 +163,81 @@ class TallerTest extends TestCase
                 ->where('resumen_total.egresos_total', 300)
                 // 5000 cobrados en efectivo menos los 300 que salieron
                 ->where('resumen_total.efectivo_en_caja', 4700));
+    }
+
+    // ─── La caja ────────────────────────────────────────────────────────────
+
+    public function test_el_servicio_guarda_como_pago_el_cliente(): void
+    {
+        $admin = $this->admin();
+        $tecnico = $this->tecnicoDePrueba();
+
+        // Sin forma de pago no se registra: darla por efectivo inflaría la caja sin que nadie lo note
+        $this->cobradoHoy($admin, $tecnico, 250, '')->assertSessionHasErrors('metodo_pago');
+        $this->cobradoHoy($admin, $tecnico, 250, 'cripto')->assertSessionHasErrors('metodo_pago');
+        $this->assertSame(0, ServicioTecnico::count());
+
+        $this->cobradoHoy($admin, $tecnico, 250, 'transferencia')->assertSessionHasNoErrors();
+        $this->assertSame('transferencia', ServicioTecnico::sole()->metodo_pago);
+        $this->assertSame('Transferencia', ServicioTecnico::sole()->metodoPagoTexto());
+    }
+
+    public function test_en_la_caja_solo_entra_lo_cobrado_en_efectivo(): void
+    {
+        $admin = $this->admin();
+        $tecnico = $this->tecnicoDePrueba();
+
+        $this->cobradoHoy($admin, $tecnico, 250, 'efectivo');
+        $this->cobradoHoy($admin, $tecnico, 200, 'qr');
+        $this->cobradoHoy($admin, $tecnico, 120, 'tarjeta');
+        $this->cobradoHoy($admin, $tecnico, 90, 'transferencia');
+
+        $this->actingAs($admin)
+            ->get(route('admin.dashboard'))
+            ->assertInertia(fn (Assert $page) => $page
+                // Antes contaba los cuatro como efectivo: 660. En el cajón quedaron 250.
+                ->where('resumen_total.efectivo_en_caja', 250));
+    }
+
+    public function test_la_caja_se_ve_por_sucursal(): void
+    {
+        $cochabamba = Sucursal::where('prefijo', 'CBA')->firstOrFail();
+        $sucre      = Sucursal::where('prefijo', 'SUC')->firstOrFail();
+
+        $jefes = [];
+        foreach ([[$cochabamba, 300], [$sucre, 500]] as [$sucursal, $cobro]) {
+            $jefes[$sucursal->id] = User::factory()->create(['rol' => 'admin', 'sucursal_id' => $sucursal->id]);
+            $tecnico = Tecnico::create([
+                'nombre' => 'Técnico ' . $sucursal->prefijo, 'especialidad' => Tecnico::AMBAS,
+                'comision' => 60, 'activo' => true, 'sucursal_id' => $sucursal->id,
+            ]);
+            $this->cobradoHoy($jefes[$sucursal->id], $tecnico, $cobro, 'efectivo')->assertSessionHasNoErrors();
+        }
+
+        // Un gasto que salió del cajón de Sucre no le resta a Cochabamba
+        Egreso::create([
+            'concepto' => 'Almuerzo', 'precio_invertido' => 80, 'tipo_gasto' => 'servicio_basico',
+            'user_id' => $jefes[$sucre->id]->id, 'sucursal_id' => $sucre->id,
+        ]);
+
+        // El super administrador mirando todas: el total y lo que quedó en cada una
+        $super = User::factory()->create(['rol' => 'admin', 'sucursal_id' => null]);
+        $this->actingAs($super)
+            ->get(route('admin.dashboard'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('resumen_total.efectivo_en_caja', 720)
+                ->where('resumen_total.efectivo_por_sucursal.0.sucursal', 'Cochabamba')
+                ->where('resumen_total.efectivo_por_sucursal.0.efectivo', 300)
+                ->where('resumen_total.efectivo_por_sucursal.1.sucursal', 'Sucre')
+                ->where('resumen_total.efectivo_por_sucursal.1.efectivo', 420));
+
+        // El de Sucre ve solo su cajón
+        $this->actingAs($jefes[$sucre->id])
+            ->get(route('admin.dashboard'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('resumen_total.efectivo_en_caja', 420)
+                ->has('resumen_total.efectivo_por_sucursal', 1)
+                ->where('resumen_total.efectivo_por_sucursal.0.efectivo', 420));
     }
 
     // ─── La nota ────────────────────────────────────────────────────────────

@@ -9,6 +9,9 @@ import {
 import { useAutoRefresh } from '@/Hooks/useAutoRefresh';
 import { Badge, EmptyState, Field, Input, Modal, PageHeader, Toast, bsFmt, buttonCls, inputCls, useToast } from '@/Components/Admin/ui';
 
+// Cómo pagó el cliente, tal como sale en la nota
+const FORMA_DE_PAGO = { efectivo: 'Efectivo', qr: 'QR', transferencia: 'Transferencia', tarjeta: 'Tarjeta' };
+
 const TZ = 'America/La_Paz';
 const SIN_FILTROS = { desde: '', hasta: '', vendedor: '', tecnico: '', pendientes: false };
 
@@ -563,7 +566,10 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
                               )}
                             </td>
                           )}
-                          <td className="whitespace-nowrap px-4 py-3 text-right font-bold tabular-nums text-gris-900">{bsFmt(s.cobrado)}</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right font-bold tabular-nums text-gris-900">
+                            {bsFmt(s.cobrado)}
+                            <p className="mt-0.5 text-xs font-normal text-gris-400">{FORMA_DE_PAGO[s.metodo_pago] ?? ''}</p>
+                          </td>
                           {conCostos && (
                             <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
                               {s.pendiente ? (
@@ -619,7 +625,7 @@ export default function ServiciosIndex({ servicios = [], filtros = {}, vendedore
                       </p>
                       <div className={`grid gap-2 rounded-xl bg-gris-50 p-3 text-center ${conCostos ? 'grid-cols-3' : 'grid-cols-1'}`}>
                         {conCostos && <div><p className="text-[10px] font-bold uppercase tracking-[0.1em] text-gris-400">Costo</p><p className="text-sm font-semibold tabular-nums text-gris-600">{s.pendiente ? '—' : bsFmt(s.costo)}</p></div>}
-                        <div><p className="text-[10px] font-bold uppercase tracking-[0.1em] text-gris-400">Cobrado</p><p className="text-sm font-bold tabular-nums text-gris-900">{bsFmt(s.cobrado)}</p></div>
+                        <div><p className="text-[10px] font-bold uppercase tracking-[0.1em] text-gris-400">Cobrado</p><p className="text-sm font-bold tabular-nums text-gris-900">{bsFmt(s.cobrado)}</p><p className="text-[11px] text-gris-400">{FORMA_DE_PAGO[s.metodo_pago] ?? ''}</p></div>
                         {conCostos && <div><p className="text-[10px] font-bold uppercase tracking-[0.1em] text-gris-400">Ganancia</p><p className={`text-sm font-bold tabular-nums ${s.pendiente ? 'text-gris-400' : s.ganancia < 0 ? 'text-rose-600' : 'text-emerald-700'}`}>{s.pendiente ? 'Pendiente' : conSigno(s.ganancia)}</p></div>}
                       </div>
                       {conCostos && s.pendiente && (

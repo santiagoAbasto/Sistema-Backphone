@@ -46,6 +46,7 @@ class TecnicosTest extends TestCase
             'equipo'           => 'Equipo',
             'tecnico_id'       => $tecnico->id,
             'marca'            => $marca,
+            'metodo_pago'      => 'efectivo',
             'fecha'            => '2026-09-16',
             'detalle_servicio' => json_encode($trabajos),
             'precio_venta'     => 0,
@@ -142,6 +143,7 @@ class TecnicosTest extends TestCase
             'equipo'           => 'iPhone 12',
             'tecnico_id'       => $axel->id,
             'marca'            => 'apple',
+            'metodo_pago'      => 'efectivo',
             'fecha'            => '2026-09-16',
             'detalle_servicio' => json_encode([['descripcion' => 'Cambio de pantalla', 'precio' => 700]]),
             'precio_venta'     => 700,
@@ -229,7 +231,7 @@ class TecnicosTest extends TestCase
 
         $this->actingAs($vendedor)->post(route('vendedor.servicios.store'), [
             'cliente' => 'María Rojas', 'equipo' => 'iPhone 12',
-            'tecnico_id' => $axel->id, 'marca' => 'apple', 'fecha' => '2026-09-16',
+            'tecnico_id' => $axel->id, 'marca' => 'apple', 'metodo_pago' => 'efectivo', 'fecha' => '2026-09-16',
             'detalle_servicio' => json_encode([['descripcion' => 'Pantalla', 'precio' => 700]]),
             'precio_venta' => 700,
         ]);
