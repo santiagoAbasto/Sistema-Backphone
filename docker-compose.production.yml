@@ -21,7 +21,10 @@ x-app: &app
     db:
       condition: service_healthy
   volumes:
-    - storage:/var/www/html/storage
+    # nocopy: los tres servicios montan este volumen. Si Docker lo llenara con lo que trae la
+    # imagen, en la primera instalación lo harían los tres a la vez y uno falla con «file exists».
+    # Las carpetas que hacen falta las arma el entrypoint en cada arranque.
+    - storage:/var/www/html/storage:nocopy
   networks:
     - backend
 
