@@ -729,7 +729,7 @@ class VentaController extends Controller
             'tipo_venta' => 'required|in:producto,servicio_tecnico',
             'es_permuta' => 'boolean',
             'tipo_permuta' => 'nullable|in:celular,computadora,producto_general',
-            'metodo_pago' => 'required|in:efectivo,qr,tarjeta',
+            'metodo_pago' => 'required|in:efectivo,qr,tarjeta,transferencia',
             'inicio_tarjeta' => 'required_if:metodo_pago,tarjeta|nullable|digits:4',
             'fin_tarjeta' => 'required_if:metodo_pago,tarjeta|nullable|digits:4',
             'reserva_id' => 'nullable|integer|exists:reservas,id',
@@ -1068,7 +1068,7 @@ class VentaController extends Controller
         $request->validate([
             'nombre_cliente' => 'required|string|max:255',
             'telefono_cliente' => 'nullable|string|max:255',
-            'metodo_pago' => 'required|in:efectivo,qr,tarjeta',
+            'metodo_pago' => 'required|in:efectivo,qr,tarjeta,transferencia',
             'inicio_tarjeta' => 'required_if:metodo_pago,tarjeta|nullable|digits:4',
             'fin_tarjeta' => 'required_if:metodo_pago,tarjeta|nullable|digits:4',
             'notas_adicionales' => 'nullable|string',

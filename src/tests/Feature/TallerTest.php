@@ -199,6 +199,29 @@ class TallerTest extends TestCase
                 ->where('resumen_total.efectivo_en_caja', 250));
     }
 
+    public function test_una_venta_por_transferencia_no_entra_en_la_caja(): void
+    {
+        $admin = $this->admin();
+
+        $celular = Celular::create([
+            'modelo' => 'iPhone 14', 'capacidad' => '128GB', 'color' => 'Azul', 'estado_imei' => 'libre',
+            'imei_1' => '350000000000002', 'procedencia' => 'EE. UU.',
+            'precio_costo' => 4500, 'precio_venta' => 5600, 'estado' => 'disponible', 'condicion' => 'Nuevo',
+        ]);
+
+        $this->actingAs($admin)->postJson(route('admin.ventas.store'), [
+            'nombre_cliente' => 'Lucía', 'tipo_venta' => 'producto', 'es_permuta' => false,
+            'metodo_pago' => 'transferencia',
+            'items' => [['tipo' => 'celular', 'producto_id' => $celular->id, 'cantidad' => 1, 'descuento' => 0]],
+        ])->assertOk();
+
+        $this->assertSame('transferencia', Venta::sole()->metodo_pago);
+
+        $this->actingAs($admin)
+            ->get(route('admin.dashboard'))
+            ->assertInertia(fn (Assert $page) => $page->where('resumen_total.efectivo_en_caja', 0));
+    }
+
     public function test_la_caja_se_ve_por_sucursal(): void
     {
         $cochabamba = Sucursal::where('prefijo', 'CBA')->firstOrFail();

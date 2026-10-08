@@ -2,7 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { useMemo, useState } from 'react';
 import {
-  ArrowLeft, Banknote, CheckCircle2, CreditCard, FileText, Package, Plus, QrCode, Save, Search,
+  ArrowLeft, ArrowLeftRight, Banknote, CheckCircle2, CreditCard, FileText, Package, Plus, QrCode, Save, Search,
   SlidersHorizontal, Trash2, User, Wrench,
 } from 'lucide-react';
 import CardPaymentFields from '@/Components/CardPaymentFields';
@@ -24,6 +24,7 @@ const POR_CANTIDAD = ['producto_general', 'pieza'];
 const METODOS_PAGO = [
   { value: 'efectivo', label: 'Efectivo', icon: Banknote },
   { value: 'qr', label: 'QR', icon: QrCode },
+  { value: 'transferencia', label: 'Transferencia', icon: ArrowLeftRight },
   { value: 'tarjeta', label: 'Tarjeta', icon: CreditCard },
 ];
 

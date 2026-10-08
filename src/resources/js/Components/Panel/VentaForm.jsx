@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { route } from 'ziggy-js';
 import {
-  ArrowLeft, Banknote, CalendarCheck, CreditCard, Laptop, Package, Plus, QrCode, Repeat, Search,
+  ArrowLeft, ArrowLeftRight, Banknote, CalendarCheck, CreditCard, Laptop, Package, Plus, QrCode, Repeat, Search,
   ShoppingCart, Smartphone, Tablet, Trash2, X,
 } from 'lucide-react';
 import ModalPermutaComponent from '@/Components/ModalPermutaComponent';
@@ -35,6 +35,7 @@ const TIPOS_PERMUTA = [
 const METODOS_PAGO = [
   { value: 'efectivo', label: 'Efectivo', icon: Banknote },
   { value: 'qr', label: 'QR', icon: QrCode },
+  { value: 'transferencia', label: 'Transferencia', icon: ArrowLeftRight },
   { value: 'tarjeta', label: 'Tarjeta', icon: CreditCard },
 ];
 
