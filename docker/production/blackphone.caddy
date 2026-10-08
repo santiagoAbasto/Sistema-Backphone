@@ -4,7 +4,7 @@
 # Se pega tal cual al final del Caddyfile del proyecto que publica el sitio real
 # (docker/production/Caddyfile). No se toca ningún bloque existente: se agrega uno.
 #
-# `blackphone-demo-app` es el alias de red del contenedor, declarado en
+# `blackphone-app` es el alias de red del contenedor, declarado en
 # docker-compose.production.yml. Los dos stacks se ven porque comparten la red
 # `appleboss-production_edge`, y nada más que eso.
 # ─────────────────────────────────────────────────────────────────────────────
@@ -17,7 +17,7 @@ blackphone.com.bo {
         X-Robots-Tag "noindex, nofollow, noarchive"
     }
 
-    reverse_proxy blackphone-demo-app:80
+    reverse_proxy blackphone-app:80
 
     log {
         output stdout

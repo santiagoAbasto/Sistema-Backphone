@@ -1,4 +1,4 @@
-# Desplegar el demo de Blackphone
+# Desplegar Blackphone
 
 Blackphone se publica en su propio dominio, `blackphone.com.bo`, **sin tocar el
 sitio que ya está en producción**. Los dos viven en el mismo VPS, pero separados: carpeta
@@ -6,7 +6,7 @@ distinta, repositorio distinto, base de datos distinta, claves distintas y
 volúmenes distintos.
 
 Lo único que comparten es el **reverse proxy**. El servidor tiene un solo Caddy
-escuchando en los puertos 80 y 443 —no puede haber dos—, así que el demo se
+escuchando en los puertos 80 y 443 —no puede haber dos—, así que Blackphone se
 cuelga de ese Caddy con un bloque propio. Es el único archivo del proyecto real
 que se toca, y se le agrega un bloque: no se modifica ninguno existente.
 
@@ -19,9 +19,9 @@ que se toca, y se le agrega un bloque: no se modifica ninguno existente.
                    │        │
       appleboss.com.bo     blackphone.com.bo
              │                    │
-      app (real)          blackphone-demo-app
+      app (real)            blackphone-app
              │                    │
-      db (real)           db (del demo)
+      db (real)             db (de Blackphone)
 ```
 
 ---
@@ -59,8 +59,8 @@ por HTTP a Caddy, Caddy redirige a HTTPS y el navegador queda en un bucle.
 
 ```bash
 mkdir -p ~/apps && cd ~/apps
-git clone https://github.com/santiagoAbasto/Sistema-Backphone.git blackphone-demo
-cd blackphone-demo
+git clone https://github.com/santiagoAbasto/Sistema-Backphone.git blackphone
+cd blackphone
 ```
 
 Preparar el archivo de variables:
@@ -77,17 +77,11 @@ contraseña de la base va en dos variables —`DB_PASSWORD` para Laravel y
 ```bash
 APP_KEY="base64:$(openssl rand -base64 32)"
 DB_PASS="$(openssl rand -base64 30 | tr -dc 'A-Za-z0-9' | cut -c1-28)"
-ADMIN_PASS="$(openssl rand -base64 30 | tr -dc 'A-Za-z0-9' | cut -c1-20)"
 
 sed -i "s|^APP_KEY=.*|APP_KEY=${APP_KEY}|" .env.production
 sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=${DB_PASS}|" .env.production
 sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=${DB_PASS}|" .env.production
-sed -i "s|^SEED_ADMIN_PASSWORD=.*|SEED_ADMIN_PASSWORD=${ADMIN_PASS}|" .env.production
-
-echo "Clave del administrador: ${ADMIN_PASS}"
 ```
-
-Falta completar a mano `SEED_ADMIN_EMAIL` con el correo de la primera cuenta.
 
 Levantar:
 
@@ -101,7 +95,12 @@ Crear las tablas y la primera cuenta:
 ```bash
 docker compose -f docker-compose.production.yml exec blackphone php artisan migrate --force
 docker compose -f docker-compose.production.yml exec blackphone php artisan db:seed --force
+docker compose -f docker-compose.production.yml exec blackphone php artisan usuarios:super-admin correo@dominio
 ```
+
+El último pide la contraseña dos veces y no la muestra al escribirla: no queda en el
+`.env` ni en el historial de la terminal. La cuenta sale como super administrador
+(rol admin, sin sucursal). El resto del equipo se crea desde Usuarios y roles.
 
 Comprobar que la aplicación responde por dentro, antes de tocar Caddy:
 
@@ -115,7 +114,7 @@ Tiene que decir `200`.
 
 ## 4. Publicar el dominio
 
-El bloque a agregar está en `docker/production/blackphone-demo.caddy`. Se pega
+El bloque a agregar está en `docker/production/blackphone.caddy`. Se pega
 al final del Caddyfile del proyecto real.
 
 **Antes de editar, copia de seguridad:**
@@ -153,7 +152,7 @@ curl -s -o /dev/null -w '%{http_code}\n' https://blackphone.com.bo/up
 ## 5. Actualizaciones
 
 ```bash
-cd ~/apps/blackphone-demo
+cd ~/apps/blackphone
 git pull --ff-only origin main
 docker compose -f docker-compose.production.yml build
 docker compose -f docker-compose.production.yml up -d --force-recreate
@@ -175,7 +174,7 @@ docker compose -f docker-compose.production.yml up -d --force-recreate blackphon
 
 ## 6. Lo que no se toca
 
-- **`ports:` en el demo.** Ni la aplicación ni PostgreSQL se asoman al servidor.
+- **`ports:` en Blackphone.** Ni la aplicación ni PostgreSQL se asoman al servidor.
   Caddy llega por la red interna de Docker; nadie más tiene por qué.
 - **El nombre del servicio web.** Se llama `blackphone`, no `app`. En una red
   compartida Compose registra el nombre del servicio como alias DNS: un servicio
@@ -184,7 +183,7 @@ docker compose -f docker-compose.production.yml up -d --force-recreate blackphon
 - **`APP_DEBUG`.** Queda en `false`. En `true`, cualquier error muestra la
   configuración entera, variables de entorno incluidas.
 - **`.env.production`.** No se versiona ni se pega en un chat.
-- **Las claves.** El demo tiene su propia base, su propia `APP_KEY` y su propia
+- **Las claves.** Blackphone tiene su propia base, su propia `APP_KEY` y su propia
   contraseña de administrador. Ninguna se comparte con el sitio real.
 
 ---
@@ -201,13 +200,13 @@ curl -I https://blackphone.com.bo
 **502 Bad Gateway.** Caddy encontró el dominio pero no llega a la aplicación:
 
 ```bash
-cd ~/apps/blackphone-demo
+cd ~/apps/blackphone
 docker compose -f docker-compose.production.yml ps
 docker compose -f docker-compose.production.yml logs --tail=100 blackphone
 docker network inspect appleboss-production_edge | grep -A3 blackphone
 ```
 
-El contenedor tiene que aparecer en esa red con el alias `blackphone-demo-app`.
+El contenedor tiene que aparecer en esa red con el alias `blackphone-app`.
 
 **Error de Laravel con la pantalla en blanco.** El log del contenedor lo dice:
 
@@ -221,7 +220,7 @@ No pegar el contenido de `.env.production` en ningún lado.
 
 ---
 
-## 8. Antes de mostrar el demo
+## 8. Antes de entregar
 
 - [ ] `https://blackphone.com.bo/up` responde `200`.
 - [ ] `https://appleboss.com.bo` sigue abriendo igual que antes.
@@ -229,3 +228,28 @@ No pegar el contenido de `.env.production` en ningún lado.
 - [ ] La contraseña del administrador no es la de ningún otro sistema.
 - [ ] Ajustes → Datos del negocio está completado (sale en las notas y PDF).
 - [ ] Probado desde el celular y en una ventana de incógnito.
+
+---
+
+## 9. De demo a producción: dejar la base limpia
+
+Si la instalación se usó de demo, `docker/production/limpiar-datos-de-prueba.sql`
+borra todo lo cargado probando (ventas, servicios, inventario, clientes, egresos,
+traspasos, cuentas y fichas de técnicos) y conserva roles, sucursales y datos del
+negocio. Los contadores de notas vuelven a cero.
+
+Antes, una copia:
+
+```bash
+docker compose -f docker-compose.production.yml exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -Fc "$POSTGRES_DB"' > ~/blackphone-antes-de-limpiar.dump
+```
+
+Sin `-v confirmar=si` el script muestra qué borraría, lo borra para comprobar que se
+puede y lo deshace; con `-v confirmar=si` lo aplica:
+
+```bash
+docker compose -f docker-compose.production.yml exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < docker/production/limpiar-datos-de-prueba.sql
+```
+
+Como también se van las cuentas, después se crea la primera con
+`php artisan usuarios:super-admin` (sección 3).
