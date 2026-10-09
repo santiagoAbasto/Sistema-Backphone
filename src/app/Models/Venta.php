@@ -28,6 +28,7 @@ class Venta extends Model
         'fecha',
         'codigo_nota',
         'reserva_id',
+        'tienda_id',
         'tipo_venta',
         'es_permuta',
         'tipo_permuta',
@@ -164,5 +165,11 @@ class Venta extends Model
     public function reserva()
     {
         return $this->belongsTo(Reserva::class);
+    }
+
+    /** La tienda que compró, si fue una venta a tienda (precio mayorista). */
+    public function tienda(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Tienda::class);
     }
 }

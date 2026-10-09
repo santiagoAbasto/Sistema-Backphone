@@ -22,6 +22,7 @@ class ProductoApple extends Model
         'procedencia',
         'precio_costo',
         'precio_venta',
+        'precio_tienda',
         'tiene_imei',
         'imei_1',
         'imei_2',
@@ -34,6 +35,7 @@ class ProductoApple extends Model
         'tiene_imei' => 'boolean',
         'precio_costo' => 'float',
         'precio_venta' => 'float',
+        'precio_tienda' => 'float',
     ];
 
     public function ventaItems()

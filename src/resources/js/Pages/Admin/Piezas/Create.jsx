@@ -38,7 +38,7 @@ export default function Create({ categorias = [], sugerencias = [] }) {
         notifyRecordsUpdated();
         if (!otra) return;
         setRegistradas((n) => n + 1);
-        setData((d) => ({ ...d, nombre: '', codigo: '', cantidad: '', precio_costo: '', precio_venta: '', notas: '' }));
+        setData((d) => ({ ...d, nombre: '', codigo: '', cantidad: '', precio_costo: '', precio_venta: '', precio_tienda: '', notas: '' }));
         setErrores({});
         window.scrollTo({ top: 0, behavior: 'smooth' });
       },

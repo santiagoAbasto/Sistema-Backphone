@@ -9,6 +9,7 @@ use App\Models\Computadora;
 use App\Models\ProductoGeneral;
 use App\Models\ProductoApple;
 use App\Models\Cliente;
+use App\Support\SinCostos;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -57,16 +58,19 @@ class CotizacionController extends Controller
 
     private function vistaCreate()
     {
+        // Al vendedor no le viajan el costo, la procedencia ni el precio para tiendas
+        $paraMi = fn ($lista) => SinCostos::paraUsuario($lista, auth()->user());
+
         return Inertia::render(
             auth()->user()->rol === 'admin'
                 ? 'Admin/Cotizaciones/Create'
                 : 'Vendedor/Cotizaciones/Create',
             [
                 'fechaHoy' => now()->toDateString(),
-                'celulares' => Celular::where('estado', 'disponible')->get(),
-                'computadoras' => Computadora::where('estado', 'disponible')->get(),
-                'productosGenerales' => ProductoGeneral::where('estado', 'disponible')->get(),
-                'productosApple' => ProductoApple::where('estado', 'disponible')->get(),
+                'celulares' => $paraMi(Celular::where('estado', 'disponible')->get()),
+                'computadoras' => $paraMi(Computadora::where('estado', 'disponible')->get()),
+                'productosGenerales' => $paraMi(ProductoGeneral::where('estado', 'disponible')->get()),
+                'productosApple' => $paraMi(ProductoApple::where('estado', 'disponible')->get()),
             ]
         );
     }

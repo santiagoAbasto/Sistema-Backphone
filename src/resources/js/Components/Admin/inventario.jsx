@@ -56,6 +56,8 @@ export const util = (v) => {
 export const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
 export const MAX_MONTO = 99999999.99;
 export const montoInicial = (v) => (v === null || v === undefined || v === '' ? '' : String(Number(v)));
+// El precio para tiendas es opcional: vacío viaja como null, nunca como 0 (0 sería «vender gratis a tiendas»)
+export const r2Opcional = (v) => (v === null || v === undefined || v === '' ? null : r2(v));
 
 export function rentabilidad(costo, venta) {
   const v = Number(venta) || 0;
@@ -63,9 +65,14 @@ export function rentabilidad(costo, venta) {
   return { ganancia, margen: v > 0 ? Math.round((ganancia / v) * 100) : null };
 }
 
-/** Revisa el costo y el precio de venta; agrega los errores a `e`. */
+/** Revisa el costo, el precio al cliente final y (si lo escribieron) el de tiendas; agrega los errores a `e`. */
 export function validarPrecios(d, e) {
-  [['precio_costo', 'Escribe el precio de costo.'], ['precio_venta', 'Escribe el precio de venta.']].forEach(([campo, falta]) => {
+  [
+    ['precio_costo', 'Escribe el precio de costo.'],
+    ['precio_venta', 'Escribe el precio de venta al cliente final.'],
+    ['precio_tienda', null],
+  ].forEach(([campo, falta]) => {
+    if (falta === null && (d[campo] ?? '') === '') return; // el precio para tiendas puede quedar vacío
     const n = Number(d[campo]);
     if (d[campo] === '') e[campo] = falta;
     else if (!Number.isFinite(n) || n < 0) e[campo] = 'Escribe un monto válido.';
@@ -159,9 +166,9 @@ export function CampoCondicion({ valor, error, onChange }) {
   );
 }
 
-export function CampoMonto({ label, valor, error, onChange }) {
+export function CampoMonto({ label, valor, error, hint, className, onChange }) {
   return (
-    <Field label={label} error={error}>
+    <Field label={label} error={error} hint={hint} className={className}>
       <div className="relative">
         <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-gris-400">Bs</span>
         <Input type="number" min="0" step="0.01" inputMode="decimal" placeholder="0,00" className="pl-11 text-base font-bold tabular-nums"
@@ -171,23 +178,31 @@ export function CampoMonto({ label, valor, error, onChange }) {
   );
 }
 
-/** Costo, venta y la ganancia (o pérdida) que dejan. */
+// Con tres columnas las etiquetas largas se parten en dos líneas. Se les reserva siempre el alto de dos
+// y se pegan al campo, para que los tres montos queden a la misma altura aunque una etiqueta no se parta.
+const ETIQUETA_DE_DOS_LINEAS = 'lg:[&>div:first-child]:min-h-[2.25rem] lg:[&>div:first-child]:items-end';
+
+/** Costo, venta al cliente final, venta a tiendas y la ganancia (o pérdida) que dejan. */
 export function CamposPrecio({ data, errores, cambiar }) {
   const hayPrecios = data.precio_costo !== '' && data.precio_venta !== '';
   const rent = rentabilidad(data.precio_costo, data.precio_venta);
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2">
-        <CampoMonto label="Precio de costo" valor={data.precio_costo} error={errores.precio_costo} onChange={(v) => cambiar('precio_costo', v)} />
-        <CampoMonto label="Precio de venta" valor={data.precio_venta} error={errores.precio_venta} onChange={(v) => cambiar('precio_venta', v)} />
+      <div className="grid items-start gap-4 lg:grid-cols-3">
+        <CampoMonto label="Precio de costo" valor={data.precio_costo} error={errores.precio_costo} className={ETIQUETA_DE_DOS_LINEAS}
+          onChange={(v) => cambiar('precio_costo', v)} />
+        <CampoMonto label="Precio venta cliente final" valor={data.precio_venta} error={errores.precio_venta} className={ETIQUETA_DE_DOS_LINEAS}
+          onChange={(v) => cambiar('precio_venta', v)} />
+        <CampoMonto label="Precio venta para tiendas" valor={data.precio_tienda ?? ''} error={errores.precio_tienda} className={ETIQUETA_DE_DOS_LINEAS}
+          hint="Sin este precio, el producto no se vende a tiendas." onChange={(v) => cambiar('precio_tienda', v)} />
       </div>
       {hayPrecios && (rent.ganancia >= 0 ? (
         <p className="mt-3 flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-[13px] font-semibold text-emerald-800">
-          <TrendingUp className="h-4 w-4 shrink-0" /> Ganancia de {bsFmt(rent.ganancia)}{rent.margen != null ? ` · ${rent.margen} % del precio de venta` : ''}
+          <TrendingUp className="h-4 w-4 shrink-0" /> Ganancia de {bsFmt(rent.ganancia)}{rent.margen != null ? ` · ${rent.margen} % del precio al cliente final` : ''}
         </p>
       ) : (
         <p className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2.5 text-[13px] font-semibold text-amber-800">
-          <AlertTriangle className="h-4 w-4 shrink-0" /> El precio de venta es menor al costo: se pierden {bsFmt(-rent.ganancia)}.
+          <AlertTriangle className="h-4 w-4 shrink-0" /> El precio al cliente final es menor al costo: se pierden {bsFmt(-rent.ganancia)}.
         </p>
       ))}
     </>
@@ -233,7 +248,7 @@ export function CajaPrecio({ costo, venta }) {
   const hayPrecios = costo !== '' && venta !== '';
   return (
     <div className="rounded-xl bg-carbon-900 px-4 py-3.5 text-white">
-      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/60">Precio de venta</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/60">Precio venta cliente final</p>
       <p className="mt-1 text-[28px] font-bold leading-none tracking-tight tabular-nums">{bsFmt(venta)}</p>
       <p className="mt-1.5 text-xs text-white/70">
         {hayPrecios
@@ -295,7 +310,17 @@ export function Stat({ icon: Icon, label, value, hint, tone = 'navy' }) {
   );
 }
 
-export function PrecioConGanancia({ costo, venta }) {
+/** Debajo del precio de venta, en chico: lo que cuesta para tiendas, o que todavía no tiene precio para ellas. */
+export function PrecioTienda({ valor }) {
+  const sin = valor === null || valor === undefined || valor === '';
+  return (
+    <p className={`text-[11px] tabular-nums ${sin ? 'text-gris-400' : 'text-gris-500'}`}>
+      {sin ? 'Sin precio para tiendas' : `Tiendas: ${bsFmt(valor)}`}
+    </p>
+  );
+}
+
+export function PrecioConGanancia({ costo, venta, tienda }) {
   const { ganancia } = rentabilidad(costo, venta);
   return (
     <div className="text-right">
@@ -303,6 +328,7 @@ export function PrecioConGanancia({ costo, venta }) {
       <p className={`text-xs font-semibold tabular-nums ${ganancia < 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
         {ganancia < 0 ? `Bajo el costo (−${bsFmt(-ganancia)})` : `+${bsFmt(ganancia)}`}
       </p>
+      <PrecioTienda valor={tienda} />
     </div>
   );
 }

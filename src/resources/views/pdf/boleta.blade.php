@@ -193,6 +193,8 @@
   <div class="section-title">Datos del Cliente</div>
   <div class="info">
     <p><strong>Cliente:</strong> {{ $venta->nombre_cliente }}</p>
+    @if ($venta->tienda)<p><strong>Tienda:</strong> {{ $venta->tienda->nombre }}</p>@endif
+    @if ($venta->tienda?->responsable)<p><strong>Responsable:</strong> {{ $venta->tienda->responsable }}</p>@endif
     <p><strong>Teléfono:</strong> {{ $venta->telefono_cliente ?? '-' }}</p>
     @if ($venta->documento_cliente)<p><strong>Carnet de identidad:</strong> {{ $venta->documento_cliente }}</p>@endif
     <p><strong>Método de pago:</strong> {{ \App\Support\FormasDePago::texto($venta->metodo_pago) }}</p>

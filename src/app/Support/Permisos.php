@@ -26,6 +26,7 @@ class Permisos
 
         'caja'         => ['Caja',                 'Ventas y operación',  ['admin.caja']],
         'ventas'       => ['Ventas',               'Ventas y operación',  ['admin.ventas']],
+        'ventas_tiendas' => ['Ventas a tiendas',   'Ventas y operación',  ['admin.ventas-tiendas']],
         'reservas'     => ['Reservas',             'Ventas y operación',  ['admin.reservas']],
         'servicios'    => ['Servicio técnico',     'Ventas y operación',  ['admin.servicios']],
         'tecnicos'     => ['Técnicos y comisiones', 'Ventas y operación',  ['admin.tecnicos']],

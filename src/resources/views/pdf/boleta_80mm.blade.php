@@ -214,6 +214,8 @@
             <p><strong>Fecha:</strong> {{ optional($venta->created_at)->timezone(config('app.timezone'))->format('d/m/Y H:i') }}</p>
             <p><strong>N° Nota:</strong> {{ $venta->codigo_nota }}</p>
             <p><strong>Cliente:</strong> {{ $venta->nombre_cliente }}</p>
+            @if($venta->tienda)<p><strong>Tienda:</strong> {{ $venta->tienda->nombre }}</p>@endif
+            @if($venta->tienda?->responsable)<p><strong>Responsable:</strong> {{ $venta->tienda->responsable }}</p>@endif
             <p><strong>Tel:</strong> {{ $venta->telefono_cliente ?? '—' }}</p>
             @if($venta->documento_cliente)<p><strong>CI:</strong> {{ $venta->documento_cliente }}</p>@endif
             <p><strong>Pago:</strong> {{ \App\Support\FormasDePago::texto($venta->metodo_pago) }}</p>

@@ -19,6 +19,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\CotizacionController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\ClienteAdminController;
+use App\Http\Controllers\Admin\VentaTiendaController;
 use App\Http\Controllers\Api\StockController;
 use App\Http\Controllers\ProductoAppleController; // 👈 Asegúrate que esté arriba
 use App\Http\Controllers\Vendedor\ProductoVendedorController;
@@ -181,6 +182,28 @@ Route::middleware(['auth', 'verified', 'permiso'])
             ->except(['show', 'destroy'])
             ->names('ventas')
             ->parameters(['ventas' => 'venta']);
+
+        // ========================
+        // 🏬 Ventas a tiendas (precio mayorista)
+        // ========================
+        // Solo administración. La nota pasa por este módulo para que el permiso sea el suyo.
+        Route::get('/ventas-a-tiendas', [VentaTiendaController::class, 'index'])
+            ->name('ventas-tiendas.index');
+
+        Route::get('/ventas-a-tiendas/create', [VentaTiendaController::class, 'create'])
+            ->name('ventas-tiendas.create');
+
+        Route::get('/ventas-a-tiendas/productos', [VentaTiendaController::class, 'productos'])
+            ->name('ventas-tiendas.productos');
+
+        Route::post('/ventas-a-tiendas', [VentaTiendaController::class, 'store'])
+            ->name('ventas-tiendas.store');
+
+        Route::get('/ventas-a-tiendas/{venta}/boleta', [VentaTiendaController::class, 'boleta'])
+            ->name('ventas-tiendas.boleta');
+
+        Route::get('/ventas-a-tiendas/{venta}/boleta-80', [VentaTiendaController::class, 'boleta80'])
+            ->name('ventas-tiendas.boleta80');
 
         // ========================
         // 📌 Reservas

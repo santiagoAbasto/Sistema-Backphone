@@ -5,7 +5,7 @@ import { AlertTriangle, PackageMinus, PackagePlus } from 'lucide-react';
 import { notifyRecordsUpdated } from '@/Hooks/useAutoRefresh';
 import { Badge, Field, Input, Modal, StepCard, Switch, Textarea, bsFmt, buttonCls } from '@/Components/Admin/ui';
 import {
-  CajaPrecio, CamposPrecio, Linea, Nota, Sugerencias, fmtFecha, montoInicial, r2, useFormularioInventario, validarPrecios,
+  CajaPrecio, CamposPrecio, Linea, Nota, Sugerencias, fmtFecha, montoInicial, r2, r2Opcional, useFormularioInventario, validarPrecios,
 } from '@/Components/Admin/inventario';
 
 // Piezas y repuestos: pantallas, baterías, pines de carga, tornillos.
@@ -75,6 +75,7 @@ export function datosDesde(p) {
     notas: p?.notas ?? '',
     precio_costo: montoInicial(p?.precio_costo),
     precio_venta: montoInicial(p?.precio_venta),
+    precio_tienda: montoInicial(p?.precio_tienda),
     activa: p ? Boolean(p.activa) : true,
   };
 }
@@ -103,6 +104,7 @@ export const payloadDe = (d) => ({
   notas: d.notas.trim(),
   precio_costo: r2(d.precio_costo),
   precio_venta: r2(d.precio_venta),
+  precio_tienda: r2Opcional(d.precio_tienda),
   activa: d.activa,
 });
 
@@ -184,7 +186,7 @@ export function CamposPieza({ form, categorias = [], sugerencias = [], edicion =
         )}
       </StepCard>
 
-      <StepCard step={3} title="Precios" subtitle="A cuánto entra la pieza y a cuánto sale. El vendedor solo ve el precio de venta.">
+      <StepCard step={3} title="Precios" subtitle="A cuánto entra la pieza y a cuánto sale. El vendedor solo ve el precio de cliente final.">
         <CamposPrecio data={data} errores={errores} cambiar={cambiar} />
       </StepCard>
 

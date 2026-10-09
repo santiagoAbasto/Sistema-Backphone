@@ -298,7 +298,7 @@ export default function Index({ computadoras = [], conHistorial = [] }) {
                             <p className="max-w-[170px] truncate text-gris-600" title={c.procedencia}>{c.procedencia || '—'}</p>
                           </td>
                           <td className="px-3 py-3 text-right tabular-nums text-gris-500">{bsFmt(c.costo)}</td>
-                          <td className="px-3 py-3"><PrecioConGanancia costo={c.costo} venta={c.venta} /></td>
+                          <td className="px-3 py-3"><PrecioConGanancia costo={c.costo} venta={c.venta} tienda={c.precio_tienda ?? null} /></td>
                           <td className="px-3 py-3"><EstadoBadge estado={c.estado} /></td>
                           <td className="py-3 pl-3 pr-5">
                             <AccionesFila editarUrl={route('admin.computadoras.edit', c.id)} nombre={c.nombre} estado={c.estado}
@@ -329,7 +329,7 @@ export default function Index({ computadoras = [], conHistorial = [] }) {
                               <Link href={route('admin.computadoras.edit', c.id)} className="mt-1.5 block truncate text-[15px] font-bold text-gris-900">{c.nombre}</Link>
                               <p className="truncate text-xs text-gris-500">{c.detalle || 'Sin chip ni memoria'}</p>
                             </div>
-                            <PrecioConGanancia costo={c.costo} venta={c.venta} />
+                            <PrecioConGanancia costo={c.costo} venta={c.venta} tienda={c.precio_tienda ?? null} />
                           </div>
                           <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-gris-500">
                             <span className="cifra text-gris-700">{c.numero_serie}</span>

@@ -246,6 +246,7 @@ class TraspasoDeInventario
                 'minimo'         => $origen->minimo,
                 'precio_costo'   => $origen->precio_costo,
                 'precio_venta'   => $origen->precio_venta,
+                'precio_tienda'  => $origen->precio_tienda,
                 // El código es único por sucursal, pero copiarlo invita a confusión: el destino
                 // le pone el suyo si lo necesita.
                 'codigo'         => null,

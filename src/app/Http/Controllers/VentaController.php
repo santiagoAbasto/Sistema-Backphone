@@ -8,6 +8,7 @@ use App\Models\Computadora;
 use App\Models\MovimientoPieza;
 use App\Models\Pieza;
 use App\Models\ProductoGeneral;
+use App\Models\Tienda;
 use App\Services\StockDePiezas;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -36,6 +37,15 @@ class VentaController extends Controller
         if (auth()->user()->rol === 'vendedor' && (int) $venta->user_id !== (int) auth()->id()) {
             abort(404);
         }
+    }
+
+    /**
+     * La edición común recalcula los precios con el de cliente final: una venta a tienda editada
+     * por acá perdería su precio mayorista sin que nadie lo note.
+     */
+    private function noEsVentaATienda(Venta $venta): void
+    {
+        abort_if($venta->tienda_id !== null, 404);
     }
 
     private function authorizeReservaAccess(Reserva $reserva): void
@@ -354,14 +364,18 @@ class VentaController extends Controller
         }
     }
 
-    private function buildValidatedSaleItems(array $items, ?Reserva $reserva = null): array
+    /**
+     * @param bool $aTienda venta a otra tienda: el producto tiene que tener precio para tiendas, se
+     *                      cobra al precio que llega en la línea (ajustado al vender) y no lleva descuento.
+     */
+    private function buildValidatedSaleItems(array $items, ?Reserva $reserva = null, bool $aTienda = false): array
     {
         $validated = [];
 
         foreach ($items as $index => $item) {
             $tipo = (string) ($item['tipo'] ?? '');
             $cantidad = max(1, (int) ($item['cantidad'] ?? 1));
-            $descuento = max(0, (float) ($item['descuento'] ?? 0));
+            $descuento = $aTienda ? 0 : max(0, (float) ($item['descuento'] ?? 0));
             $producto = $this->getAvailableProductForSale($tipo, (int) ($item['producto_id'] ?? 0), $index, $reserva);
 
             if ($cantidad > 1 && ! $this->esPorCantidad($tipo)) {
@@ -379,6 +393,25 @@ class VentaController extends Controller
 
             $precioVenta = (float) $producto->precio_venta;
             $precioCosto = (float) ($producto->precio_costo ?? 0);
+
+            if ($aTienda) {
+                // Sin precio para tiendas no se vende a tiendas: nunca se cae al precio de cliente final.
+                if ($producto->precio_tienda === null) {
+                    throw ValidationException::withMessages([
+                        "items.$index.producto_id" => '"' . $this->productLabelForSale($producto) . '" no tiene precio para tiendas.',
+                    ]);
+                }
+
+                $precioVenta = $item['precio'] ?? $producto->precio_tienda;
+
+                if (! is_numeric($precioVenta) || (float) $precioVenta <= 0) {
+                    throw ValidationException::withMessages([
+                        "items.$index.precio" => 'El precio de "' . $this->productLabelForSale($producto) . '" tiene que ser mayor a cero.',
+                    ]);
+                }
+
+                $precioVenta = (float) $precioVenta;
+            }
 
             if ($descuento > $precioVenta) {
                 throw ValidationException::withMessages([
@@ -640,6 +673,8 @@ class VentaController extends Controller
             'servicioTecnico', // ✅ Añade esta relación
             'reserva',
         ])
+            // Las ventas a tiendas (precio mayorista) se ven en su propio módulo
+            ->whereNull('tienda_id')
             ->when(auth()->user()->rol === 'vendedor', function ($q) {
                 $q->where('user_id', auth()->id());
             })
@@ -697,6 +732,11 @@ class VentaController extends Controller
 
     public function store(Request $request)
     {
+        // La venta a tienda la marca el controlador de Ventas a tiendas en la request, nunca el input:
+        // así nadie convierte una venta común en venta a tienda (con otro precio) mandando un campo.
+        $tienda = $request->attributes->get('venta_a_tienda');
+        $tienda = $tienda instanceof Tienda ? $tienda : null;
+
         if ($request->filled('reserva_id')) {
             $reservaParaValidacion = Reserva::with('items')
                 ->whereKey($request->reserva_id)
@@ -743,7 +783,7 @@ class VentaController extends Controller
             'tecnico' => 'required_if:tipo_venta,servicio_tecnico|string',
         ]);
 
-        return DB::transaction(function () use ($request) {
+        return DB::transaction(function () use ($request, $tienda) {
 
             $permutaCosto = 0;
             $entregado = null;
@@ -841,7 +881,7 @@ class VentaController extends Controller
             $subtotal = 0;
             $ganancia = 0;
             $aplicaPermuta = false;
-            $itemsValidados = $this->buildValidatedSaleItems($request->items, $reserva);
+            $itemsValidados = $this->buildValidatedSaleItems($request->items, $reserva, $tienda !== null);
             $precioInvertidoTotal = 0;
 
             foreach ($itemsValidados as $item) {
@@ -872,10 +912,11 @@ class VentaController extends Controller
             /* ======================================================
          * 3) CÓDIGO CORRELATIVO VENTA (AT-V###)
          * ====================================================== */
-            $venta = GeneradorCodigos::crearVentaConCodigo(function (string $codigoVenta) use ($request, $subtotal, $aplicaPermuta, $permutaCosto, $entregado, $precioInvertidoTotal, $reserva, $montoReservaAplicado) {
+            $venta = GeneradorCodigos::crearVentaConCodigo(function (string $codigoVenta) use ($request, $subtotal, $aplicaPermuta, $permutaCosto, $entregado, $precioInvertidoTotal, $reserva, $montoReservaAplicado, $tienda) {
                 return Venta::create([
                     'codigo_nota' => $codigoVenta,
                     'reserva_id' => $reserva?->id,
+                    'tienda_id' => $tienda?->id,
 
                     'nombre_cliente' => $request->nombre_cliente,
                     'telefono_cliente' => $request->telefono_cliente,
@@ -984,7 +1025,8 @@ class VentaController extends Controller
             /* ======================================================
          * 8) CREAR CLIENTE SI NO EXISTE (MISMA LÓGICA)
          * ====================================================== */
-            if ($venta->telefono_cliente) {
+            // La tienda no se anota como cliente: tiene su propia lista en Ventas a tiendas
+            if ($venta->telefono_cliente && $venta->tienda_id === null) {
                 $clienteExistente = Cliente::where('telefono', $venta->telefono_cliente)->first();
 
                 if (!$clienteExistente) {
@@ -1020,6 +1062,7 @@ class VentaController extends Controller
     public function edit(Venta $venta)
     {
         $this->authorizeVentaAccess($venta);
+        $this->noEsVentaATienda($venta);
 
         $venta->load([
             'vendedor',
@@ -1064,6 +1107,7 @@ class VentaController extends Controller
     public function update(Request $request, Venta $venta)
     {
         $this->authorizeVentaAccess($venta);
+        $this->noEsVentaATienda($venta);
 
         $request->validate([
             'nombre_cliente' => 'required|string|max:255',
@@ -1379,6 +1423,7 @@ class VentaController extends Controller
             // Buscar ventas válidas que no estén repetidas
             $ventasRaw = \App\Models\Venta::with('vendedor')
                 ->whereNotNull('codigo_nota')
+                ->whereNull('tienda_id')
                 ->whereNotIn('codigo_nota', $codigosST)
                 ->when(auth()->user()->rol === 'vendedor', fn($q) => $q->where('user_id', auth()->id()))
                 ->where(function ($q) use ($query) {
@@ -1440,6 +1485,7 @@ class VentaController extends Controller
 
         $ventas = \App\Models\Venta::select('id', 'codigo_nota', 'nombre_cliente', 'created_at')
             ->whereNotNull('codigo_nota')
+            ->whereNull('tienda_id')
             ->when(auth()->user()->rol === 'vendedor', fn($q) => $q->where('user_id', auth()->id()))
             ->where(function ($q) use ($query) {
                 $q->whereRaw('LOWER(codigo_nota) LIKE ?', [Busqueda::contiene($query)])

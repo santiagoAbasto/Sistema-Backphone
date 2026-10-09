@@ -27,6 +27,7 @@ class Pieza extends Model
         'cantidad',
         'precio_costo',
         'precio_venta',
+        'precio_tienda',
         'codigo',
         'categoria',
         'compatibilidad',
@@ -41,6 +42,7 @@ class Pieza extends Model
         'minimo'       => 'integer',
         'precio_costo' => 'decimal:2',
         'precio_venta' => 'decimal:2',
+        'precio_tienda' => 'decimal:2',
         'activa'       => 'boolean',
     ];
 

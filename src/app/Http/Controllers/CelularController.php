@@ -48,6 +48,9 @@ class CelularController extends Controller
         'precio_venta.min'      => 'El monto no puede ser negativo.',
         'precio_costo.max'      => 'El monto es demasiado grande.',
         'precio_venta.max'      => 'El monto es demasiado grande.',
+        'precio_tienda.numeric' => 'Escribe un monto válido.',
+        'precio_tienda.gt'     => 'El precio para tiendas tiene que ser mayor a cero. Si no le vendes a tiendas, déjalo vacío.',
+        'precio_tienda.max'     => 'El monto es demasiado grande.',
         'estado.required'       => 'Elige el estado del celular.',
         'estado.in'             => 'Elige el estado del celular.',
     ];
@@ -200,6 +203,8 @@ class CelularController extends Controller
             'procedencia'  => 'required|string|max:100',
             'precio_costo' => 'required|numeric|min:0|max:99999999.99',
             'precio_venta' => 'required|numeric|min:0|max:99999999.99',
+            // Opcional: sin precio para tiendas, el equipo no se vende a tiendas. Vacío queda null, nunca 0.
+            'precio_tienda' => 'nullable|numeric|gt:0|max:99999999.99',
             'estado'       => ['required', Rule::in([Celular::ESTADO_DISPONIBLE, Celular::ESTADO_VENDIDO, Celular::ESTADO_PERMUTA])],
             'condicion'    => CondicionInventario::regla(),
         ], self::MENSAJES + CondicionInventario::MENSAJES);

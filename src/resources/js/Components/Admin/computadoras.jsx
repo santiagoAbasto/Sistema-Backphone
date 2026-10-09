@@ -3,7 +3,7 @@ import { Badge, Field, Input, StepCard } from '@/Components/Admin/ui';
 import { MENSAJE_CONDICION } from '@/Components/Admin/condicion';
 import {
   CajaPrecio, CampoCondicion, CampoEstado, CampoProcedencia, CamposPrecio, EstadoBadge, Linea, Nota, SelectorRapido, Sugerencias,
-  bonito, montoInicial, r2, util, validarPrecios,
+  bonito, montoInicial, r2, r2Opcional, util, validarPrecios,
 } from '@/Components/Admin/inventario';
 
 // Piezas de las pantallas de computadoras (listado, registro y edición).
@@ -96,6 +96,7 @@ export function datosDesde(c) {
     procedencia: c?.procedencia ?? '',
     precio_costo: montoInicial(c?.precio_costo),
     precio_venta: montoInicial(c?.precio_venta),
+    precio_tienda: montoInicial(c?.precio_tienda),
     estado: c?.estado ?? 'disponible',
   };
 }
@@ -129,6 +130,7 @@ export const payloadDe = (d) => ({
   procedencia: d.procedencia.trim(),
   precio_costo: r2(d.precio_costo),
   precio_venta: r2(d.precio_venta),
+  precio_tienda: r2Opcional(d.precio_tienda),
   estado: d.estado,
 });
 
@@ -208,7 +210,7 @@ export function CamposComputadora({ form, sugerencias = {}, pasos = false, refs 
         )}
       </StepCard>
 
-      <StepCard step={pasos ? 3 : undefined} icon={Wallet} title="Precio y estado" subtitle="El precio de venta es el que se usa al vender y al cotizar.">
+      <StepCard step={pasos ? 3 : undefined} icon={Wallet} title="Precio y estado" subtitle="El precio al cliente final es el que se usa al vender y al cotizar.">
         <CamposPrecio data={data} errores={errores} cambiar={cambiar} />
         <div className="mt-4">
           <CampoProcedencia valor={data.procedencia} error={errores.procedencia} sugerencias={sugerencias.procedencias}

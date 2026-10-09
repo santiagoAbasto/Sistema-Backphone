@@ -37,6 +37,9 @@ class PiezaController extends Controller
         'precio_venta.numeric'  => 'Escribe un monto válido.',
         'precio_costo.min'      => 'El monto no puede ser negativo.',
         'precio_venta.min'      => 'El monto no puede ser negativo.',
+        'precio_tienda.numeric' => 'Escribe un monto válido.',
+        'precio_tienda.gt'     => 'El precio para tiendas tiene que ser mayor a cero. Si no le vendes a tiendas, déjalo vacío.',
+        'precio_tienda.max'     => 'El monto es demasiado grande.',
         'codigo.unique'         => 'Ya hay una pieza con este código en esta sucursal.',
     ];
 
@@ -284,6 +287,8 @@ class PiezaController extends Controller
             'cantidad'       => 'required|integer|min:0|max:1000000',
             'precio_costo'   => 'required|numeric|min:0|max:99999999.99',
             'precio_venta'   => 'required|numeric|min:0|max:99999999.99',
+            // Opcional: sin precio para tiendas, no se vende a tiendas. Vacío queda null, nunca 0.
+            'precio_tienda'  => 'nullable|numeric|gt:0|max:99999999.99',
             'codigo'         => [
                 'nullable', 'string', 'max:60',
                 Rule::unique('piezas', 'codigo')

@@ -4,7 +4,7 @@ import { Badge, Field, Input, Segmented, StepCard, Switch } from '@/Components/A
 import { MENSAJE_CONDICION } from '@/Components/Admin/condicion';
 import {
   CajaPrecio, CampoCondicion, CampoEstado, CampoProcedencia, CamposPrecio, EstadoBadge, Linea, Nota, SelectorRapido, Sugerencias,
-  bonito, checkCls, montoInicial, r2, useFormularioInventario, util, validarPrecios,
+  bonito, checkCls, montoInicial, r2, r2Opcional, useFormularioInventario, util, validarPrecios,
 } from '@/Components/Admin/inventario';
 import { imeiValido, leerBateria } from '@/Components/Admin/celulares';
 
@@ -60,6 +60,7 @@ export function datosDesde(p) {
     procedencia: p?.procedencia ?? '',
     precio_costo: montoInicial(p?.precio_costo),
     precio_venta: montoInicial(p?.precio_venta),
+    precio_tienda: montoInicial(p?.precio_tienda),
     estado: p?.estado ?? 'disponible',
   };
 }
@@ -97,6 +98,7 @@ export const payloadDe = (d) => ({
   procedencia: d.procedencia.trim(),
   precio_costo: r2(d.precio_costo),
   precio_venta: r2(d.precio_venta),
+  precio_tienda: r2Opcional(d.precio_tienda),
   estado: d.estado,
 });
 
@@ -215,7 +217,7 @@ export function CamposProductoApple({ form, sugerencias = {}, pasos = false, ref
         )}
       </StepCard>
 
-      <StepCard step={pasos ? 3 : undefined} icon={Wallet} title="Precio y estado" subtitle="El precio de venta es el que se usa al vender y al cotizar.">
+      <StepCard step={pasos ? 3 : undefined} icon={Wallet} title="Precio y estado" subtitle="El precio al cliente final es el que se usa al vender y al cotizar.">
         <CamposPrecio data={data} errores={errores} cambiar={cambiar} />
         <div className="mt-4">
           <CampoProcedencia valor={data.procedencia} error={errores.procedencia} sugerencias={sugerencias.procedencias}

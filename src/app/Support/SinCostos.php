@@ -7,16 +7,19 @@ use Illuminate\Support\Collection;
 /**
  * Lo que el vendedor no tiene por qué ver: el costo de la tienda y la ganancia.
  *
- * El vendedor ve el precio, el descuento que él hizo y lo que cobró. El precio de costo, la ganancia
- * y la procedencia son del administrador, así que no se ocultan con CSS: no salen del servidor.
+ * El vendedor ve el precio, el descuento que él hizo y lo que cobró. El precio de costo, la ganancia,
+ * la procedencia y el precio para tiendas son del administrador, así que no se ocultan con CSS: no salen del servidor.
  *
  * Se usa en las listas del panel del vendedor, en la API de stock y en los PDF que él puede abrir.
  */
 class SinCostos
 {
-    /** Campos que nunca viajan al panel del vendedor (el costo, y de un servicio técnico, quién y cuándo lo cargó). */
+    /**
+     * Campos que nunca viajan al panel del vendedor (el costo, y de un servicio técnico, quién y cuándo lo cargó).
+     * `precio_tienda` es el precio mayorista: el vendedor vende a cliente final y no tiene por qué verlo.
+     */
     public const OCULTOS = [
-        'precio_costo', 'precio_invertido', 'ganancia_neta', 'procedencia',
+        'precio_costo', 'precio_invertido', 'ganancia_neta', 'procedencia', 'precio_tienda',
         'costo_pendiente', 'costo_cargado_por', 'costo_cargado_en', 'quien_cargo_el_costo',
     ];
 

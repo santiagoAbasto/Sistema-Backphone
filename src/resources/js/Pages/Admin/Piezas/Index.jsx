@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { notifyRecordsUpdated, useAutoRefresh } from '@/Hooks/useAutoRefresh';
 import { Badge, EmptyState, PageHeader, Paginador, Toast, bsFmt, buttonCls, inputCls, useToast } from '@/Components/Admin/ui';
-import { Aviso, Stat } from '@/Components/Admin/inventario';
+import { Aviso, PrecioTienda, Stat } from '@/Components/Admin/inventario';
 import { EstadoPieza, IconoPieza, ModalStock, Saldo, estadoDe } from '@/Components/Admin/piezas';
 
 // El listado se arma en el servidor: un taller que despieza equipos junta miles de repuestos, y
@@ -210,7 +210,10 @@ export default function Index({ piezas, filtros = {}, resumen = {}, categorias =
                         </td>
                         <td className="px-3 py-3 text-center"><Saldo cantidad={p.cantidad} minimo={p.minimo} /></td>
                         <td className="hidden px-3 py-3 text-right tabular-nums text-gris-500 2xl:table-cell">{bsFmt(p.precio_costo)}</td>
-                        <td className="px-3 py-3 text-right font-bold tabular-nums text-gris-900">{bsFmt(p.precio_venta)}</td>
+                        <td className="px-3 py-3 text-right">
+                          <p className="font-bold tabular-nums text-gris-900">{bsFmt(p.precio_venta)}</p>
+                          <PrecioTienda valor={p.precio_tienda} />
+                        </td>
                         <td className="px-3 py-3 text-right tabular-nums text-gris-600">{bsFmt((Number(p.cantidad) || 0) * (Number(p.precio_venta) || 0))}</td>
                         <td className="py-3 pl-3 pr-5">
                           <Acciones pieza={p} onIngresar={() => setMovimiento({ pieza: p, accion: 'ingreso' })} onArchivar={archivar} />
@@ -233,6 +236,7 @@ export default function Index({ piezas, filtros = {}, resumen = {}, categorias =
                       </div>
                       <div className="shrink-0 text-right">
                         <p className="font-bold tabular-nums text-gris-900">{bsFmt(p.precio_venta)}</p>
+                        <PrecioTienda valor={p.precio_tienda} />
                         <Saldo cantidad={p.cantidad} minimo={p.minimo} />
                       </div>
                     </div>

@@ -1,5 +1,5 @@
 import {
-  ArrowLeftRight, Banknote, CalendarCheck, ChartLine, ClipboardCheck, FileDown, Hammer, Laptop, LayoutDashboard, Package, Receipt,
+  ArrowLeftRight, Banknote, Building2, CalendarCheck, ChartLine, ClipboardCheck, FileDown, Hammer, Laptop, LayoutDashboard, Package, Receipt,
   Settings, ShoppingCart, SlidersHorizontal, Smartphone, Tablet, Users, Wallet, Wrench,
 } from 'lucide-react';
 import IconoUsuarios from '@/Components/Admin/IconoUsuarios';
@@ -23,6 +23,7 @@ const NAV = [
   { key: 'operacion', label: 'Ventas y operación', items: [
     { r: 'admin.caja.index', icon: Banknote, label: 'Caja', modulo: 'caja' },
     { r: 'admin.ventas.index', icon: ShoppingCart, label: 'Ventas', modulo: 'ventas' },
+    { r: 'admin.ventas-tiendas.index', icon: Building2, label: 'Ventas a tiendas', modulo: 'ventas_tiendas' },
     { r: 'admin.reservas.index', icon: CalendarCheck, label: 'Reservas', modulo: 'reservas' },
     { r: 'admin.servicios.index', icon: Hammer, label: 'Servicio técnico', modulo: 'servicios' },
     { r: 'admin.tecnicos.index', icon: Wrench, label: 'Técnicos y comisiones', modulo: 'tecnicos' },

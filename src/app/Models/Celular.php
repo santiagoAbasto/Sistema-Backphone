@@ -31,6 +31,7 @@ class Celular extends Model
         'procedencia',
         'precio_costo',
         'precio_venta',
+        'precio_tienda',
         'estado',
         'condicion',
     ];

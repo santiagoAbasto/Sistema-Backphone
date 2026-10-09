@@ -33,6 +33,9 @@ class ProductoGeneralController extends Controller
         'precio_venta.min'      => 'El monto no puede ser negativo.',
         'precio_costo.max'      => 'El monto es demasiado grande.',
         'precio_venta.max'      => 'El monto es demasiado grande.',
+        'precio_tienda.numeric' => 'Escribe un monto válido.',
+        'precio_tienda.gt'     => 'El precio para tiendas tiene que ser mayor a cero. Si no le vendes a tiendas, déjalo vacío.',
+        'precio_tienda.max'     => 'El monto es demasiado grande.',
         'estado.required'       => 'Elige el estado del producto.',
         'estado.in'             => 'Elige el estado del producto.',
     ];
@@ -54,7 +57,7 @@ class ProductoGeneralController extends Controller
                 ->orderByRaw("CASE estado WHEN 'disponible' THEN 0 WHEN 'permuta' THEN 1 ELSE 2 END")
                 ->orderByDesc('created_at')
                 ->orderByDesc('id')
-                ->get(['id', 'codigo', 'tipo', 'nombre', 'procedencia', 'precio_costo', 'precio_venta', 'estado', 'condicion', 'created_at']),
+                ->get(['id', 'codigo', 'tipo', 'nombre', 'procedencia', 'precio_costo', 'precio_venta', 'precio_tienda', 'estado', 'condicion', 'created_at']),
             'conHistorial' => $this->idsConHistorial(),
         ]);
     }
@@ -185,6 +188,8 @@ class ProductoGeneralController extends Controller
             'procedencia'  => 'required|string|max:100',
             'precio_costo' => 'required|numeric|min:0|max:99999999.99',
             'precio_venta' => 'required|numeric|min:0|max:99999999.99',
+            // Opcional: sin precio para tiendas, no se vende a tiendas. Vacío queda null, nunca 0.
+            'precio_tienda' => 'nullable|numeric|gt:0|max:99999999.99',
             'estado'       => ['required', Rule::in(['disponible', 'vendido', 'permuta'])],
             'condicion'    => CondicionInventario::regla(),
         ], self::MENSAJES + CondicionInventario::MENSAJES);
