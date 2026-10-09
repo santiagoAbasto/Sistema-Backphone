@@ -93,6 +93,10 @@
       <td>Bs {{ number_format($reserva->monto_reserva, 2) }}</td>
     </tr>
     <tr>
+      <td>Abono pagado con:</td>
+      <td>{{ \App\Support\FormasDePago::texto($reserva->metodo_pago) }}</td>
+    </tr>
+    <tr>
       <td><strong>Saldo estimado al vender:</strong></td>
       <td><strong>Bs {{ number_format(max(0, $reserva->subtotal - $reserva->monto_reserva), 2) }}</strong></td>
     </tr>

@@ -26,12 +26,7 @@ class ServicioTecnico extends Model
     ];
 
     /** Cómo pagó el cliente. Solo lo cobrado en efectivo entra en «Efectivo en caja». */
-    public const METODOS_PAGO = [
-        'efectivo'      => 'Efectivo',
-        'qr'            => 'QR',
-        'transferencia' => 'Transferencia',
-        'tarjeta'       => 'Tarjeta',
-    ];
+    public const METODOS_PAGO = \App\Support\FormasDePago::TODAS;
 
     /**
      * Campos asignables en masa
@@ -215,6 +210,6 @@ class ServicioTecnico extends Model
     /** «QR» y no «Qr»: lo que sale impreso en la nota. */
     public function metodoPagoTexto(): string
     {
-        return self::METODOS_PAGO[$this->metodo_pago] ?? ucfirst((string) $this->metodo_pago);
+        return \App\Support\FormasDePago::texto($this->metodo_pago);
     }
 }

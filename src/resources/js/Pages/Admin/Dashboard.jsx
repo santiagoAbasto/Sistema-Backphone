@@ -173,6 +173,7 @@ export default function Dashboard({
 }) {
   // Un egreso o una venta cargados desde otra pantalla tienen que verse acá sin recargar
   useAutoRefresh(['resumen', 'resumen_total', 'serie', 'distribucion_economica']);
+  const { auth } = usePage().props;
 
   const hoyStr = dayjs().format('YYYY-MM-DD');
 
@@ -266,6 +267,8 @@ export default function Dashboard({
   const egresos = safeNum(resumen_total?.egresos_total);
   const efectivo = safeNum(resumen_total?.efectivo_en_caja);
   const efectivoPorSucursal = resumen_total?.efectivo_por_sucursal ?? [];
+  const efectivoUnDia = Boolean(resumen_total?.efectivo_un_dia);
+  const conApertura = efectivoPorSucursal.some((s) => s.apertura !== null && s.apertura !== undefined);
   const composicion = [
     { etiqueta: 'Ganancia', valor: Math.max(ganancia, 0), color: 'var(--ok-fuerte)' },
     { etiqueta: 'Inversión', valor: inversion, color: 'var(--acento)' },
@@ -454,22 +457,36 @@ export default function Dashboard({
                   <Metrica
                     etiqueta="Efectivo en caja"
                     valor={fmtCaja(efectivo)}
-                    hint={efectivo < 0 ? 'Salió más de lo que entró en efectivo' : 'Lo cobrado en efectivo, menos egresos'}
+                    hint={efectivo < 0
+                      ? 'Salió más de lo que entró en efectivo'
+                      : efectivoUnDia ? 'Apertura más lo cobrado en efectivo, menos egresos' : 'Lo cobrado en efectivo, menos egresos'}
                     icono={CircleDollarSign}
                     tono={efectivo < 0 ? 'negativo' : 'acento'}
                   >
-                    {/* Mirando todas las sucursales: cuánto quedó en el cajón de cada una */}
-                    {efectivoPorSucursal.length > 1 && (
-                      <ul className="space-y-1 border-t border-gris-100 pt-2.5" aria-label="Efectivo por sucursal">
+                    {/* Cuánto quedó en el cajón de cada sucursal y, mirando un día, con cuánto arrancó */}
+                    {(efectivoPorSucursal.length > 1 || conApertura) && (
+                      <ul className="space-y-1.5 border-t border-gris-100 pt-2.5" aria-label="Efectivo por sucursal">
                         {efectivoPorSucursal.map((s) => (
                           <li key={s.sucursal} className="flex items-baseline justify-between gap-3 text-[12px]">
-                            <span className="truncate text-gris-500">{s.sucursal}</span>
+                            <span className="min-w-0">
+                              <span className="block truncate text-gris-500">{s.sucursal}</span>
+                              {efectivoUnDia && (
+                                <span className="block text-[11px] text-gris-400">
+                                  {s.apertura !== null && s.apertura !== undefined ? `Arrancó con ${fmtBs(s.apertura)}` : 'Caja sin abrir'}
+                                </span>
+                              )}
+                            </span>
                             <span className={`shrink-0 font-semibold tabular-nums ${safeNum(s.efectivo) < 0 ? 'text-[color:var(--peligro-texto)]' : 'text-gris-900'}`}>
                               {fmtCaja(s.efectivo)}
                             </span>
                           </li>
                         ))}
                       </ul>
+                    )}
+                    {puede(auth?.permisos, 'caja') && (
+                      <Link href={route('admin.caja.index')} className="mt-2.5 inline-flex text-[12px] font-semibold text-[color:var(--acento)] hover:text-carbon-900">
+                        Abrir o cerrar la caja →
+                      </Link>
                     )}
                   </Metrica>
                 </motion.div>

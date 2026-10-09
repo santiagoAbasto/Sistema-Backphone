@@ -19,6 +19,7 @@ class Reserva extends Model
         'fecha',
         'subtotal',
         'monto_reserva',
+        'metodo_pago',
         'terminos_condiciones',
         'estado',
         'venta_id',

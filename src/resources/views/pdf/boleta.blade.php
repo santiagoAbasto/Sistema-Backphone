@@ -195,7 +195,7 @@
     <p><strong>Cliente:</strong> {{ $venta->nombre_cliente }}</p>
     <p><strong>Teléfono:</strong> {{ $venta->telefono_cliente ?? '-' }}</p>
     @if ($venta->documento_cliente)<p><strong>Carnet de identidad:</strong> {{ $venta->documento_cliente }}</p>@endif
-    <p><strong>Método de pago:</strong> {{ ucfirst($venta->metodo_pago) }}</p>
+    <p><strong>Método de pago:</strong> {{ \App\Support\FormasDePago::texto($venta->metodo_pago) }}</p>
     @if ($venta->metodo_pago === 'tarjeta')
     <p><strong>Tarjeta:</strong> {{ $venta->inicio_tarjeta ?? '••••' }} •••• •••• {{ $venta->fin_tarjeta ?? '••••' }}</p>
     @endif

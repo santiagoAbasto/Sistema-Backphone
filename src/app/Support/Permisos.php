@@ -24,6 +24,7 @@ class Permisos
     public const MODULOS = [
         'resumen'      => ['Resumen',              'Inicio',              ['admin.dashboard', 'admin.notifications']],
 
+        'caja'         => ['Caja',                 'Ventas y operación',  ['admin.caja']],
         'ventas'       => ['Ventas',               'Ventas y operación',  ['admin.ventas']],
         'reservas'     => ['Reservas',             'Ventas y operación',  ['admin.reservas']],
         'servicios'    => ['Servicio técnico',     'Ventas y operación',  ['admin.servicios']],

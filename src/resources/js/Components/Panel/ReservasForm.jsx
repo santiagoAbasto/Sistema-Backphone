@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { route } from 'ziggy-js';
 import {
-  ArrowLeft, CalendarCheck, Laptop, Package, Plus, RotateCcw, Search, Smartphone, Tablet, Trash2,
+  ArrowLeft, ArrowLeftRight, Banknote, CalendarCheck, CreditCard, Laptop, Package, Plus, QrCode, RotateCcw, Search, Smartphone, Tablet, Trash2,
 } from 'lucide-react';
 import PremiumNotice from '@/Components/PremiumNotice';
 import { notifyRecordsUpdated, useAutoRefreshCallback } from '@/Hooks/useAutoRefresh';
@@ -20,11 +20,21 @@ const TIPOS_PRODUCTO = [
 
 const etiquetaTipo = (tipo) => TIPOS_PRODUCTO.find((t) => t.value === tipo)?.label ?? 'Producto';
 
+// Cómo pagó el abono. El que entra en efectivo se suma a la caja del día.
+const METODOS_PAGO = [
+  { value: 'efectivo', label: 'Efectivo', icon: Banknote },
+  { value: 'qr', label: 'QR', icon: QrCode },
+  { value: 'transferencia', label: 'Transferencia', icon: ArrowLeftRight },
+  { value: 'tarjeta', label: 'Tarjeta', icon: CreditCard },
+];
+
 export default function ReservasForm({ Layout, prefijo = 'admin', guia = null }) {
   const [data, setData] = useState({
     nombre_cliente: '',
     telefono_cliente: '',
     monto_reserva: '',
+    // Sin valor por defecto: si arrancara en efectivo, un abono por QR descuadraría la caja
+    metodo_pago: '',
     terminos_condiciones: TERMINOS,
   });
   const [stocks, setStocks] = useState({ celulares: [], computadoras: [], productosGenerales: [], productosApple: [] });
@@ -160,6 +170,7 @@ export default function ReservasForm({ Layout, prefijo = 'admin', guia = null })
     if (items.length === 0) return avisar('La reserva está vacía', 'Agrega al menos un producto.');
     if (abono <= 0) return avisar('Falta el abono', 'Indica cuánto deja el cliente para reservar.');
     if (abono > subtotal) return avisar('Abono demasiado alto', 'No puede superar el total reservado.');
+    if (!data.metodo_pago) return avisar('Falta la forma de pago', 'Indica cómo pagó el cliente el abono.');
 
     setGuardando(true);
     setErrores({});
@@ -379,6 +390,13 @@ export default function ReservasForm({ Layout, prefijo = 'admin', guia = null })
                     </div>
                   </div>
                 )}
+              </div>
+
+              <div className="mt-4 max-w-xl">
+                <Field label="¿Cómo paga el abono?" error={errores.metodo_pago}>
+                  <Segmented options={METODOS_PAGO} value={data.metodo_pago} ariaLabel="Forma de pago del abono"
+                    onChange={(v) => setData({ ...data, metodo_pago: v })} />
+                </Field>
               </div>
 
               <div className="mt-5">

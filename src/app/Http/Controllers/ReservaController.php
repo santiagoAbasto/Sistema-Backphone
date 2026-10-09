@@ -154,12 +154,17 @@ class ReservaController extends Controller
             'nombre_cliente' => 'required|string|max:255',
             'telefono_cliente' => 'nullable|string|max:255',
             'monto_reserva' => 'required|numeric|min:0.01',
+            // Sin valor por defecto: el abono en efectivo entra a la caja del día y se cuenta al cerrar
+            'metodo_pago' => 'required|in:efectivo,qr,transferencia,tarjeta',
             'terminos_condiciones' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.tipo' => 'required|in:celular,computadora,producto_general,producto_apple',
             'items.*.producto_id' => 'required|integer',
             'items.*.cantidad' => 'required|integer|min:1',
             'items.*.descuento' => 'nullable|numeric|min:0',
+        ], [
+            'metodo_pago.required' => 'Indica cómo pagó el cliente el abono.',
+            'metodo_pago.in'       => 'Indica cómo pagó el cliente el abono.',
         ]);
 
         return DB::transaction(function () use ($request) {
@@ -207,6 +212,7 @@ class ReservaController extends Controller
                     'fecha' => now('America/La_Paz'),
                     'subtotal' => $subtotal,
                     'monto_reserva' => $request->monto_reserva,
+                    'metodo_pago' => $request->metodo_pago,
                     'terminos_condiciones' => $request->terminos_condiciones,
                     'estado' => 'activa',
                     'user_id' => auth()->id(),

@@ -386,6 +386,13 @@ Route::middleware(['auth', 'verified', 'permiso'])
 
 
         // ========================
+        // 🗃️ Caja diaria (apertura y cierre por sucursal)
+        // ========================
+        Route::get('/caja', [\App\Http\Controllers\CajaController::class, 'index'])->name('caja.index');
+        Route::post('/caja/abrir', [\App\Http\Controllers\CajaController::class, 'abrir'])->name('caja.abrir');
+        Route::post('/caja/{caja}/cerrar', [\App\Http\Controllers\CajaController::class, 'cerrar'])->name('caja.cerrar');
+
+        // ========================
         // 💰 Egresos
         // ========================
         Route::get('/egresos', [EgresoController::class, 'index'])
@@ -499,6 +506,13 @@ Route::middleware(['auth', 'verified', 'rol:vendedor'])
 
         Route::get('/reservas/{reserva}/boleta-80', [ReservaController::class, 'boleta80'])
             ->name('reservas.boleta80');
+
+        // ========================
+        // 🗃️ Caja diaria: la abre y la cierra quien atiende
+        // ========================
+        Route::get('/caja', [\App\Http\Controllers\CajaController::class, 'index'])->name('caja.index');
+        Route::post('/caja/abrir', [\App\Http\Controllers\CajaController::class, 'abrir'])->name('caja.abrir');
+        Route::post('/caja/{caja}/cerrar', [\App\Http\Controllers\CajaController::class, 'cerrar'])->name('caja.cerrar');
 
         // ========================
         // 🧰 SERVICIO TÉCNICO

@@ -1,4 +1,4 @@
-import { Boxes, CalendarCheck, Hammer, LayoutDashboard, PlusCircle, Receipt, ShoppingCart, Users } from 'lucide-react';
+import { Banknote, Boxes, CalendarCheck, Hammer, LayoutDashboard, PlusCircle, Receipt, ShoppingCart, Users } from 'lucide-react';
 import PanelShell from '@/Layouts/PanelShell';
 
 /**
@@ -11,6 +11,7 @@ const NAV = [
     { r: 'vendedor.dashboard', icon: LayoutDashboard, label: 'Mi día', exact: true },
   ] },
   { key: 'v-vender', label: 'Vender', items: [
+    { r: 'vendedor.caja.index', icon: Banknote, label: 'Caja', exact: true },
     { r: 'vendedor.ventas.create', icon: PlusCircle, label: 'Registrar venta', exact: true },
     { r: 'vendedor.ventas.index', icon: ShoppingCart, label: 'Mis ventas', exact: true },
     { r: 'vendedor.reservas.index', icon: CalendarCheck, label: 'Reservas' },

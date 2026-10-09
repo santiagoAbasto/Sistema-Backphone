@@ -8,9 +8,11 @@ use App\Models\Celular;
 use App\Models\Computadora;
 use App\Models\ProductoGeneral;
 use App\Models\ProductoApple;
+use App\Models\Caja;
 use App\Models\Egreso;
 use App\Models\Sucursal;
 use App\Models\User;
+use App\Services\EfectivoDeCaja;
 use App\Support\SucursalActiva;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -224,35 +226,33 @@ class DashboardController extends Controller
         /* =========================
          * 💵 EFECTIVO EN CAJA
          * =========================
-         * Lo que de verdad quedó en el cajón de cada sucursal: lo cobrado en efectivo menos lo
-         * que se pagó. La permuta y el abono de una reserva no son plata que entró hoy, así que
-         * se descuentan. De los servicios entra solo lo cobrado en efectivo (los que salieron de
-         * una venta ya vienen contados en esa venta). Los egresos salen todos de la caja.
+         * Lo que quedó en el cajón de cada sucursal. La cuenta es EfectivoDeCaja, la misma del
+         * cierre de caja, así el Resumen y el cierre nunca dan números distintos. La caja es de la
+         * sucursal, no del vendedor: el filtro por vendedor no la toca.
+         *
+         * Mirando un solo día, el cajón arranca con lo que se anotó al abrir la caja. En un período
+         * más largo no se suman aperturas (sería contar varias veces la misma plata): es lo que
+         * entró y salió en efectivo, y la caja de cada día está en Caja.
          */
-        $efectivoVentas = $ventas->where('metodo_pago', 'efectivo')->groupBy('sucursal_id')->map->sum(
-            fn ($v) => (float) $v->subtotal - (float) $v->valor_permuta - (float) $v->monto_reserva_aplicado
-        );
-        $efectivoServicios = $serviciosTecnicos->whereNull('venta_id')->where('metodo_pago', 'efectivo')
-            ->groupBy('sucursal_id')->map->sum('precio_venta');
-        $egresosDeCaja = $egresosCollection->groupBy('sucursal_id')->map->sum('precio_invertido');
-
-        $efectivoDe = fn ($sucursalId) => round(
-            ($efectivoVentas[$sucursalId] ?? 0) + ($efectivoServicios[$sucursalId] ?? 0) - ($egresosDeCaja[$sucursalId] ?? 0),
-            2
-        );
-
-        // Mirando «Todas», una fila por sucursal (también las que no movieron nada: un cero dice
-        // algo). Mirando una sola, solo esa.
+        $unSoloDia      = $fechaInicio === $fechaFin;
         $sucursalActiva = SucursalActiva::id();
         $efectivoPorSucursal = Sucursal::activas()
             ->when($sucursalActiva, fn ($s) => $s->where('id', $sucursalActiva))
-            ->map(fn ($s) => ['sucursal' => $s->nombre, 'efectivo' => $efectivoDe($s->id)])
+            ->map(function (Sucursal $s) use ($fechaInicio, $fechaFin, $unSoloDia) {
+                $mov      = EfectivoDeCaja::movimientos($s->id, $fechaInicio, $fechaFin);
+                $apertura = $unSoloDia
+                    ? Caja::where('sucursal_id', $s->id)->whereDate('fecha', $fechaInicio)->value('monto_apertura')
+                    : null;
+
+                return [
+                    'sucursal' => $s->nombre,
+                    'apertura' => $apertura === null ? null : (float) $apertura,
+                    'efectivo' => round((float) $apertura + $mov['neto'], 2),
+                ];
+            })
             ->values();
 
-        $efectivoEnCaja = round(
-            $efectivoVentas->sum() + $efectivoServicios->sum() - $egresosDeCaja->sum(),
-            2
-        );
+        $efectivoEnCaja = round($efectivoPorSucursal->sum('efectivo'), 2);
 
         /* =====================================================
  * 📈 HISTÓRICO PARA SVG (DÍA / MES / AÑO) ✅ POST-EGRESOS
@@ -555,6 +555,7 @@ class DashboardController extends Controller
                 'egresos_total' => $totalEgresos,
                 'efectivo_en_caja' => $efectivoEnCaja,
                 'efectivo_por_sucursal' => $efectivoPorSucursal,
+                'efectivo_un_dia' => $unSoloDia,
                 'utilidad_disponible' => $utilidadDisponible,
                 'ganancia_productos' => $ganancias['celulares'] + $ganancias['computadoras'] + $ganancias['producto_apple'],
                 'ganancia_productos_generales' => $ganancias['generales'] + $ganancias['piezas'],

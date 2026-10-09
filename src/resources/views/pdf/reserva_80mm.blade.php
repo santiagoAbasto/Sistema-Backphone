@@ -89,6 +89,10 @@
             <span>Monto abonado</span>
             <span>Bs {{ number_format($reserva->monto_reserva, 2) }}</span>
         </div>
+        <div class="price-line">
+            <span>Pagado con</span>
+            <span>{{ \App\Support\FormasDePago::texto($reserva->metodo_pago) }}</span>
+        </div>
 
         <div class="total-box">
             <div class="total-label">SALDO ESTIMADO</div>
