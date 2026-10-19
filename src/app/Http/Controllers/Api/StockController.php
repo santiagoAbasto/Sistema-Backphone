@@ -50,10 +50,10 @@ class StockController extends Controller
             ->whereNotIn('id', $this->idsReservados('computadora')));
     }
 
+    /** Productos generales con saldo: como las piezas, no se reservan y viaja cuántos quedan. */
     public function productosGenerales()
     {
-        return $this->lista(ProductoGeneral::where('estado', 'disponible')
-            ->whereNotIn('id', $this->idsReservados('producto_general')));
+        return $this->lista(ProductoGeneral::disponibles()->orderBy('nombre'));
     }
 
     public function productosApple()
@@ -164,12 +164,8 @@ class StockController extends Controller
         }
 
         // Buscar en productos generales (código o nombre exacto)
-        $pg = ProductoGeneral::where(function ($q) use ($codigo) {
-            $q->where('codigo', $codigo)
-                ->orWhere('nombre', $codigo);
-        })
-            ->where('estado', 'disponible')
-            ->whereNotIn('id', $this->idsReservados('producto_general'))
+        $pg = ProductoGeneral::disponibles()
+            ->where(fn ($q) => $q->where('codigo', mb_strtoupper($codigo))->orWhere('nombre', $codigo))
             ->first();
 
         if ($pg) {
@@ -178,9 +174,13 @@ class StockController extends Controller
                 'producto' => [
                     'id' => $pg->id,
                     'nombre' => $pg->nombre,
+                    'codigo' => $pg->codigo,
+                    'modelo' => $pg->modelo,
+                    'calidad' => $pg->calidad,
                     'precio_venta' => $pg->precio_venta,
                     'precio_costo' => SinCostos::aplica(request()->user()) ? null : $pg->precio_costo,
-                    'stock' => $pg->stock,
+                    'cantidad' => $pg->cantidad,
+                    'stock' => $pg->cantidad,
                     'estado' => $pg->estado,
                     'condicion' => $pg->condicion,
                 ],

@@ -385,11 +385,8 @@ class InventoryAuditController extends Controller
                 [$product->capacidad, $product->color, $product->bateria], $now, $tertiary);
         }
 
-        foreach (ProductoGeneral::where('estado', 'disponible')->get() as $product) {
-            $rows[] = $this->snapshotRow($auditId, 'producto_general', $product->id, 'productos_generales',
-                $product->nombre ?: str_replace('_', ' ', $product->tipo), $product->codigo, null,
-                [str_replace('_', ' ', $product->tipo), $product->procedencia], $now);
-        }
+        // Los productos generales no entran: van por cantidad y no se escanean de a uno. Se cuentan en
+        // su propia pantalla (Productos generales → Contar inventario), que anota cada diferencia.
 
         return $rows;
     }
@@ -620,13 +617,6 @@ class InventoryAuditController extends Controller
                 'name' => fn ($product) => $product->modelo,
                 'codes' => fn ($product) => [$product->numero_serie, $product->imei_1, $product->imei_2],
                 'details' => fn ($product) => [$product->capacidad, $product->color, $product->bateria],
-            ],
-            'producto_general' => [
-                'model' => ProductoGeneral::class,
-                'category' => 'productos_generales',
-                'name' => fn ($product) => $product->nombre ?: str_replace('_', ' ', $product->tipo),
-                'codes' => fn ($product) => [$product->codigo],
-                'details' => fn ($product) => [str_replace('_', ' ', $product->tipo), $product->procedencia],
             ],
         ];
     }

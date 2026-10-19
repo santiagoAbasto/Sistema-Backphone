@@ -63,7 +63,7 @@ class PrecioParaTiendasTest extends TestCase
                 'update' => fn ($m) => route('admin.productos-generales.update', $m),
                 'datos'  => [
                     'codigo' => 'CUBO20_1', 'tipo' => 'cargador_20w', 'nombre' => 'Cubo 20 W original', 'procedencia' => 'CHINA',
-                    'precio_costo' => 40, 'precio_venta' => 120, 'estado' => 'disponible', 'condicion' => 'Nuevo',
+                    'cantidad' => 30, 'precio_costo' => 40, 'precio_venta' => 120, 'condicion' => 'Nuevo',
                 ],
             ],
             'pieza' => [

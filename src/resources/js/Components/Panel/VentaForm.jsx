@@ -21,9 +21,14 @@ const TIPOS_PRODUCTO = [
   { value: 'pieza', label: 'Pieza', icon: IconoPieza },
 ];
 
-// Las piezas se venden por cantidad: de una misma pantalla pueden salir tres en la misma nota.
-// Todo lo demás es un equipo concreto, con su IMEI o su serie, y va de a uno.
-const esPorCantidad = (tipo) => tipo === 'pieza';
+// Las piezas y los productos generales se venden por cantidad: de un mismo vidrio pueden salir
+// diez en la misma nota. Todo lo demás es un equipo concreto, con su IMEI o su serie, y va de a uno.
+const esPorCantidad = (tipo) => tipo === 'pieza' || tipo === 'producto_general';
+
+// A un vidrio no lo distingue el nombre: lo distinguen el modelo y la calidad
+const nombreParaNota = (producto, tipo) => (tipo === 'producto_general'
+  ? [producto.nombre, producto.modelo, producto.calidad].filter(Boolean).join(' · ')
+  : producto.modelo || producto.nombre);
 
 // El servidor acepta permutas de estos tipos (VentaController@store)
 const TIPOS_PERMUTA = [
@@ -85,6 +90,7 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
     producto.modelo,
     producto.categoria,
     producto.compatibilidad,
+    producto.calidad,
   ];
 
   const claveProducto = (producto) =>
@@ -172,7 +178,7 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
       precio_invertido: precioCosto * cantidad,
       descuento: Number(descuento || 0),
       subtotal: (precioVenta - Number(descuento || 0)) * cantidad,
-      nombre: producto.nombre || producto.modelo || '---',
+      nombre: (tipo === 'producto_general' ? nombreParaNota(producto, tipo) : producto.nombre || producto.modelo) || '---',
       imei: tipo === 'celular' ? imei : null,
       detalles: producto,
     };
@@ -460,7 +466,7 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
             </StepCard>
 
             {/* Paso 2 */}
-            <StepCard step={2} title="Productos" subtitle="Elige el tipo y busca por código, IMEI, serie o nombre. Las piezas y repuestos se venden por cantidad.">
+            <StepCard step={2} title="Productos" subtitle="Elige el tipo y busca por código, IMEI, serie o nombre. Las piezas y los productos generales se venden por cantidad.">
               <Segmented
                 options={TIPOS_PRODUCTO}
                 value={productoSeleccionado.tipo}
@@ -479,7 +485,9 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
                   className="pl-10"
                   disabled={!productoSeleccionado.tipo}
                   placeholder={productoSeleccionado.tipo
-                    ? (esPorCantidad(productoSeleccionado.tipo)
+                    ? (productoSeleccionado.tipo === 'producto_general'
+                      ? 'Buscar por nombre, modelo, calidad o código'
+                      : esPorCantidad(productoSeleccionado.tipo)
                       ? 'Buscar la pieza por nombre, categoría, equipo compatible o código'
                       : `Buscar ${etiquetaTipo(productoSeleccionado.tipo).toLowerCase()} por código, IMEI, serie o nombre`)
                     : 'Primero elige el tipo de producto'}
@@ -502,7 +510,7 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
                             <span className="block truncate font-semibold text-gris-900">{p.nombre || p.modelo}</span>
                             <span className="block truncate text-xs text-gris-500">
                               {esPorCantidad(p.tipo)
-                                ? [p.compatibilidad || p.categoria, `quedan ${p.cantidad ?? 0}`].filter(Boolean).join(' · ')
+                                ? [p.compatibilidad || p.categoria || p.modelo, p.calidad, `quedan ${p.cantidad ?? 0}`].filter(Boolean).join(' · ')
                                 : `${etiquetaTipo(p.tipo)} · ${p.codigo || p.imei_1 || p.numero_serie}`}
                             </span>
                           </span>
@@ -520,7 +528,7 @@ export default function VentaForm({ celulares, computadoras, productosGenerales,
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--acento)]">Producto elegido</p>
-                      <p className="mt-1 truncate text-base font-bold text-gris-900">{productoActual.modelo || productoActual.nombre}</p>
+                      <p className="mt-1 truncate text-base font-bold text-gris-900">{nombreParaNota(productoActual, productoSeleccionado.tipo)}</p>
                       <p className="text-xs text-gris-500">
                         {etiquetaTipo(productoSeleccionado.tipo)} · {productoActual.codigo || productoActual.imei_1 || productoActual.numero_serie || 'sin código'}
                         {' · '}quedan {esPorCantidad(productoSeleccionado.tipo) ? (productoActual.cantidad ?? 0) : (productoActual.stock ?? 1)}

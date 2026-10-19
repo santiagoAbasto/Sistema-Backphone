@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { route } from 'ziggy-js';
 import {
-  ArrowLeft, ArrowLeftRight, Banknote, CalendarCheck, CreditCard, Laptop, Package, Plus, QrCode, RotateCcw, Search, Smartphone, Tablet, Trash2,
+  ArrowLeft, ArrowLeftRight, Banknote, CalendarCheck, CreditCard, Laptop, Plus, QrCode, RotateCcw, Search, Smartphone, Tablet, Trash2,
 } from 'lucide-react';
 import PremiumNotice from '@/Components/PremiumNotice';
 import { notifyRecordsUpdated, useAutoRefreshCallback } from '@/Hooks/useAutoRefresh';
@@ -11,11 +11,11 @@ import { Badge, Button, Field, Input, Segmented, StepCard, Textarea, bsFmt, butt
 
 const TERMINOS = 'La reserva se descuenta del precio final al concretar la venta. El producto queda separado mientras la reserva permanezca activa. En caso de cancelación, vencimiento o cambio de producto, Blackphone debe autorizar el ajuste antes de liberar el inventario.';
 
+// Los productos generales no se reservan: van por cantidad y se descuentan recién al venderlos
 const TIPOS_PRODUCTO = [
   { value: 'celular', label: 'Celular', icon: Smartphone },
   { value: 'computadora', label: 'Computadora', icon: Laptop },
   { value: 'producto_apple', label: 'Equipo de marca', icon: Tablet },
-  { value: 'producto_general', label: 'Producto general', icon: Package },
 ];
 
 const etiquetaTipo = (tipo) => TIPOS_PRODUCTO.find((t) => t.value === tipo)?.label ?? 'Producto';
@@ -37,7 +37,7 @@ export default function ReservasForm({ Layout, prefijo = 'admin', guia = null })
     metodo_pago: '',
     terminos_condiciones: TERMINOS,
   });
-  const [stocks, setStocks] = useState({ celulares: [], computadoras: [], productosGenerales: [], productosApple: [] });
+  const [stocks, setStocks] = useState({ celulares: [], computadoras: [], productosApple: [] });
   const [productoSeleccionado, setProductoSeleccionado] = useState({ tipo: '', codigo: '', cantidad: 1, descuento: 0, producto: null });
   const [sugerenciasProductos, setSugerenciasProductos] = useState([]);
   const [mostrarProductos, setMostrarProductos] = useState(false);
@@ -71,16 +71,14 @@ export default function ReservasForm({ Layout, prefijo = 'admin', guia = null })
   });
 
   const fetchStock = async () => {
-    const [c, comp, pg, apple] = await Promise.all([
+    const [c, comp, apple] = await Promise.all([
       axios.get(route('api.stock.celulares')),
       axios.get(route('api.stock.computadoras')),
-      axios.get(route('api.stock.productos_generales')),
       axios.get(route('api.stock.productos_apple')),
     ]);
     setStocks({
       celulares: c.data,
       computadoras: comp.data,
-      productosGenerales: pg.data,
       productosApple: apple.data,
     });
   };
@@ -91,7 +89,6 @@ export default function ReservasForm({ Layout, prefijo = 'admin', guia = null })
   const fuenteDe = (tipo) => ({
     celular: stocks.celulares,
     computadora: stocks.computadoras,
-    producto_general: stocks.productosGenerales,
     producto_apple: stocks.productosApple,
   }[tipo] || []);
 

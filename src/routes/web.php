@@ -146,6 +146,15 @@ Route::middleware(['auth', 'verified', 'permiso'])
         Route::patch('productos-generales/condicion', [ProductoGeneralController::class, 'condicionMasiva'])
             ->name('productos-generales.condicion');
 
+        // Van por cantidad, como las piezas: el saldo entra por «Ingresar», se corrige por «Ajustar»
+        // y el conteo físico de todo el inventario anota cada diferencia en el historial.
+        Route::get('productos-generales/conteo', [ProductoGeneralController::class, 'conteo'])
+            ->name('productos-generales.conteo');
+        Route::post('productos-generales/conteo', [ProductoGeneralController::class, 'guardarConteo'])
+            ->name('productos-generales.conteo.guardar');
+        Route::post('productos-generales/{producto}/stock', [ProductoGeneralController::class, 'stock'])
+            ->name('productos-generales.stock');
+
         Route::resource('productos-generales', ProductoGeneralController::class)
             ->names('productos-generales')
             ->parameters(['productos-generales' => 'producto']);

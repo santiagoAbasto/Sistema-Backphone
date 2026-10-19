@@ -234,6 +234,8 @@
             <div class="name">
                 @if($item->tipo === 'pieza')
                 {{ $item->cantidad > 1 ? $item->cantidad . ' × ' : '' }}{{ strtoupper($item->nombre_producto ?? optional($item->pieza)->nombre ?? 'PIEZA') }}
+                @elseif($item->tipo === 'producto_general')
+                {{ $item->cantidad > 1 ? $item->cantidad . ' × ' : '' }}{{ strtoupper($item->nombre_producto ?? optional($item->productoGeneral)->nombre ?? 'PRODUCTO') }}
                 @else
                 {{ strtoupper(str_replace('_', ' ', $item->tipo)) }}
                 @endif
@@ -253,8 +255,8 @@
                 {{ $item->productoApple->color }} · Batería: {{ $item->productoApple->bateria }}
                 @elseif($item->tipo === 'pieza')
                 {{ $item->modelo ?? optional($item->pieza)->compatibilidad ?? 'Repuesto' }}
-                @elseif($item->productoGeneral)
-                {{ $item->productoGeneral->nombre }} · {{ $item->productoGeneral->codigo }}
+                @elseif($item->tipo === 'producto_general')
+                {{ implode(' · ', array_filter([$item->modelo, optional($item->productoGeneral)->codigo])) ?: 'Accesorio' }}
                 @endif
             </div>
 

@@ -348,7 +348,7 @@ class DashboardController extends Controller
         // Stocks
         $stockCel   = Celular::where('estado', 'disponible')->count();
         $stockComp  = Computadora::where('estado', 'disponible')->count();
-        $stockGen   = ProductoGeneral::where('estado', 'disponible')->count();
+        $stockGen   = (int) ProductoGeneral::disponibles()->sum('cantidad'); // unidades, no registros
         $stockApple = ProductoApple::where('estado', 'disponible')->count();
         $stockTotal = $stockCel + $stockComp + $stockGen + $stockApple;
 

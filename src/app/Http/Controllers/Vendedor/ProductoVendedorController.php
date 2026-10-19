@@ -55,9 +55,10 @@ class ProductoVendedorController extends Controller
             'modelo'  => ProductoGeneral::class,
             'label'   => 'Accesorios y otros',
             'vacio'   => 'No queda ningún accesorio disponible',
-            'campos'  => ['id', 'codigo', 'tipo', 'nombre', 'condicion', 'precio_venta'],
-            'buscar'  => ['codigo', 'tipo', 'nombre'],
+            'campos'  => ['id', 'codigo', 'tipo', 'nombre', 'modelo', 'calidad', 'condicion', 'cantidad', 'precio_venta'],
+            'buscar'  => ['codigo', 'tipo', 'nombre', 'modelo', 'calidad'],
             'orden'   => 'nombre',
+            'saldo'   => true,
         ],
         'piezas' => [
             'modelo'  => Pieza::class,
@@ -66,7 +67,7 @@ class ProductoVendedorController extends Controller
             'campos'  => ['id', 'codigo', 'nombre', 'categoria', 'compatibilidad', 'cantidad', 'precio_venta'],
             'buscar'  => ['codigo', 'nombre', 'categoria', 'compatibilidad'],
             'orden'   => 'nombre',
-            // Las piezas llevan saldo, no estado: «disponible» es que quede al menos una.
+            // Llevan saldo: «disponible» es que quede al menos una.
             'saldo'   => true,
         ],
     ];
@@ -100,7 +101,7 @@ class ProductoVendedorController extends Controller
                 ])->values(),
             'resumen'   => [
                 'encontrados' => $productos->total(),
-                // En las piezas, el valor del stock es el saldo por el precio: seis pantallas valen seis.
+                // Con saldo, el valor del stock es la cantidad por el precio: seis pantallas valen seis.
                 'valor'       => round((float) (($config['saldo'] ?? false)
                     ? $this->consulta($config, $q)->selectRaw('COALESCE(SUM(cantidad * precio_venta), 0) AS t')->value('t')
                     : $this->consulta($config, $q)->sum('precio_venta')), 2),

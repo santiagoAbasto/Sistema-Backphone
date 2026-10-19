@@ -39,9 +39,9 @@ class ProductosGeneralesTest extends TestCase
             'tipo'         => 'cargador_20w',
             'nombre'       => 'Cubo 20 W original',
             'procedencia'  => 'CHINA',
+            'cantidad'     => 30,
             'precio_costo' => 40,
             'precio_venta' => 120,
-            'estado'       => 'disponible',
             'condicion'    => 'Nuevo',
         ], $cambios);
     }
@@ -49,7 +49,7 @@ class ProductosGeneralesTest extends TestCase
     public function test_el_listado_y_la_edicion_muestran_el_historial(): void
     {
         $admin = $this->admin();
-        $vendido = $this->producto(['estado' => 'vendido']);
+        $vendido = $this->producto(['estado' => 'vendido', 'cantidad' => 0]);
         $venta = Venta::create([
             'nombre_cliente' => 'Cliente', 'telefono_cliente' => '70000000', 'fecha' => '2026-09-08',
             'codigo_nota' => 'AT-V970', 'tipo_venta' => 'producto', 'precio_venta' => 60, 'subtotal' => 60, 'user_id' => $admin->id,
@@ -72,7 +72,7 @@ class ProductosGeneralesTest extends TestCase
             ->get(route('admin.productos-generales.edit', $vendido))
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Admin/ProductosGenerales/Edit')
-                ->has('historial', 1)
+                ->has('movimientos')
                 ->where('bloqueo', 'Figura en una venta y se conserva para no perder el historial.')
                 ->has('sugerencias.nombres'));
 

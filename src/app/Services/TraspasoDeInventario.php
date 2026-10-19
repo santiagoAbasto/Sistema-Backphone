@@ -4,11 +4,13 @@ namespace App\Services;
 
 use App\Models\MovimientoPieza;
 use App\Models\Pieza;
+use App\Models\ProductoGeneral;
 use App\Models\Traspaso;
 use App\Models\TraspasoItem;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -17,8 +19,8 @@ use Illuminate\Validation\ValidationException;
  * Un traspaso pasa por tres momentos y en ninguno el producto queda en el aire:
  *
  * - **Sale.** El equipo queda «en tránsito»: sigue siendo de la sucursal que lo envió, pero no se
- *   puede vender en ninguna de las dos. Las piezas se descuentan del saldo del origen, porque van
- *   en el paquete.
+ *   puede vender en ninguna de las dos. Lo que va por cantidad (piezas y productos generales) se
+ *   descuenta del saldo del origen, porque va en el paquete.
  * - **Llega.** Recién ahí cambia de dueño y vuelve a estar disponible, ya en la sucursal destino.
  * - **Se cancela.** Todo vuelve como estaba, sin haber salido nunca del origen.
  */
@@ -87,8 +89,8 @@ class TraspasoDeInventario
 
         DB::transaction(function () use ($traspaso) {
             foreach ($traspaso->items as $item) {
-                if ($item->tipo === 'pieza') {
-                    self::entregarPieza($item, $traspaso);
+                if (Traspaso::esPorCantidad($item->tipo)) {
+                    self::entregarPorCantidad($item, $traspaso);
 
                     continue;
                 }
@@ -124,9 +126,13 @@ class TraspasoDeInventario
 
         DB::transaction(function () use ($traspaso) {
             foreach ($traspaso->items as $item) {
-                if ($item->tipo === 'pieza') {
-                    if ($pieza = StockDePiezas::bloquear($item->producto_id)) {
-                        StockDePiezas::devolver($pieza, $item->cantidad, MovimientoPieza::ENTRADA_TRASPASO, $traspaso, 'Traspaso ' . $traspaso->codigo . ' cancelado');
+                if (Traspaso::esPorCantidad($item->tipo)) {
+                    // El origen puede no ser la sucursal elegida en el encabezado: sin el filtro
+                    $modelo = Traspaso::TIPOS[$item->tipo]['modelo'];
+                    $origen = $modelo::withoutGlobalScope('sucursal')->whereKey($item->producto_id)->lockForUpdate()->first();
+
+                    if ($origen) {
+                        StockPorCantidad::devolver($origen, $item->cantidad, MovimientoPieza::ENTRADA_TRASPASO, $traspaso, 'Traspaso ' . $traspaso->codigo . ' cancelado');
                     }
 
                     continue;
@@ -170,7 +176,13 @@ class TraspasoDeInventario
 
         $cantidad = max(1, $cantidad);
 
-        if ($tipo === 'pieza') {
+        if (Traspaso::esPorCantidad($tipo)) {
+            if ($producto instanceof ProductoGeneral && $producto->estado !== ProductoGeneral::ESTADO_DISPONIBLE) {
+                throw ValidationException::withMessages([
+                    "items.$indice.producto_id" => '«' . self::nombreDe($tipo, $producto) . '» no está disponible: no se puede enviar.',
+                ]);
+            }
+
             if ($producto->cantidad < $cantidad) {
                 throw ValidationException::withMessages([
                     "items.$indice.cantidad" => 'De «' . $producto->nombre . '» quedan ' . $producto->cantidad . ' y se están enviando ' . $cantidad . '.',
@@ -198,8 +210,8 @@ class TraspasoDeInventario
     /** Lo enviado deja de poder venderse en las dos sucursales mientras viaja. */
     private static function sacarDeLaVenta(array $item, Traspaso $traspaso): void
     {
-        if ($item['tipo'] === 'pieza') {
-            StockDePiezas::descontar(
+        if (Traspaso::esPorCantidad($item['tipo'])) {
+            StockPorCantidad::descontar(
                 $item['producto'],
                 $item['cantidad'],
                 MovimientoPieza::SALIDA_TRASPASO,
@@ -215,20 +227,75 @@ class TraspasoDeInventario
     }
 
     /**
-     * La pieza que llega se suma a la misma pieza del destino, si ya la tenían.
+     * Lo que llega se suma al mismo producto del destino, si ya lo tenían.
      *
-     * Se busca por nombre y compatibilidad: si Sucre ya tiene «Pantalla incell · iPhone 11», las
-     * unidades entran en esa ficha en vez de abrir una segunda con el mismo nombre. Si no la
-     * tienen, se le copia la ficha del origen y entra con las unidades que llegaron.
+     * Una pieza se busca por nombre y compatibilidad; un producto general, por tipo, nombre, modelo
+     * y calidad. Si Sucre ya tiene «Vidrio templado 9D · iPhone 13 · Premium», las unidades entran
+     * en esa ficha en vez de abrir una segunda igual. Si no lo tienen, se copia la ficha del origen
+     * y entra con las unidades que llegaron.
      */
-    private static function entregarPieza(TraspasoItem $item, Traspaso $traspaso): void
+    private static function entregarPorCantidad(TraspasoItem $item, Traspaso $traspaso): void
     {
-        $origen = Pieza::withoutGlobalScope('sucursal')->find($item->producto_id);
+        $modelo = Traspaso::TIPOS[$item->tipo]['modelo'];
+        $origen = $modelo::withoutGlobalScope('sucursal')->find($item->producto_id);
 
         if (! $origen) {
             return;
         }
 
+        $destino = $origen instanceof ProductoGeneral
+            ? self::productoGeneralDelDestino($origen, $traspaso)
+            : self::piezaDelDestino($origen, $traspaso);
+
+        StockPorCantidad::devolver(
+            $destino,
+            $item->cantidad,
+            MovimientoPieza::ENTRADA_TRASPASO,
+            $traspaso,
+            'Traspaso ' . $traspaso->codigo . ' desde ' . $traspaso->origen->nombre,
+        );
+    }
+
+    private static function productoGeneralDelDestino(ProductoGeneral $origen, Traspaso $traspaso): ProductoGeneral
+    {
+        $igual = fn (string $columna) => ["LOWER(COALESCE({$columna}, '')) = ?", [mb_strtolower((string) $origen->{$columna})]];
+
+        $consulta = ProductoGeneral::withoutGlobalScope('sucursal')
+            ->where('sucursal_id', $traspaso->destino_sucursal_id)
+            ->where('tipo', $origen->tipo)
+            ->whereIn('estado', [ProductoGeneral::ESTADO_DISPONIBLE, ProductoGeneral::ESTADO_VENDIDO]);
+
+        foreach (['nombre', 'modelo', 'calidad'] as $columna) {
+            $consulta->whereRaw(...$igual($columna));
+        }
+
+        if ($destino = $consulta->lockForUpdate()->first()) {
+            return $destino;
+        }
+
+        // El código es único en todo el sistema: el destino recibe uno nuevo
+        $destino = ProductoGeneral::withoutGlobalScope('sucursal')->create([
+            'sucursal_id'   => $traspaso->destino_sucursal_id,
+            'codigo'        => 'TMP-' . Str::uuid(),
+            'tipo'          => $origen->tipo,
+            'nombre'        => $origen->nombre,
+            'modelo'        => $origen->modelo,
+            'calidad'       => $origen->calidad,
+            'condicion'     => $origen->condicion,
+            'procedencia'   => $origen->procedencia,
+            'precio_costo'  => $origen->precio_costo,
+            'precio_venta'  => $origen->precio_venta,
+            'precio_tienda' => $origen->precio_tienda,
+            'cantidad'      => 0,
+            'estado'        => ProductoGeneral::ESTADO_VENDIDO,
+        ]);
+        $destino->asignarCodigoAutomatico();
+
+        return $destino;
+    }
+
+    private static function piezaDelDestino(Pieza $origen, Traspaso $traspaso): Pieza
+    {
         $destino = Pieza::withoutGlobalScope('sucursal')
             ->where('sucursal_id', $traspaso->destino_sucursal_id)
             ->whereRaw('LOWER(nombre) = ?', [mb_strtolower($origen->nombre)])
@@ -254,13 +321,7 @@ class TraspasoDeInventario
             ]);
         }
 
-        StockDePiezas::devolver(
-            $destino,
-            $item->cantidad,
-            MovimientoPieza::ENTRADA_TRASPASO,
-            $traspaso,
-            'Traspaso ' . $traspaso->codigo . ' desde ' . $traspaso->origen->nombre,
-        );
+        return $destino;
     }
 
     private static function nombreDe(string $tipo, Model $producto): string
@@ -276,7 +337,7 @@ class TraspasoDeInventario
         $partes = match ($tipo) {
             'celular', 'producto_apple' => [$producto->capacidad, $producto->color, $producto->imei_1],
             'computadora'               => [$producto->procesador, $producto->ram, $producto->numero_serie],
-            'producto_general'          => [$producto->tipo, $producto->codigo],
+            'producto_general'          => [$producto->modelo, $producto->calidad, $producto->codigo],
             'pieza'                     => [$producto->categoria, $producto->compatibilidad],
             default                     => [],
         };

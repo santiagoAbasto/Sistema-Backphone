@@ -158,7 +158,8 @@ class ReservaController extends Controller
             'metodo_pago' => 'required|in:efectivo,qr,transferencia,tarjeta',
             'terminos_condiciones' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.tipo' => 'required|in:celular,computadora,producto_general,producto_apple',
+            // Lo que va por cantidad (piezas, productos generales) no se aparta: se descuenta al venderlo
+            'items.*.tipo' => 'required|in:celular,computadora,producto_apple',
             'items.*.producto_id' => 'required|integer',
             'items.*.cantidad' => 'required|integer|min:1',
             'items.*.descuento' => 'nullable|numeric|min:0',

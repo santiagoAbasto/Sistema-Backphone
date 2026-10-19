@@ -42,7 +42,7 @@ export function bonito(texto) {
   return t.split(' ').map((w) => {
     const lower = w.toLowerCase();
     if (PALABRAS[lower]) return PALABRAS[lower];
-    if (/^\d/.test(w)) return lower;
+    if (/^\d/.test(w)) return w; // «9D», «20W», «5G»: tal como se escribió
     return lower.charAt(0).toUpperCase() + lower.slice(1);
   }).join(' ');
 }

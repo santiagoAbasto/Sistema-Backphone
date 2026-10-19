@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * A diferencia del resto del inventario, acá no hay un registro por unidad sino un saldo:
  * «pantalla iPhone 11, quedan 6». El saldo nunca se toca a mano desde fuera del modelo;
- * lo mueve `App\Services\StockDePiezas`, que además deja anotado cada movimiento.
+ * lo mueve `App\Services\StockPorCantidad`, que además deja anotado cada movimiento.
  */
 class Pieza extends Model
 {

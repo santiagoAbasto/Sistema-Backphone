@@ -31,8 +31,8 @@ const METODOS_PAGO = [
   { value: 'tarjeta', label: 'Tarjeta', icon: CreditCard },
 ];
 
-// Solo las piezas se llevan por cantidad (saldo); lo demás es un equipo concreto, de a uno.
-const esPorCantidad = (tipo) => tipo === 'pieza';
+// Piezas y productos generales se llevan por cantidad (saldo); lo demás es un equipo concreto, de a uno.
+const esPorCantidad = (tipo) => tipo === 'pieza' || tipo === 'producto_general';
 
 const normalizar = (v) => String(v ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 const precioDe = (item) => Number(item.precio) || 0;

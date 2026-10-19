@@ -271,14 +271,14 @@ export function ResumenPieza({ data, saldo = null, children }) {
 const TEXTOS_MOVIMIENTO = {
   ingreso: {
     titulo: 'Ingresar unidades',
-    ayuda: 'Llegó un pedido o se despiezó un equipo. Se suman al saldo que ya hay.',
+    ayuda: 'Llegó mercadería (un pedido, un equipo despiezado). Se suman al saldo que ya hay.',
     campo: 'Cuántas entran',
     motivo: 'Ej.: llegó el pedido del 12/09',
     boton: 'Ingresar al stock',
   },
   ajuste: {
     titulo: 'Ajustar el saldo',
-    ayuda: 'Contaste el cajón y no coincide. Escribe lo que contaste: el sistema anota la diferencia.',
+    ayuda: 'Contaste y no coincide. Escribe lo que contaste: el sistema anota la diferencia.',
     campo: 'Cuántas contaste',
     motivo: 'Ej.: conteo físico de fin de mes',
     boton: 'Guardar el conteo',
@@ -286,13 +286,14 @@ const TEXTOS_MOVIMIENTO = {
 };
 
 /**
- * Entrada de mercadería o corrección de saldo.
+ * Entrada de mercadería o corrección de saldo. Sirve para piezas y para productos generales: `ruta`
+ * dice a dónde se guarda (por defecto, el stock de la pieza).
  *
  * Son dos verbos distintos a propósito. «Ingresar» suma, y es lo de todos los días. «Ajustar» fija
  * el saldo en lo que se contó, y es lo que se usa cuando algo se rompió o se traspapeló: el sistema
  * calcula la diferencia y la deja anotada, que es justamente lo que después hay que poder explicar.
  */
-export function ModalStock({ pieza, accion = 'ingreso', onCerrar, onHecho }) {
+export function ModalStock({ pieza, accion = 'ingreso', ruta = null, onCerrar, onHecho }) {
   const t = TEXTOS_MOVIMIENTO[accion] ?? TEXTOS_MOVIMIENTO.ingreso;
   const [cantidad, setCantidad] = useState(accion === 'ajuste' ? String(pieza?.cantidad ?? 0) : '');
   const [motivo, setMotivo] = useState('');
@@ -315,7 +316,7 @@ export function ModalStock({ pieza, accion = 'ingreso', onCerrar, onHecho }) {
       return;
     }
 
-    router.post(route('admin.piezas.stock', pieza.id), { accion, cantidad: n, motivo: motivo.trim() }, {
+    router.post(ruta ?? route('admin.piezas.stock', pieza.id), { accion, cantidad: n, motivo: motivo.trim() }, {
       preserveScroll: true,
       onStart: () => setGuardando(true),
       onSuccess: () => { notifyRecordsUpdated(); onHecho?.(); onCerrar(); },
@@ -341,7 +342,7 @@ export function ModalStock({ pieza, accion = 'ingreso', onCerrar, onHecho }) {
         <div className="rounded-xl bg-gris-50 px-4 py-3">
           <p className="truncate text-[15px] font-bold text-gris-900">{pieza?.nombre}</p>
           <p className="mt-0.5 text-xs text-gris-500">
-            {[pieza?.compatibilidad, pieza?.codigo].filter(Boolean).join(' · ') || 'Sin más datos'}
+            {[pieza?.compatibilidad ?? pieza?.modelo, pieza?.calidad, pieza?.codigo].filter(Boolean).join(' · ') || 'Sin más datos'}
           </p>
           <p className="mt-2 text-[13px] text-gris-600">Hoy hay <Saldo cantidad={saldoActual} minimo={pieza?.minimo} />.</p>
         </div>
@@ -354,7 +355,7 @@ export function ModalStock({ pieza, accion = 'ingreso', onCerrar, onHecho }) {
             onChange={(e) => { setCantidad(e.target.value); setError(null); }} />
         </Field>
 
-        <Field label="Motivo (opcional)" hint="Queda en el historial de la pieza.">
+        <Field label="Motivo (opcional)" hint="Queda anotado en el historial.">
           <Input value={motivo} maxLength={200} placeholder={t.motivo} onChange={(e) => setMotivo(e.target.value)} />
         </Field>
 
@@ -372,12 +373,12 @@ export function ModalStock({ pieza, accion = 'ingreso', onCerrar, onHecho }) {
   );
 }
 
-/** El historial de una pieza: qué se movió, cuándo y por qué. */
+/** El historial de un saldo (pieza o producto general): qué se movió, cuándo y por qué. */
 export function HistorialPieza({ movimientos = [] }) {
   if (movimientos.length === 0) {
     return (
       <p className="rounded-xl bg-gris-50 px-4 py-3 text-[13px] leading-relaxed text-gris-500">
-        Todavía no hay movimientos. Van a aparecer acá en cuanto la pieza se venda, se use en una reparación o entre mercadería.
+        Todavía no hay movimientos. Van a aparecer acá en cuanto se venda, se use en una reparación o entre mercadería.
       </p>
     );
   }

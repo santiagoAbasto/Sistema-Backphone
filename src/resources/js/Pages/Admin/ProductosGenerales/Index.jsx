@@ -2,14 +2,29 @@ import AdminLayout from '@/Layouts/AdminLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, FileDown, Package, Plus, Search, ShoppingBag, Tag, TrendingUp, X } from 'lucide-react';
+import { AlertTriangle, ClipboardCheck, FileDown, Package, PackagePlus, Plus, Search, ShoppingBag, Tag, TrendingUp, X } from 'lucide-react';
 import { notifyRecordsUpdated, useAutoRefresh } from '@/Hooks/useAutoRefresh';
-import { EmptyState, PageHeader, Paginador, Toast, bsFmt, buttonCls, inputCls, useToast } from '@/Components/Admin/ui';
+import { Badge, EmptyState, PageHeader, Paginador, Toast, bsFmt, buttonCls, inputCls, useToast } from '@/Components/Admin/ui';
 import { CONDICIONES } from '@/Components/Admin/condicion';
 import {
   AccionesFila, Aviso, BarraSeleccion, ChipsEstado, CondicionFila, EstadoBadge, ModalEliminar, PrecioConGanancia, Stat, bonito, checkCls, motivoEnListado, paginar, useSeleccion,
 } from '@/Components/Admin/inventario';
-import { TIPOS, nombreProducto, tipoTexto } from '@/Components/Admin/productos-generales';
+import { TIPOS, detalleProducto, nombreProducto, tipoTexto } from '@/Components/Admin/productos-generales';
+import { ModalStock, Saldo } from '@/Components/Admin/piezas';
+
+// Un producto general que se quedó en cero no está «vendido»: está agotado hasta que entre más.
+function Estado({ estado }) {
+  return estado === 'vendido' ? <Badge tone="rose">Agotado</Badge> : <EstadoBadge estado={estado} />;
+}
+
+function BotonIngresar({ onClick }) {
+  return (
+    <button type="button" onClick={onClick} title="Entró mercadería"
+      className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-carbon-900 px-2.5 text-xs font-semibold text-white transition-colors hover:bg-carbon-800">
+      <PackagePlus className="h-3.5 w-3.5" /> Ingresar
+    </button>
+  );
+}
 
 const normalizar = (v) => String(v ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
@@ -26,6 +41,7 @@ export default function Index({ productos = [], conHistorial = [] }) {
   const [aplicando, setAplicando] = useState(false);
   const [borrar, setBorrar] = useState(null);
   const [procesando, setProcesando] = useState(false);
+  const [ingresar, setIngresar] = useState(null);
   const tablaRef = useRef(null);
 
   const historial = useMemo(() => new Set(conHistorial), [conHistorial]);
@@ -34,19 +50,22 @@ export default function Index({ productos = [], conHistorial = [] }) {
     ...c,
     pos: i,
     nombre: nombreProducto(c),
-    detalle: tipoTexto(c.tipo),
+    detalle: [tipoTexto(c.tipo), detalleProducto(c)].filter(Boolean).join(' · '),
+    cantidad: Number(c.cantidad) || 0,
     costo: Number(c.precio_costo) || 0,
     venta: Number(c.precio_venta) || 0,
-    busqueda: normalizar([c.codigo, c.nombre, c.procedencia, tipoTexto(c.tipo), c.condicion].join(' ')),
+    busqueda: normalizar([c.codigo, c.nombre, c.modelo, c.calidad, c.procedencia, tipoTexto(c.tipo), c.condicion].join(' ')),
   })), [productos]);
 
   const conteo = useMemo(() => {
+    // El valor del stock es el precio por las unidades que quedan: 500 vidrios valen 500
     const disponibles = filas.filter((c) => c.estado === 'disponible');
-    const costo = disponibles.reduce((s, c) => s + c.costo, 0);
-    const venta = disponibles.reduce((s, c) => s + c.venta, 0);
+    const costo = disponibles.reduce((s, c) => s + c.costo * c.cantidad, 0);
+    const venta = disponibles.reduce((s, c) => s + c.venta * c.cantidad, 0);
     return {
       todos: filas.length,
       disponible: disponibles.length,
+      unidades: disponibles.reduce((s, c) => s + c.cantidad, 0),
       permuta: filas.filter((c) => c.estado === 'permuta').length,
       vendido: filas.filter((c) => c.estado === 'vendido').length,
       bajo_costo: disponibles.filter((c) => c.venta < c.costo).length,
@@ -80,6 +99,7 @@ export default function Index({ productos = [], conHistorial = [] }) {
     if (orden === 'recientes') return [...lista].sort((a, b) => b.id - a.id);
     if (orden === 'precio_desc') return [...lista].sort((a, b) => b.venta - a.venta || a.pos - b.pos);
     if (orden === 'precio_asc') return [...lista].sort((a, b) => a.venta - b.venta || a.pos - b.pos);
+    if (orden === 'stock_asc') return [...lista].sort((a, b) => a.cantidad - b.cantidad || a.pos - b.pos);
     return lista;
   }, [filas, estado, tipo, condicion, q, orden]);
 
@@ -130,7 +150,7 @@ export default function Index({ productos = [], conHistorial = [] }) {
     { key: 'todos', label: 'Todos' },
     { key: 'disponible', label: 'Disponibles' },
     { key: 'permuta', label: 'En permuta', ocultarSinDatos: true },
-    { key: 'vendido', label: 'Vendidos' },
+    { key: 'vendido', label: 'Agotados' },
     { key: 'bajo_costo', label: 'Bajo el costo', ocultarSinDatos: true, alerta: true },
   ].filter((f) => !f.ocultarSinDatos || conteo[f.key] > 0 || estado === f.key);
 
@@ -145,9 +165,12 @@ export default function Index({ productos = [], conHistorial = [] }) {
       <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <PageHeader
           title="Productos generales"
-          subtitle="Fundas, vidrios, cargadores y accesorios: cada unidad con su código."
+          subtitle="Fundas, vidrios, cargadores y accesorios, por cantidad: cada venta descuenta del saldo."
           actions={(
             <>
+              <Link href={route('admin.productos-generales.conteo')} className={buttonCls('secondary', 'h-11 px-4')}>
+                <ClipboardCheck className="h-4 w-4" /> Contar inventario
+              </Link>
               <a href={tipo !== 'todos' && TIPOS.some((t) => t.value === tipo) ? route('admin.exportar.productos-generales.tipo', tipo) : route('admin.exportar.productos-generales')} target="_blank" rel="noopener noreferrer" className={buttonCls('secondary', 'h-11 px-4')}>
                 <FileDown className="h-4 w-4" /> {tipo !== 'todos' ? `Exportar ${tipoTexto(tipo).toLowerCase()}` : 'Exportar disponibles'}
               </a>
@@ -159,14 +182,14 @@ export default function Index({ productos = [], conHistorial = [] }) {
         />
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Stat icon={Package} label="Disponibles" value={conteo.disponible.toLocaleString('es-BO')}
-            hint={`De ${conteo.todos.toLocaleString('es-BO')} registrados`} />
+          <Stat icon={Package} label="Unidades en stock" value={conteo.unidades.toLocaleString('es-BO')}
+            hint={`En ${conteo.disponible.toLocaleString('es-BO')} ${conteo.disponible === 1 ? 'producto' : 'productos'} con saldo`} />
           <Stat icon={Tag} label="Valor de venta" value={bsFmt(conteo.venta)} tone="emerald"
             hint={`Costo de los disponibles: ${bsFmt(conteo.costo)}`} />
           <Stat icon={TrendingUp} label="Ganancia esperada" value={bsFmt(conteo.ganancia)} tone="lila"
             hint={margen != null ? `Margen de ${margen} % sobre la venta` : 'Sin productos disponibles'} />
-          <Stat icon={ShoppingBag} label="Vendidos" value={conteo.vendido.toLocaleString('es-BO')} tone="slate"
-            hint={conteo.permuta ? `${conteo.permuta} en permuta por habilitar` : 'Productos que ya salieron'} />
+          <Stat icon={ShoppingBag} label="Agotados" value={conteo.vendido.toLocaleString('es-BO')} tone="slate"
+            hint={conteo.permuta ? `${conteo.permuta} en permuta por habilitar` : 'Productos sin unidades'} />
         </div>
 
         {sinCondicion > 0 && !(estado === 'disponible' && condicion === 'sin') && (
@@ -189,7 +212,7 @@ export default function Index({ productos = [], conHistorial = [] }) {
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gris-400" />
               <input value={texto} onChange={(e) => setTexto(e.target.value)} aria-label="Buscar productos generales"
-                placeholder="Buscar por código, nombre o procedencia"
+                placeholder="Buscar por código, nombre, modelo o calidad"
                 className={`${inputCls} h-11 pl-10 pr-10`} />
               {texto && (
                 <button type="button" onClick={() => setTexto('')} aria-label="Borrar búsqueda"
@@ -212,6 +235,7 @@ export default function Index({ productos = [], conHistorial = [] }) {
               <option value="recientes">Registrados recientemente</option>
               <option value="precio_desc">Precio: de mayor a menor</option>
               <option value="precio_asc">Precio: de menor a mayor</option>
+              <option value="stock_asc">Menos stock primero</option>
             </select>
           </div>
           <ChipsEstado filtros={FILTROS} activo={estado} conteo={conteo} onChange={setEstado} />
@@ -254,9 +278,9 @@ export default function Index({ productos = [], conHistorial = [] }) {
                       <th className="w-10 py-3 pl-5 pr-2">
                         <input type="checkbox" checked={sel.paginaMarcada} onChange={sel.alternarPagina} aria-label="Seleccionar esta página" className={checkCls} />
                       </th>
-                      <th className="px-3 py-3">Equipo</th>
+                      <th className="px-3 py-3">Producto</th>
                       <th className="px-3 py-3">Código</th>
-                      <th className="px-3 py-3">Procedencia</th>
+                      <th className="px-3 py-3 text-right">Stock</th>
                       <th className="px-3 py-3 text-right">Costo</th>
                       <th className="px-3 py-3 text-right">Venta</th>
                       <th className="px-3 py-3">Estado</th>
@@ -287,16 +311,17 @@ export default function Index({ productos = [], conHistorial = [] }) {
                               </div>
                             </div>
                           </td>
-                          <td className="px-3 py-3"><span className="cifra text-xs text-gris-800">{c.codigo}</span></td>
-                          <td className="px-3 py-3">
-                            <p className="max-w-[170px] truncate text-gris-600" title={c.procedencia}>{c.procedencia || '—'}</p>
-                          </td>
-                          <td className="px-3 py-3 text-right tabular-nums text-gris-500">{bsFmt(c.costo)}</td>
-                          <td className="px-3 py-3"><PrecioConGanancia costo={c.costo} venta={c.venta} tienda={c.precio_tienda ?? null} /></td>
-                          <td className="px-3 py-3"><EstadoBadge estado={c.estado} /></td>
+                          <td className="whitespace-nowrap px-3 py-3"><span className="cifra text-xs text-gris-800">{c.codigo}</span></td>
+                          <td className="whitespace-nowrap px-3 py-3 text-right"><Saldo cantidad={c.cantidad} /></td>
+                          <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums text-gris-500">{bsFmt(c.costo)}</td>
+                          <td className="whitespace-nowrap px-3 py-3"><PrecioConGanancia costo={c.costo} venta={c.venta} tienda={c.precio_tienda ?? null} /></td>
+                          <td className="px-3 py-3"><Estado estado={c.estado} /></td>
                           <td className="py-3 pl-3 pr-5">
-                            <AccionesFila editarUrl={route('admin.productos-generales.edit', c.id)} nombre={c.nombre} estado={c.estado}
+                            <div className="flex justify-end gap-1.5">
+                              {c.estado !== 'permuta' && <BotonIngresar onClick={() => setIngresar(c)} />}
+                              <AccionesFila editarUrl={route('admin.productos-generales.edit', c.id)} nombre={c.nombre} estado={c.estado}
                               motivo={motivoEnListado(c.id, historial)} onBorrar={() => setBorrar(c)} onHabilitar={() => habilitar(c)} />
+                            </div>
                           </td>
                         </tr>
                       );
@@ -317,7 +342,7 @@ export default function Index({ productos = [], conHistorial = [] }) {
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-1.5">
-                                <EstadoBadge estado={c.estado} />
+                                <Estado estado={c.estado} />
                                 <CondicionFila condicion={c.condicion} estado={c.estado} />
                               </div>
                               <Link href={route('admin.productos-generales.edit', c.id)} className="mt-1.5 block truncate text-[15px] font-bold text-gris-900">{c.nombre}</Link>
@@ -326,10 +351,12 @@ export default function Index({ productos = [], conHistorial = [] }) {
                             <PrecioConGanancia costo={c.costo} venta={c.venta} tienda={c.precio_tienda ?? null} />
                           </div>
                           <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-gris-500">
+                            <Saldo cantidad={c.cantidad} />
                             <span className="cifra text-gris-700">{c.codigo}</span>
                             {c.procedencia && <span className="max-w-[200px] truncate">{c.procedencia}</span>}
                           </div>
-                          <div className="mt-3">
+                          <div className="mt-3 flex flex-wrap justify-end gap-1.5">
+                            {c.estado !== 'permuta' && <BotonIngresar onClick={() => setIngresar(c)} />}
                             <AccionesFila editarUrl={route('admin.productos-generales.edit', c.id)} nombre={c.nombre} estado={c.estado}
                               motivo={motivoEnListado(c.id, historial)} onBorrar={() => setBorrar(c)} onHabilitar={() => habilitar(c)} />
                           </div>
@@ -356,6 +383,11 @@ export default function Index({ productos = [], conHistorial = [] }) {
           aplicando={aplicando}
         />
       </div>
+
+      {ingresar && (
+        <ModalStock pieza={ingresar} accion="ingreso" ruta={route('admin.productos-generales.stock', ingresar.id)}
+          onCerrar={() => setIngresar(null)} />
+      )}
 
       {borrar && (
         <ModalEliminar titulo="Eliminar producto general" icon={Package} nombre={borrar.nombre}

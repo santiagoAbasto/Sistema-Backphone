@@ -33,8 +33,16 @@ class Traspaso extends Model
         'pieza'            => ['modelo' => Pieza::class,           'label' => 'Piezas y repuestos'],
     ];
 
-    /** Las piezas se mueven por cantidad; el resto es una unidad por registro. */
-    public const POR_CANTIDAD = ['pieza'];
+    /**
+     * Lo que se lleva por cantidad (un saldo que sube y baja) y no de a una unidad por registro.
+     * Es la lista que usan la venta, el servicio técnico y el traspaso para saber qué camino tomar.
+     */
+    public const POR_CANTIDAD = ['pieza', 'producto_general'];
+
+    public static function esPorCantidad(string $tipo): bool
+    {
+        return in_array($tipo, self::POR_CANTIDAD, true);
+    }
 
     protected $fillable = [
         'codigo',

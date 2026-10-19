@@ -183,9 +183,9 @@ class CondicionInventarioTest extends TestCase
                 'tipo'         => 'funda',
                 'nombre'       => 'FUNDA SILICONA 15 PRO',
                 'procedencia'  => 'CHINA',
+                'cantidad'     => 12,
                 'precio_costo' => 30,
                 'precio_venta' => 80,
-                'estado'       => 'disponible',
                 'condicion'    => 'Nuevo',
             ])
             ->assertSessionHasNoErrors();

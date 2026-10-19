@@ -20,11 +20,12 @@ export default function Create({ sugerencias = {} }) {
   const [registrados, setRegistrados] = useState(0);
   const [notice, setNotice] = useState(null);
   const [toast] = useToast();
-  const refs = { nombre: useRef(null), codigo: useRef(null) };
+  const refs = { nombre: useRef(null), modelo: useRef(null), cantidad: useRef(null), codigo: useRef(null) };
 
   const avisar = (title, message = '', type = 'error') => setNotice({ id: Date.now(), title, message, type });
 
-  // «Registrar otro» vuelve a esta página con todo igual y el siguiente código de la serie
+  // «Registrar otro» vuelve a esta página con el mismo producto, precio y procedencia: solo falta
+  // el siguiente modelo y cuántos llegaron. Así un pedido de vidrios para diez equipos se carga seguido.
   const guardar = (otro = false) => {
     if (guardando) return;
     const e = validarProductoGeneral(data);
@@ -47,10 +48,10 @@ export default function Create({ sugerencias = {} }) {
         notifyRecordsUpdated();
         if (!otro) return;
         setRegistrados((n) => n + 1);
-        setData((d) => ({ ...d, codigo: siguienteCodigo(enviado.codigo) }));
+        setData((d) => ({ ...d, modelo: '', cantidad: '', codigo: siguienteCodigo(enviado.codigo) }));
         setErrores({});
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        setTimeout(() => refs.codigo.current?.select(), 300);
+        setTimeout(() => refs.modelo.current?.focus(), 300);
       },
       onError: (errs) => {
         setErrores(errs);
@@ -68,7 +69,7 @@ export default function Create({ sugerencias = {} }) {
 
       <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <EncabezadoFormulario volverUrl={route('admin.productos-generales.index')} volverLabel="Volver a productos generales"
-          titulo="Registrar producto general" subtitulo="Fundas, vidrios, cargadores y accesorios: cada unidad con su código." />
+          titulo="Registrar producto general" subtitulo="Fundas, vidrios, cargadores y accesorios: se cargan con su cantidad, sin etiquetar cada unidad." />
 
         <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
           <div className="min-w-0 space-y-5">
@@ -82,10 +83,10 @@ export default function Create({ sugerencias = {} }) {
                 {guardando === 'listado' ? 'Guardando…' : 'Guardar producto'}
               </button>
               <button type="button" onClick={() => guardar(true)} disabled={Boolean(guardando)} className={buttonCls('secondary', 'h-11 w-full')}>
-                <CopyPlus className="h-4 w-4" /> {guardando === 'otro' ? 'Guardando…' : 'Guardar y registrar otro'}
+                <CopyPlus className="h-4 w-4" /> {guardando === 'otro' ? 'Guardando…' : 'Guardar y registrar otro modelo'}
               </button>
               <p className="text-center text-xs leading-relaxed text-gris-400">
-                «Registrar otro» mantiene el tipo, el nombre, los precios y la procedencia, y propone el siguiente código (FUNDA_1 → FUNDA_2).
+                «Registrar otro modelo» mantiene el tipo, el nombre, la calidad, los precios y la procedencia: solo cambias el modelo y la cantidad.
                 {registrados > 0 && <span className="mt-1 block font-semibold text-emerald-700">Llevas {registrados} {registrados === 1 ? 'producto registrado' : 'productos registrados'} seguidos.</span>}
               </p>
             </ResumenProductoGeneral>

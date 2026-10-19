@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\MovimientoPieza;
 use App\Models\Pieza;
-use App\Services\StockDePiezas;
+use App\Services\StockPorCantidad;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -89,7 +89,7 @@ class PiezaController extends Controller
 
         $pieza = DB::transaction(function () use ($datos) {
             $pieza = Pieza::create($datos);
-            StockDePiezas::registrarAlta($pieza);
+            StockPorCantidad::registrarAlta($pieza);
 
             return $pieza;
         });
@@ -142,15 +142,15 @@ class PiezaController extends Controller
         $motivo = trim((string) ($datos['motivo'] ?? '')) ?: null;
 
         $movimiento = DB::transaction(function () use ($pieza, $datos, $motivo) {
-            $bloqueada = StockDePiezas::bloquear($pieza->id);
+            $bloqueada = StockPorCantidad::bloquear($pieza->id);
 
             if (! $bloqueada) {
                 return null;
             }
 
             return $datos['accion'] === 'ingreso'
-                ? StockDePiezas::ingresar($bloqueada, (int) $datos['cantidad'], $motivo)
-                : StockDePiezas::ajustar($bloqueada, (int) $datos['cantidad'], $motivo);
+                ? StockPorCantidad::ingresar($bloqueada, (int) $datos['cantidad'], $motivo)
+                : StockPorCantidad::ajustar($bloqueada, (int) $datos['cantidad'], $motivo);
         });
 
         if (! $movimiento) {

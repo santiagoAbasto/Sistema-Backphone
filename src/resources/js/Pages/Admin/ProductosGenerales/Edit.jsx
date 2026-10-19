@@ -2,19 +2,20 @@ import AdminLayout from '@/Layouts/AdminLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { route } from 'ziggy-js';
-import { Package } from 'lucide-react';
+import { History, Package } from 'lucide-react';
 import PremiumNotice from '@/Components/PremiumNotice';
 import { notifyRecordsUpdated } from '@/Hooks/useAutoRefresh';
-import { Toast, buttonCls, useToast } from '@/Components/Admin/ui';
+import { Card, Toast, buttonCls, useToast } from '@/Components/Admin/ui';
 import {
-  EncabezadoFormulario, ErroresResumen, HistorialEquipo, ModalEliminar, Nota, ZonaPeligro, fmtFecha,
+  EncabezadoFormulario, ErroresResumen, ModalEliminar, ZonaPeligro, fmtFecha,
 } from '@/Components/Admin/inventario';
+import { HistorialPieza, ModalStock } from '@/Components/Admin/piezas';
 import {
-  CamposProductoGeneral, ResumenProductoGeneral, datosDesde, nombreProducto, payloadDe, tipoTexto, useCodigoDisponible,
-  useFormularioProductoGeneral, validarProductoGeneral,
+  CamposProductoGeneral, ResumenProductoGeneral, datosDesde, detalleProducto, nombreProducto, payloadDe, tipoTexto,
+  useCodigoDisponible, useFormularioProductoGeneral, validarProductoGeneral,
 } from '@/Components/Admin/productos-generales';
 
-export default function Edit({ producto, historial = [], bloqueo = null, sugerencias = {} }) {
+export default function Edit({ producto, movimientos = [], bloqueo = null, sugerencias = {} }) {
   const original = datosDesde(producto);
   const form = useFormularioProductoGeneral(original);
   const { data, errores, setErrores } = form;
@@ -22,29 +23,27 @@ export default function Edit({ producto, historial = [], bloqueo = null, sugeren
   const [guardando, setGuardando] = useState(false);
   const [borrar, setBorrar] = useState(false);
   const [eliminando, setEliminando] = useState(false);
+  const [movimiento, setMovimiento] = useState(null);
   const [notice, setNotice] = useState(null);
   const [toast] = useToast();
 
   const avisar = (title, message = '', type = 'error') => setNotice({ id: Date.now(), title, message, type });
-  const hayCambios = Object.keys(original).some((k) => data[k] !== original[k]);
-  const ventas = historial.filter((m) => m.tipo === 'venta');
+  // La cantidad no cuenta como cambio: en la edición no se toca, se mueve por «Ingresar» o «Ajustar»
+  const hayCambios = Object.keys(original).some((k) => k !== 'cantidad' && data[k] !== original[k]);
   const nombre = nombreProducto(producto);
-  const detalle = [tipoTexto(producto.tipo), producto.codigo].filter(Boolean).join(' · ');
-
-  const avisoEstado = ventas.length > 0 && data.estado !== 'vendido' ? (
-    <Nota tono="amber">Figura en la venta {ventas[0].codigo}. Cambiar el estado aquí no modifica esa venta.</Nota>
-  ) : null;
+  const detalle = [tipoTexto(producto.tipo), detalleProducto(producto), producto.codigo].filter(Boolean).join(' · ');
+  const enPermuta = producto.estado === 'permuta';
 
   const guardar = () => {
     if (guardando || !hayCambios) return;
-    const e = validarProductoGeneral(data);
+    const e = validarProductoGeneral(data, { edicion: true });
     if (!e.codigo && estadoCodigo === 'ocupado') e.codigo = 'Ya hay un producto con este código.';
     setErrores(e);
     if (Object.keys(e).length > 0) {
       avisar('Revisa los datos', 'Hay campos por corregir.');
       return;
     }
-    router.put(route('admin.productos-generales.update', producto.id), payloadDe(data), {
+    router.put(route('admin.productos-generales.update', producto.id), payloadDe(data, { edicion: true }), {
       preserveState: true,
       preserveScroll: true,
       onStart: () => setGuardando(true),
@@ -69,6 +68,11 @@ export default function Edit({ producto, historial = [], bloqueo = null, sugeren
     });
   };
 
+  // Lo que llegó en permuta se habilita desde el listado antes de moverle el saldo
+  const moverStock = (accion) => (enPermuta
+    ? avisar('Primero habilítalo', 'Llegó en una permuta: habilítalo para la venta desde el listado.', 'info')
+    : setMovimiento(accion));
+
   return (
     <AdminLayout>
       <Head title={`Editar producto · ${nombre}`} />
@@ -81,8 +85,14 @@ export default function Edit({ producto, historial = [], bloqueo = null, sugeren
 
         <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
           <div className="min-w-0 space-y-5">
-            <CamposProductoGeneral form={form} sugerencias={sugerencias} estadoCodigo={estadoCodigo} avisoEstado={avisoEstado} />
-            <HistorialEquipo historial={historial} />
+            <CamposProductoGeneral form={form} sugerencias={sugerencias} estadoCodigo={estadoCodigo} edicion
+              saldo={producto.cantidad} onMoverStock={moverStock} />
+
+            <Card title="Historial del producto" subtitle="Cada unidad que entró o salió, con su motivo y cómo quedó el saldo."
+              actions={<History className="h-[18px] w-[18px] text-gris-400" />}>
+              <HistorialPieza movimientos={movimientos} />
+            </Card>
+
             <ZonaPeligro
               bloqueo={bloqueo}
               sustantivo="producto"
@@ -91,7 +101,7 @@ export default function Edit({ producto, historial = [], bloqueo = null, sugeren
           </div>
 
           <aside className="xl:sticky xl:top-24">
-            <ResumenProductoGeneral data={data}>
+            <ResumenProductoGeneral data={data} estado={producto.estado} saldo={producto.cantidad}>
               <ErroresResumen errores={errores} />
               {hayCambios && <p className="text-center text-xs font-semibold text-amber-700">Tienes cambios sin guardar.</p>}
               <button type="button" onClick={guardar} disabled={guardando || !hayCambios} className={buttonCls('primary', 'h-12 w-full text-[15px]')}>
@@ -103,6 +113,11 @@ export default function Edit({ producto, historial = [], bloqueo = null, sugeren
           </aside>
         </div>
       </div>
+
+      {movimiento && (
+        <ModalStock pieza={{ ...producto, nombre }} accion={movimiento} ruta={route('admin.productos-generales.stock', producto.id)}
+          onCerrar={() => setMovimiento(null)} />
+      )}
 
       {borrar && (
         <ModalEliminar titulo="Eliminar producto general" icon={Package} nombre={nombre} detalle={detalle}

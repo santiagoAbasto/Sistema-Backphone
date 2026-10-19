@@ -342,8 +342,9 @@
       <tr>
         <th>#</th>
         <th>Nombre</th>
-        <th>Tipo</th>
+        <th>Modelo</th>
         <th>Código</th>
+        <th>Cantidad</th>
         <th class="table-right">Precio</th>
         <th class="table-right">Descuento</th>
         <th class="table-right">Subtotal</th>
@@ -352,10 +353,12 @@
     <tbody>
       @foreach ($generales as $i => $item)
       <tr>
+        {{-- Nombre y modelo salen del ítem: lo vendido ese día, aunque después se corrija la ficha --}}
         <td>{{ $i + 1 }}</td>
-        <td>{{ $item->productoGeneral->nombre }}</td>
-        <td>{{ $item->productoGeneral->tipo }}</td>
-        <td>{{ $item->productoGeneral->codigo }}</td>
+        <td>{{ $item->nombre_producto ?? optional($item->productoGeneral)->nombre ?? 'Producto' }}</td>
+        <td>{{ $item->modelo ?? '---' }}</td>
+        <td>{{ optional($item->productoGeneral)->codigo ?? '---' }}</td>
+        <td>{{ $item->cantidad }}</td>
         <td class="table-right">Bs {{ number_format($item->precio_venta, 2) }}</td>
         <td class="table-right">Bs {{ number_format($item->descuento, 2) }}</td>
         <td class="table-right">Bs {{ number_format($item->subtotal, 2) }}</td>

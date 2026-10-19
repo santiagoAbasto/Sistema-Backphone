@@ -11,6 +11,7 @@ use App\Models\ProductoApple;
 use App\Models\ProductoGeneral;
 use App\Models\ReservaItem;
 use App\Models\Tienda;
+use App\Models\Traspaso;
 use App\Models\Venta;
 use App\Support\Busqueda;
 use App\Support\SucursalActiva;
@@ -35,7 +36,7 @@ class VentaTiendaController extends Controller
         'celular'          => [Celular::class, ['modelo', 'imei_1', 'imei_2', 'color', 'capacidad']],
         'computadora'      => [Computadora::class, ['nombre', 'numero_serie', 'procesador', 'color']],
         'producto_apple'   => [ProductoApple::class, ['modelo', 'imei_1', 'numero_serie', 'color']],
-        'producto_general' => [ProductoGeneral::class, ['nombre', 'codigo', 'tipo']],
+        'producto_general' => [ProductoGeneral::class, ['nombre', 'codigo', 'modelo', 'calidad', 'tipo']],
     ];
 
     private const POR_TIPO = 8;
@@ -114,6 +115,7 @@ class VentaTiendaController extends Controller
         foreach (self::BUSCABLES as $tipo => [$modelo, $columnas]) {
             $modelo::query()
                 ->where('estado', 'disponible')
+                ->when(Traspaso::esPorCantidad($tipo), fn ($c) => $c->where('cantidad', '>', 0))
                 ->whereNotNull('precio_tienda')
                 ->whereNotIn('id', $this->reservados($tipo))
                 ->where(function ($c) use ($columnas, $patron) {
@@ -242,7 +244,7 @@ class VentaTiendaController extends Controller
             'celular'          => [$p->modelo, [$p->capacidad, $p->color], $p->imei_1],
             'computadora'      => [$p->nombre, [$p->procesador, $p->ram, $p->almacenamiento], $p->numero_serie],
             'producto_apple'   => [$p->modelo, [$p->capacidad, $p->color], $p->imei_1 ?: $p->numero_serie],
-            'producto_general' => [$p->nombre, [$p->tipo], $p->codigo],
+            'producto_general' => [$p->nombre, [$p->modelo, $p->calidad], $p->codigo],
             'pieza'            => [$p->nombre, [$p->compatibilidad ?: $p->categoria], $p->codigo],
         };
 
@@ -254,8 +256,8 @@ class VentaTiendaController extends Controller
             'codigo'        => $codigo,
             'precio_tienda' => (float) $p->precio_tienda,
             'precio_venta'  => (float) $p->precio_venta,
-            // Solo las piezas se llevan por cantidad; lo demás es un equipo concreto
-            'cantidad'      => $tipo === 'pieza' ? (int) $p->cantidad : null,
+            // Piezas y productos generales se llevan por cantidad; lo demás es un equipo concreto
+            'cantidad'      => Traspaso::esPorCantidad($tipo) ? (int) $p->cantidad : null,
         ];
     }
 }

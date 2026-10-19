@@ -14,6 +14,30 @@ class InventoryAuditTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** Un equipo con su serie: lo que se escanea de a uno. */
+    private function computadora(string $serie): Computadora
+    {
+        return Computadora::create([
+            'numero_serie' => $serie, 'nombre' => 'MacBook Air', 'color' => 'Gris', 'ram' => '8 GB',
+            'almacenamiento' => '256 GB', 'procedencia' => 'USA', 'precio_costo' => 10, 'precio_venta' => 15,
+            'estado' => 'disponible',
+        ]);
+    }
+
+    public function test_los_productos_generales_no_se_escanean_se_cuentan_por_cantidad(): void
+    {
+        ProductoGeneral::create([
+            'codigo' => 'VT-00001', 'tipo' => 'vidrio_templado', 'nombre' => 'Vidrio 9D', 'modelo' => 'iPhone 13',
+            'cantidad' => 500, 'procedencia' => 'CHINA', 'precio_costo' => 3, 'precio_venta' => 20,
+        ]);
+        $this->phone('111111111111111', 'disponible');
+
+        $this->actingAs($this->admin())->post(route('admin.inventory-audits.store'));
+
+        $this->assertDatabaseCount('inventory_audit_items', 1);
+        $this->assertDatabaseMissing('inventory_audit_items', ['source_type' => 'producto_general']);
+    }
+
     public function test_admin_can_start_audit_and_snapshot_only_available_products(): void
     {
         $admin = $this->admin();
@@ -69,15 +93,7 @@ class InventoryAuditTest extends TestCase
     public function test_closing_audit_preserves_unscanned_products_as_missing(): void
     {
         $admin = $this->admin();
-        ProductoGeneral::create([
-            'codigo' => 'ACC-001',
-            'tipo' => 'accesorio',
-            'nombre' => 'Cable USB-C',
-            'procedencia' => 'USA',
-            'precio_costo' => 10,
-            'precio_venta' => 15,
-            'estado' => 'disponible',
-        ]);
+        $this->computadora('ACC-001');
 
         $this->actingAs($admin)->post(route('admin.inventory-audits.store'));
         $auditId = (int) \DB::table('inventory_audits')->value('id');
@@ -99,15 +115,7 @@ class InventoryAuditTest extends TestCase
         $admin = $this->admin();
 
         // Código guardado en DB sin S inicial (como está en el sistema)
-        ProductoGeneral::create([
-            'codigo'      => 'HHY50635DI11PW9A4',
-            'tipo'        => 'accesorio',
-            'nombre'      => 'Cubo Original 20W',
-            'procedencia' => 'USA',
-            'precio_costo' => 10,
-            'precio_venta' => 15,
-            'estado'      => 'disponible',
-        ]);
+        $this->computadora('HHY50635DI11PW9A4');
 
         $this->actingAs($admin)->post(route('admin.inventory-audits.store'));
         $auditId = (int) \DB::table('inventory_audits')->value('id');
@@ -124,15 +132,7 @@ class InventoryAuditTest extends TestCase
         $admin = $this->admin();
 
         // Código guardado en DB CON S inicial
-        ProductoGeneral::create([
-            'codigo'      => 'SHHY50635DI11PW9A4',
-            'tipo'        => 'accesorio',
-            'nombre'      => 'Cubo Original 40W',
-            'procedencia' => 'USA',
-            'precio_costo' => 10,
-            'precio_venta' => 15,
-            'estado'      => 'disponible',
-        ]);
+        $this->computadora('SHHY50635DI11PW9A4');
 
         $this->actingAs($admin)->post(route('admin.inventory-audits.store'));
         $auditId = (int) \DB::table('inventory_audits')->value('id');
@@ -206,15 +206,7 @@ class InventoryAuditTest extends TestCase
         $this->actingAs($admin)->post(route('admin.inventory-audits.store'));
         $auditId = (int) \DB::table('inventory_audits')->value('id');
 
-        ProductoGeneral::create([
-            'codigo' => 'NEW-AFTER-001',
-            'tipo' => 'accesorio',
-            'nombre' => 'Ingreso posterior',
-            'procedencia' => 'USA',
-            'precio_costo' => 10,
-            'precio_venta' => 15,
-            'estado' => 'disponible',
-        ]);
+        $this->computadora('NEW-AFTER-001');
 
         $this->actingAs($admin)
             ->postJson(route('admin.inventory-audits.scan', $auditId), ['code' => 'NEW-AFTER-001'])

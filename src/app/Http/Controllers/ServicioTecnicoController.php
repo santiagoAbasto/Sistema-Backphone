@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\MovimientoPieza;
 use App\Models\Pieza;
+use App\Models\ProductoGeneral;
 use App\Models\ServicioTecnico;
 use App\Models\Tecnico;
 use App\Models\Traspaso;
-use App\Services\StockDePiezas;
+use App\Services\StockPorCantidad;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -60,8 +61,19 @@ class ServicioTecnicoController extends Controller
                 'cantidad' => $p->cantidad, 'precio_costo' => $p->precio_costo, 'precio_venta' => $p->precio_venta,
             ]);
 
+        // Los productos generales también van por saldo: un vidrio puesto en la reparación es una unidad
+        $piezas = $piezas->concat(
+            ProductoGeneral::disponibles()->orderBy('nombre')->get()
+                ->map(fn (ProductoGeneral $p) => [
+                    'id' => $p->id, 'tipo' => 'producto_general', 'nombre' => $p->nombre,
+                    'categoria' => Traspaso::TIPOS['producto_general']['label'],
+                    'compatibilidad' => implode(' · ', array_filter([$p->modelo, $p->calidad, $p->codigo])) ?: null,
+                    'cantidad' => $p->cantidad, 'precio_costo' => $p->precio_costo, 'precio_venta' => $p->precio_venta,
+                ])
+        );
+
         foreach (Traspaso::TIPOS as $tipo => $config) {
-            if ($tipo === 'pieza') {
+            if (Traspaso::esPorCantidad($tipo)) {
                 continue;
             }
 
@@ -287,8 +299,8 @@ class ServicioTecnicoController extends Controller
             // Las piezas que se usaron salen del inventario recién ahora, con el servicio ya numerado:
             // así el movimiento queda apuntando a la nota en la que se gastaron.
             foreach ($montos['piezas'] as $uso) {
-                if ($uso['tipo'] === 'pieza') {
-                    StockDePiezas::descontar(
+                if (Traspaso::esPorCantidad($uso['tipo'])) {
+                    StockPorCantidad::descontar(
                         $uso['producto'],
                         $uso['cantidad'],
                         MovimientoPieza::SERVICIO,
@@ -425,7 +437,7 @@ class ServicioTecnicoController extends Controller
 
         foreach (array_values($items) as $item) {
             $tomado = $this->productoDelTrabajo($item, $errores);
-            $cantidad = $tomado && $tomado['tipo'] === 'pieza' ? max(1, (int) ($item['cantidad'] ?? 1)) : 1;
+            $cantidad = $tomado && Traspaso::esPorCantidad($tomado['tipo']) ? max(1, (int) ($item['cantidad'] ?? 1)) : 1;
 
             $descripcion = trim(strip_tags((string) ($item['descripcion'] ?? '')));
             if ($descripcion === '' && $tomado) {
@@ -472,7 +484,7 @@ class ServicioTecnicoController extends Controller
         // El saldo se comprueba sobre el total pedido, no línea por línea: dos renglones de la misma
         // pantalla suman, y si entre los dos se pasan del stock hay que decirlo antes de guardar nada.
         foreach ($usos as $uso) {
-            if ($uso['tipo'] === 'pieza' && $uso['producto']->cantidad < $uso['cantidad']) {
+            if (Traspaso::esPorCantidad($uso['tipo']) && $uso['producto']->cantidad < $uso['cantidad']) {
                 $errores['detalle_servicio'] = 'De «' . $uso['producto']->nombre . '» quedan '
                     . $uso['producto']->cantidad . ' y el servicio está usando ' . $uso['cantidad'] . '.';
             }
@@ -518,17 +530,23 @@ class ServicioTecnicoController extends Controller
             return null;
         }
 
-        $producto = $tipo === 'pieza'
-            ? StockDePiezas::bloquear($id)
+        $producto = Traspaso::esPorCantidad($tipo)
+            ? StockPorCantidad::bloquear($id, Traspaso::TIPOS[$tipo]['modelo'])
             : Traspaso::TIPOS[$tipo]['modelo']::whereKey($id)->where('estado', 'disponible')->lockForUpdate()->first();
 
-        if (! $producto || ($tipo === 'pieza' && ! $producto->activa)) {
+        $usable = match (true) {
+            ! $producto => false,
+            $producto instanceof Pieza => $producto->activa,
+            default => $producto->estado === 'disponible', // un producto general en permuta todavía no se usa
+        };
+
+        if (! $usable) {
             $errores['detalle_servicio'] = 'Algo de lo que usa el servicio ya no está disponible en el inventario.';
 
             return null;
         }
 
-        $etiqueta = $tipo === 'pieza'
+        $etiqueta = Traspaso::esPorCantidad($tipo)
             ? $producto->etiqueta()
             : trim(($producto->nombre ?? $producto->modelo) . ' ' . ($producto->capacidad ?? ''));
 

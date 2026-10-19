@@ -24,7 +24,7 @@ class TraspasoController extends Controller
         'celular'          => ['modelo', 'capacidad', 'color', 'imei_1', 'imei_2', 'numero_serie'],
         'computadora'      => ['nombre', 'procesador', 'ram', 'almacenamiento', 'numero_serie'],
         'producto_apple'   => ['modelo', 'capacidad', 'color', 'imei_1', 'imei_2', 'numero_serie'],
-        'producto_general' => ['codigo', 'tipo', 'nombre'],
+        'producto_general' => ['codigo', 'tipo', 'nombre', 'modelo', 'calidad'],
         'pieza'            => ['codigo', 'nombre', 'categoria', 'compatibilidad'],
     ];
 
@@ -138,8 +138,8 @@ class TraspasoController extends Controller
 
         $consulta = $modelo::withoutGlobalScope('sucursal')->where('sucursal_id', $origenId);
 
-        $consulta = $tipo === 'pieza'
-            ? $consulta->where('activa', true)->where('cantidad', '>', 0)
+        $consulta = Traspaso::esPorCantidad($tipo)
+            ? $consulta->disponibles()
             : $consulta->where('estado', 'disponible');
 
         if ($q !== '') {
@@ -165,12 +165,12 @@ class TraspasoController extends Controller
             'detalle'  => match ($tipo) {
                 'celular', 'producto_apple' => implode(' · ', array_filter([$p->capacidad, $p->color, $p->imei_1])),
                 'computadora'               => implode(' · ', array_filter([$p->procesador, $p->ram, $p->numero_serie])),
-                'producto_general'          => implode(' · ', array_filter([$p->tipo, $p->codigo])),
+                'producto_general'          => implode(' · ', array_filter([$p->modelo, $p->calidad, $p->codigo])),
                 'pieza'                     => implode(' · ', array_filter([$p->categoria, $p->compatibilidad])),
                 default                     => null,
             } ?: null,
             'precio'   => (float) $p->precio_venta,
-            'cantidad' => $tipo === 'pieza' ? (int) $p->cantidad : 1,
+            'cantidad' => Traspaso::esPorCantidad($tipo) ? (int) $p->cantidad : 1,
         ];
     }
 

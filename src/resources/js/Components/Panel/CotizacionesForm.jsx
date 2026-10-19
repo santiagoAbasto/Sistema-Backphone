@@ -51,10 +51,13 @@ const especificaciones = (i) => [
 ].filter(Boolean);
 
 // Producto del inventario → línea de la cotización (mismos campos de siempre)
+// En un producto general el modelo es el equipo para el que es: el nombre sigue siendo el suyo.
 const aItem = (tipo, p) => ({
-  nombre: p.modelo || p.nombre || '',
+  nombre: (tipo === 'producto_general' ? p.nombre : p.modelo || p.nombre) || '',
   tipo,
-  modelo: texto(tipo === 'computadora' ? p.nombre : p.modelo),
+  modelo: tipo === 'producto_general'
+    ? [p.modelo, p.calidad].map(texto).filter(Boolean).join(' · ')
+    : texto(tipo === 'computadora' ? p.nombre : p.modelo),
   procesador: texto(p.procesador),
   ram: texto(p.ram),
   almacenamiento: texto(p.almacenamiento),

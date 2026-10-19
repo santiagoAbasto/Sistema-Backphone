@@ -42,11 +42,14 @@ export const COLUMNAS = {
         { key: 'numero_serie', label: 'Serie', mono: true },
         { key: 'precio_venta', label: 'Precio', precio: true },
     ],
+    // Los accesorios también llevan saldo: lo que importa es para qué equipo son y cuántos quedan.
     generales: [
-        { key: 'codigo', label: 'Código', mono: true },
         { key: 'nombre', label: 'Producto', principal: true },
+        { key: 'modelo', label: 'Modelo' },
+        { key: 'calidad', label: 'Calidad' },
         { key: 'tipo', label: 'Tipo', bonito: true },
-        { key: 'condicion', label: 'Condición', condicion: true },
+        { key: 'codigo', label: 'Código', mono: true },
+        { key: 'cantidad', label: 'Quedan', centro: true, saldo: true },
         { key: 'precio_venta', label: 'Precio', precio: true },
     ],
     // Las piezas llevan saldo en vez de condición: lo que importa es cuántas quedan.

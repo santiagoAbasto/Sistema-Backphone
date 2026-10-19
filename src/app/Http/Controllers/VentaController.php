@@ -9,7 +9,8 @@ use App\Models\MovimientoPieza;
 use App\Models\Pieza;
 use App\Models\ProductoGeneral;
 use App\Models\Tienda;
-use App\Services\StockDePiezas;
+use App\Models\Traspaso;
+use App\Services\StockPorCantidad;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\VentaItem;
@@ -68,14 +69,12 @@ class VentaController extends Controller
     }
 
     /**
-     * Los tipos que se venden de a una unidad por registro.
-     *
-     * Las piezas quedan fuera a propósito: son un saldo («quedan 6 pantallas»), así que una misma
-     * línea puede llevar tres. Todo lo demás es un equipo concreto, con su IMEI o su serie.
+     * Piezas y productos generales son un saldo («quedan 480 vidrios»): una misma línea puede llevar
+     * varias unidades. Todo lo demás es un equipo concreto, con su IMEI o su serie, y va de a uno.
      */
     private function esPorCantidad(string $tipo): bool
     {
-        return $tipo === 'pieza';
+        return Traspaso::esPorCantidad($tipo);
     }
 
     private function productLabelForSale($producto): string
@@ -157,7 +156,7 @@ class VentaController extends Controller
         }
 
         if ($this->esPorCantidad($tipo)) {
-            return $this->getAvailablePieceForSale($productoId, $index);
+            return $this->getAvailablePieceForSale($modelo, $productoId, $index);
         }
 
         $producto = $modelo::whereKey($productoId)
@@ -186,34 +185,42 @@ class VentaController extends Controller
         return $producto;
     }
 
-    /** La pieza queda bloqueada hasta el final de la transacción: dos ventas a la vez no pueden llevarse la misma última unidad. */
-    private function getAvailablePieceForSale(int $piezaId, int $index): Pieza
+    /**
+     * Lo que se vende por cantidad queda bloqueado hasta el final de la transacción: dos ventas a la
+     * vez no pueden llevarse la misma última unidad. Si alcanza el saldo lo dice quien descuenta.
+     */
+    private function getAvailablePieceForSale(string $modelo, int $id, int $index): Pieza|ProductoGeneral
     {
-        $pieza = StockDePiezas::bloquear($piezaId);
+        $producto = StockPorCantidad::bloquear($id, $modelo);
 
-        if (! $pieza || ! $pieza->activa) {
+        // Una pieza archivada no se vende; un producto general en permuta, tampoco hasta habilitarlo
+        $vendible = $producto instanceof Pieza
+            ? $producto->activa
+            : $producto?->estado === ProductoGeneral::ESTADO_DISPONIBLE;
+
+        if (! $producto || ! $vendible) {
             throw ValidationException::withMessages([
-                "items.$index.producto_id" => 'La pieza seleccionada ya no está en el inventario.',
+                "items.$index.producto_id" => 'El producto seleccionado ya no está disponible en el inventario.',
             ]);
         }
 
-        if ((float) $pieza->precio_venta <= 0) {
+        if ((float) $producto->precio_venta <= 0) {
             throw ValidationException::withMessages([
-                "items.$index.precio_venta" => 'La pieza «' . $pieza->nombre . '» no tiene precio de venta.',
+                "items.$index.precio_venta" => '«' . $producto->nombre . '» no tiene precio de venta.',
             ]);
         }
 
-        return $pieza;
+        return $producto;
     }
 
     private function productsForSaleEdit(Venta $venta, string $tipo)
     {
-        // Las piezas no tienen estado ni reserva: se ofrecen las activas con saldo, más las que ya
-        // están en esta venta (si no, al editar desaparecería la línea de una pieza agotada).
+        // Lo que va por cantidad no se reserva: se ofrece lo que tiene saldo, más lo que ya está en
+        // esta venta (si no, al editar desaparecería la línea de un producto agotado).
         if ($this->esPorCantidad($tipo)) {
             $enLaVenta = $venta->items->where('tipo', $tipo)->pluck('producto_id')->filter()->unique();
 
-            return Pieza::query()
+            return $this->productModelForSaleType($tipo)::query()
                 ->where(fn ($q) => $q->disponibles()->orWhereIn('id', $enLaVenta))
                 ->orderBy('nombre')
                 ->get();
@@ -274,10 +281,16 @@ class VentaController extends Controller
             ]);
         }
 
-        $producto = $modelo::whereKey($productoId)->lockForUpdate()->first();
         $sameProduct = $currentItem
             && $currentItem->tipo === $tipo
             && (int) $currentItem->producto_id === $productoId;
+
+        // Uno nuevo en la línea tiene que poder venderse; el que ya estaba se edita aunque se haya agotado
+        if (! $sameProduct && $this->esPorCantidad($tipo)) {
+            return [$this->getAvailablePieceForSale($modelo, $productoId, $index), false];
+        }
+
+        $producto = $modelo::whereKey($productoId)->lockForUpdate()->first();
 
         if (! $producto) {
             throw ValidationException::withMessages([
@@ -302,10 +315,10 @@ class VentaController extends Controller
             return;
         }
 
-        // Una pieza no se «libera»: las unidades que había sacado vuelven al saldo.
+        // Lo que va por cantidad no se «libera»: las unidades que había sacado vuelven al saldo.
         if ($this->esPorCantidad($item->tipo)) {
-            if ($pieza = StockDePiezas::bloquear((int) $item->producto_id)) {
-                StockDePiezas::devolver(
+            if ($pieza = StockPorCantidad::bloquear((int) $item->producto_id, $this->productModelForSaleType($item->tipo))) {
+                StockPorCantidad::devolver(
                     $pieza,
                     (int) $item->cantidad,
                     MovimientoPieza::DEVOLUCION,
@@ -344,13 +357,13 @@ class VentaController extends Controller
      * Si cambió la pieza, vuelve entero lo que había salido y sale lo nuevo. Si es la misma, se
      * mueve solo la diferencia: pasar de 2 a 3 saca una unidad, no tres.
      */
-    private function ajustarStockDePieza(VentaItem $item, Pieza $pieza, int $cantidad, Venta $venta, bool $mismaPieza): void
+    private function ajustarStockDePieza(VentaItem $item, Pieza|ProductoGeneral $pieza, int $cantidad, Venta $venta, bool $mismaPieza): void
     {
         $motivo = 'Venta ' . ($venta->codigo_nota ?? '#' . $venta->id) . ' (editada)';
 
         if (! $mismaPieza) {
             $this->releasePreviousSaleItemProduct($item, $venta);
-            StockDePiezas::descontar($pieza, $cantidad, MovimientoPieza::VENTA, $venta, $motivo);
+            StockPorCantidad::descontar($pieza, $cantidad, MovimientoPieza::VENTA, $venta, $motivo);
 
             return;
         }
@@ -358,9 +371,9 @@ class VentaController extends Controller
         $diferencia = $cantidad - (int) $item->cantidad;
 
         if ($diferencia > 0) {
-            StockDePiezas::descontar($pieza, $diferencia, MovimientoPieza::VENTA, $venta, $motivo);
+            StockPorCantidad::descontar($pieza, $diferencia, MovimientoPieza::VENTA, $venta, $motivo);
         } elseif ($diferencia < 0) {
-            StockDePiezas::devolver($pieza, -$diferencia, MovimientoPieza::DEVOLUCION, $venta, $motivo);
+            StockPorCantidad::devolver($pieza, -$diferencia, MovimientoPieza::DEVOLUCION, $venta, $motivo);
         }
     }
 
@@ -468,8 +481,10 @@ class VentaController extends Controller
                 break;
 
             case 'producto_general':
+                // Con el modelo y la calidad: «Vidrio templado» a secas no dice cuál se llevó
                 $snapshot['categoria'] = $producto->tipo;
                 $snapshot['nombre_producto'] = $producto->nombre;
+                $snapshot['modelo'] = implode(' · ', array_filter([$producto->modelo, $producto->calidad])) ?: null;
                 break;
 
             case 'pieza':
@@ -862,7 +877,7 @@ class VentaController extends Controller
                         $request->validate([
                             'producto_entregado.tipo' => 'required|string',
                             'producto_entregado.nombre' => 'required|string',
-                            'producto_entregado.codigo' => 'required|string|unique:producto_generals,codigo',
+                            'producto_entregado.codigo' => 'required|string|unique:productos_generales,codigo',
                             'producto_entregado.procedencia' => 'required|string',
                             'producto_entregado.precio_costo' => 'required|numeric',
                             'producto_entregado.precio_venta' => 'required|numeric',
@@ -964,7 +979,7 @@ class VentaController extends Controller
             foreach ($itemsValidados as $item) {
                 // La pieza no se marca «vendida»: baja su saldo y queda el renglón en su historial.
                 if ($this->esPorCantidad($item['tipo'])) {
-                    StockDePiezas::descontar(
+                    StockPorCantidad::descontar(
                         $item['producto'],
                         $item['cantidad'],
                         MovimientoPieza::VENTA,
@@ -1223,7 +1238,7 @@ class VentaController extends Controller
                     $this->createVentaItemFromValidated($venta, $validatedItem);
 
                     if ($this->esPorCantidad($validatedItem['tipo'])) {
-                        StockDePiezas::descontar(
+                        StockPorCantidad::descontar(
                             $validatedItem['producto'],
                             $validatedItem['cantidad'],
                             MovimientoPieza::VENTA,

@@ -65,9 +65,12 @@ class TallerTest extends TestCase
             ['tipo' => 'producto_general', 'producto_id' => $cubo->id, 'descripcion' => 'Cargador de reemplazo', 'precio' => 150],
         ])->assertRedirect(route('admin.servicios.index'));
 
-        // Salió del stock con su propio estado: ni disponible ni vendido
-        $this->assertSame('servicio', $cubo->refresh()->estado);
+        // Salió del saldo como una reparación, no como una venta: el renglón del historial lo dice
+        $this->assertSame(0, $cubo->refresh()->cantidad);
         $this->assertSame(0, Venta::count());
+        $this->assertDatabaseHas('movimientos_producto_general', [
+            'producto_general_id' => $cubo->id, 'tipo' => 'servicio', 'cantidad' => -1, 'saldo' => 0,
+        ]);
 
         $servicio = ServicioTecnico::firstOrFail();
         $this->assertFalse($servicio->costo_pendiente);

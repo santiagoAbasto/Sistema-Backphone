@@ -194,11 +194,12 @@
       <th>Observaciones</th>
     @elseif($tipo === 'producto_general')
       <th>Nombre</th>
-      <th>Condición</th>
+      <th>Modelo</th>
+      <th>Calidad</th>
       <th>Tipo</th>
       <th>Código</th>
       <th>Procedencia</th>
-      <th>Estado</th>
+      <th>Cantidad</th>
       <th>Precio Costo</th>
       <th>Precio Venta</th>
       <th>Observaciones</th>
@@ -256,11 +257,12 @@
 
       @elseif($tipo === 'producto_general')
         <td>{{ $p->nombre }}</td>
-        <td>{{ $p->condicion ?: '—' }}</td>
-        <td>{{ $p->tipo }}</td>
+        <td>{{ $p->modelo ?: '—' }}</td>
+        <td>{{ $p->calidad ?: '—' }}</td>
+        <td>{{ str_replace('_', ' ', $p->tipo) }}</td>
         <td>{{ $p->codigo }}</td>
         <td>{{ $p->procedencia }}</td>
-        <td>{{ $p->estado }}</td>
+        <td>{{ $p->cantidad }}</td>
         <td>Bs {{ number_format($p->precio_costo, 2) }}</td>
         <td>Bs {{ number_format($p->precio_venta, 2) }}</td>
         <td></td>
@@ -289,8 +291,9 @@
 </table>
 
 @php
-  $valorInvertido = $productos->sum('precio_costo');
-  $valorComercial = $productos->sum('precio_venta');
+  // Un producto general vale su precio por las unidades que quedan; un equipo es una sola unidad
+  $valorInvertido = $productos->sum(fn ($p) => $p->precio_costo * ($p->cantidad ?? 1));
+  $valorComercial = $productos->sum(fn ($p) => $p->precio_venta * ($p->cantidad ?? 1));
   $gananciaEsperada = $valorComercial - $valorInvertido;
 @endphp
 

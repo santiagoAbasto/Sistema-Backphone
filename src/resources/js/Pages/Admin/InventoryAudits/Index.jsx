@@ -1,5 +1,5 @@
 import AdminLayout from '@/Layouts/AdminLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { route } from 'ziggy-js';
@@ -180,14 +180,21 @@ export default function Index({ audit: auditInicial, history = [] }) {
       <div className="bp-reset mx-auto max-w-[1400px] space-y-5">
         <PageHeader
           title="Auditoría de inventario"
-          subtitle="Conteo físico: al iniciar se guarda una foto de todo lo disponible y luego escaneas cada unidad. No modifica el inventario."
+          subtitle="Conteo físico de equipos: al iniciar se guarda una foto de todo lo disponible y luego escaneas cada unidad. No modifica el inventario."
           actions={acciones}
         />
+
+        {/* Los accesorios van por cantidad: no se escanean de a uno, se cuentan y se anota la diferencia */}
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-2xl border border-gris-200 bg-white px-5 py-3 text-[13px] text-gris-600 shadow-sutil">
+          <PackageSearch className="h-4 w-4 shrink-0 text-[color:var(--acento)]" />
+          Los productos generales (vidrios, fundas, cargadores) se cuentan por cantidad, en su propia planilla.
+          <Link href={route('admin.productos-generales.conteo')} className="font-semibold text-[color:var(--acento)] hover:underline">Contar productos generales</Link>
+        </p>
 
         {!audit ? (
           <section className="rounded-2xl border border-gris-200 bg-white shadow-sutil">
             <EmptyState icon={ClipboardCheck} title="Todavía no hay auditorías"
-              text="Inicia el conteo para guardar la lista de celulares, computadoras, equipos de marca y accesorios disponibles."
+              text="Inicia el conteo para guardar la lista de celulares, computadoras y equipos de marca disponibles."
               action={<button type="button" onClick={() => setConfirmar('iniciar')} className={buttonCls('primary')}><Play className="h-4 w-4" /> Iniciar auditoría</button>} />
           </section>
         ) : (
