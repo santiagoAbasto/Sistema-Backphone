@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Check } from 'lucide-react';
+import CreditoBurrow from '@/Components/Marca/CreditoBurrow';
 import Isotipo from '@/Components/Marca/Isotipo';
 
 /**
@@ -110,7 +111,10 @@ export default function AuthShell({ title, pageTitle, subtitle, icon: Icon, back
                     </ul>
                 </motion.div>
 
-                <p className="relative text-xs text-white/35">© {anio} Blackphone</p>
+                <div className="relative flex items-center justify-between gap-4">
+                    <p className="text-xs text-white/35">© {anio} Blackphone</p>
+                    <CreditoBurrow className="-mr-3" />
+                </div>
             </aside>
 
             {/* ── Formulario ── */}

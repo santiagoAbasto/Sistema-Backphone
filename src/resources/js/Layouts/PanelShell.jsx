@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { route } from 'ziggy-js';
 import { ChevronDown, LogOut, Menu, UserPlus, X } from 'lucide-react';
 import ConfirmLogoutModal from '@/Components/ConfirmLogoutModal';
+import CreditoBurrow from '@/Components/Marca/CreditoBurrow';
 import Logotipo from '@/Components/Marca/Logotipo';
 import SelectorSucursal from '@/Components/Panel/SelectorSucursal';
 import Avatar from '@/Components/Panel/Avatar';
@@ -271,6 +272,7 @@ function Sidebar({ nav, homeRoute, insignia, filtrarPorPermisos, tema, nombreNeg
                 >
                     <LogOut className="h-[17px] w-[17px]" /> Cerrar sesión
                 </button>
+                <CreditoBurrow className="mt-1" />
             </div>
         </aside>
     );
