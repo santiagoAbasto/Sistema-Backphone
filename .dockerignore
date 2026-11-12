@@ -7,3 +7,6 @@ src/*
 
 npm-debug.log
 yarn-error.log
+
+# Grafo de graphify del asistente
+graphify-out

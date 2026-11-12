@@ -27,3 +27,4 @@ src/storage/framework/views/*
 src/storage/logs/*
 npm-debug.log*
 yarn-error.log*
+graphify-out
