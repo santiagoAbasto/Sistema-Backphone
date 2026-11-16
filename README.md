@@ -18,17 +18,17 @@
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 📑 Contenido
+## <img src="docs/readme/ic-indice.svg" width="24" height="24" alt=""> Contenido
 
 - [El problema](#-el-problema)
 - [La solución](#-la-solución)
 - [Funcionalidades](#-funcionalidades)
-- [Arquitectura](#%EF%B8%8F-arquitectura)
+- [Arquitectura](#-arquitectura)
 - [Flujos de trabajo](#-flujos-de-trabajo)
-- [Modelo de datos](#%EF%B8%8F-modelo-de-datos)
+- [Modelo de datos](#-modelo-de-datos)
 - [Criterios y decisiones](#-criterios-y-decisiones)
-- [Stack](#%EF%B8%8F-stack)
-- [Estructura del repo](#%EF%B8%8F-estructura-del-repo)
+- [Stack](#-stack)
+- [Estructura del repo](#-estructura-del-repo)
 - [Puesta en marcha](#-puesta-en-marcha)
 - [Pruebas y calidad](#-pruebas-y-calidad)
 - [Despliegue](#-despliegue)
@@ -37,11 +37,11 @@
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 🧩 El problema
+## <img src="docs/readme/ic-problema.svg" width="24" height="24" alt=""> El problema
 
 Una tienda de celulares y computadoras con más de una sucursal necesita saber, a la vez, qué equipo tiene cada una, quién lo vendió, cuánto cuesta y dónde está. Con planillas separadas por sucursal, un mismo equipo podía venderse dos veces, un traspaso quedaba sin registrar y la caja del día no cuadraba con las boletas. El servicio técnico y los accesorios sumaban otra planilla.
 
-## 💡 La solución
+## <img src="docs/readme/ic-solucion.svg" width="24" height="24" alt=""> La solución
 
 **Blackphone** —la empresa de celulares y servicio técnico de **Axel**— opera con este sistema **privado**: no tiene tienda pública ni pantallas abiertas a internet. Todo lo que está detrás de `/` pide sesión. Concentra el inventario, las ventas, las reservas con anticipo, el servicio técnico, las cotizaciones, los egresos, los clientes y los reportes de todas las sucursales, con un panel para administración y otro para vendedores.
 
@@ -53,7 +53,7 @@ Una tienda de celulares y computadoras con más de una sucursal necesita saber, 
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## ✨ Funcionalidades
+## <img src="docs/readme/ic-funcionalidades.svg" width="24" height="24" alt=""> Funcionalidades
 
 | Módulo | Qué resuelve |
 |---|---|
@@ -76,7 +76,7 @@ Una tienda de celulares y computadoras con más de una sucursal necesita saber, 
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 🏗️ Arquitectura
+## <img src="docs/readme/ic-arquitectura.svg" width="24" height="24" alt=""> Arquitectura
 
 <p align="center">
   <img src="docs/readme/flujo.svg" alt="Cómo viaja una petición: usuario, panel, Laravel 13, PostgreSQL 18 y cola con PDF" width="100%">
@@ -99,7 +99,7 @@ flowchart LR
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 🔄 Flujos de trabajo
+## <img src="docs/readme/ic-flujos.svg" width="24" height="24" alt=""> Flujos de trabajo
 
 ### Traspaso de un equipo entre sucursales
 
@@ -133,7 +133,7 @@ stateDiagram-v2
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 🗃️ Modelo de datos
+## <img src="docs/readme/ic-datos.svg" width="24" height="24" alt=""> Modelo de datos
 
 Las entidades que dependen de una sucursal llevan `sucursal_id`; los traspasos guardan sucursal de origen y de destino.
 
@@ -167,7 +167,7 @@ erDiagram
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 🧭 Criterios y decisiones
+## <img src="docs/readme/ic-criterios.svg" width="24" height="24" alt=""> Criterios y decisiones
 
 | Decisión | Por qué |
 |---|---|
@@ -182,7 +182,7 @@ erDiagram
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 🛠️ Stack
+## <img src="docs/readme/ic-stack.svg" width="24" height="24" alt=""> Stack
 
 | Capa | Tecnología | Versión |
 |---|---|---|
@@ -197,7 +197,7 @@ erDiagram
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 🗂️ Estructura del repo
+## <img src="docs/readme/ic-estructura.svg" width="24" height="24" alt=""> Estructura del repo
 
 ```text
 .
@@ -219,7 +219,7 @@ erDiagram
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 🚀 Puesta en marcha
+## <img src="docs/readme/ic-arranque.svg" width="24" height="24" alt=""> Puesta en marcha
 
 Hace falta Docker.
 
@@ -244,7 +244,7 @@ Para trabajar el frontend, con `FRONTEND_MODE=dev` en `.env` el contenedor `node
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 🧪 Pruebas y calidad
+## <img src="docs/readme/ic-pruebas.svg" width="24" height="24" alt=""> Pruebas y calidad
 
 ```bash
 docker compose exec app php artisan test
@@ -254,13 +254,13 @@ Hay pruebas `Feature` y `Unit` en `src/tests/`. No se corrieron para este README
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 🐳 Despliegue
+## <img src="docs/readme/ic-despliegue.svg" width="24" height="24" alt=""> Despliegue
 
 El despliegue en el VPS está documentado en [`DESPLIEGUE.md`](DESPLIEGUE.md): DNS en Cloudflare, primera instalación, publicación del dominio, actualizaciones, qué no se toca y cómo recuperarse si algo falla. Blackphone corre con su propio dominio, base, claves y volúmenes, separado de otros sitios en el mismo servidor. Cuelga del proxy existente con un bloque propio. Los detalles de servidor no se publican en este repositorio.
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 📌 Estado y pendientes
+## <img src="docs/readme/ic-estado.svg" width="24" height="24" alt=""> Estado y pendientes
 
 - Último commit: **12-11-2026** (`31ec217`: el grafo de graphify queda fuera del repositorio y de la imagen). Historial de 25 commits.
 - Estado de producción: **no verificado** desde este README. La guía de despliegue describe el paso de demo a producción, con la base limpia como paso previo.
@@ -268,7 +268,7 @@ El despliegue en el VPS está documentado en [`DESPLIEGUE.md`](DESPLIEGUE.md): D
 
 <img src="docs/readme/divider.svg" alt="" width="100%">
 
-## 📄 Licencia y autoría
+## <img src="docs/readme/ic-licencia.svg" width="24" height="24" alt=""> Licencia y autoría
 
 Sistema privado. El repositorio no incluye archivo de licencia; no se distribuye sin autorización.
 
