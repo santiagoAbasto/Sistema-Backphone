@@ -103,20 +103,20 @@ flowchart LR
 
 ### Traspaso de un equipo entre sucursales
 
-Mientras el equipo viaja, queda fuera de la venta en las dos sucursales.
+Envía solo el super administrador, que es el único que ve las dos sucursales. Confirma la llegada la sucursal destino. Mientras el equipo viaja, queda fuera de la venta en las dos sucursales.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant O as Sucursal origen
+    participant S as Super administrador
     participant L as Laravel
     participant DB as PostgreSQL
     participant D as Sucursal destino
-    O->>L: Crea traspaso (equipo, destino)
-    L->>DB: traspaso en_transito · equipo en tránsito
-    L-->>O: traspaso enviado
-    D->>L: Recibe el equipo
-    L->>DB: traspaso recibido · equipo vuelve a la venta en destino
+    S->>L: Envía traspaso (origen, destino, equipos)
+    L->>DB: traspaso en_transito · equipo fuera de la venta en las dos
+    L-->>S: traspaso enviado
+    D->>L: Confirma que llegó
+    L->>DB: traspaso recibido · equipo pasa a la sucursal destino
     L-->>D: equipo disponible en la sucursal
 ```
 
@@ -126,7 +126,7 @@ sequenceDiagram
 stateDiagram-v2
     [*] --> EnTransito
     EnTransito --> Recibido: la sucursal destino lo recibe
-    EnTransito --> Cancelado: se anula antes de recibirlo
+    EnTransito --> Cancelado: la sucursal origen lo cancela antes de que llegue
     Recibido --> [*]
     Cancelado --> [*]
 ```
@@ -151,7 +151,7 @@ erDiagram
     CELULAR ||--o{ VENTA_ITEM : "referencia"
     COMPUTADORA ||--o{ VENTA_ITEM : "referencia"
 
-    SUCURSAL { bigint id PK string codigo }
+    SUCURSAL { bigint id PK string prefijo }
     USUARIO { bigint id PK bigint sucursal_id }
     VENTA { bigint id PK bigint sucursal_id }
     VENTA_ITEM { bigint id PK bigint producto_id }
@@ -262,7 +262,7 @@ El despliegue en el VPS está documentado en [`DESPLIEGUE.md`](DESPLIEGUE.md): D
 
 ## <img src="docs/readme/ic-estado.svg" width="24" height="24" alt=""> Estado y pendientes
 
-- Último commit: **12-11-2026** (`31ec217`: el grafo de graphify queda fuera del repositorio y de la imagen). Historial de 25 commits.
+- Historial de cambios: `git log`.
 - Estado de producción: **no verificado** desde este README. La guía de despliegue describe el paso de demo a producción, con la base limpia como paso previo.
 - Documentos internos de arquitectura y revisiones en `cerebro/` (fuera del repositorio).
 
